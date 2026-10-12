@@ -1,0 +1,19 @@
+PERBAIKAN DRAMALUMA — 12 OKTOBER 2026
+
+1. BAGIAN POPULER
+- Bagian Populer kini menggabungkan katalog dari beberapa provider populer: AnyReel, DramaBox, FreeReels, GoodShort, NetShort, ReelShort, Shortmax, FlexTV, DramaWave, Melolo, JoyReels, FlickReels, Vigloo, StardustTV, dan Shortical.
+- Kartu dari provider tambahan dicampur bergiliran agar satu provider tidak mendominasi daftar.
+- Provider yang gagal/tidak memiliki data dilewati; provider lain tetap bisa menampilkan hasil.
+
+2. IKLAN VAST HILLTOPADS
+- Menambahkan pemberitahuan di pemutar saat permintaan iklan gagal.
+- Mencatat pesan error IMA di console browser untuk membantu diagnosis.
+- Iklan hanya dianggap berhasil jika event STARTED benar-benar terjadi lalu iklan selesai.
+- Jika SDK/permintaan VAST gagal, video dilanjutkan sebagai fallback agar tombol Play tidak macet. Karena fallback ini, impresi HilltopAds tidak akan bertambah saat tidak ada iklan yang benar-benar diputar.
+
+3. BAHASA OTOMATIS
+- Mempertahankan deteksi negara melalui IP dari versi sebelumnya: Indonesia -> Bahasa Indonesia; negara lain -> English, dengan bahasa browser sebagai fallback jika layanan IP gagal.
+
+CATATAN PENGUJIAN
+- ZIP ini berisi perubahan source. Build/typecheck belum berhasil dijalankan di lingkungan ini karena paket definisi TypeScript untuk Node/Vite tidak tersedia lengkap.
+- Setelah deploy, uji homepage Popular dan tekan Play di episode pertama. Jika muncul pesan VAST gagal dimuat dan statistik zona tetap nol, perlu memeriksa tag/respons/fill di dashboard HilltopAds; perubahan kode saja tidak dapat membuat inventori iklan tersedia.

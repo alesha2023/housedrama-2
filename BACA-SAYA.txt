@@ -1,0 +1,17 @@
+INI FILE BARU — 12 Oktober 2026
+Bukan zip lama.
+
+Isi paket ini:
+- 62 penyedia (AnyReel, BibiShort, ReelShort, Vigloo, dan lainnya)
+- Pemilih penyedia di beranda
+- Logo baru (public/logo.png)
+- Footer: Facebook, Instagram, TikTok, YouTube
+
+Cek cepat setelah unzip:
+- src/lib/drama/types.ts  (daftar diawali anyreel, bibishort, bonustv)
+- src/routes/index.tsx    (ada home-provider)
+- src/components/drama/shell.tsx (ada facebook, instagram, tiktok, youtube)
+
+Ini kode sumber, bukan situs yang sudah jadi.
+Setelah unzip: npm install
+Lalu Publish dari Grok, atau import folder ini ke proyek Vercel.

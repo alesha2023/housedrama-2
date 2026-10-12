@@ -1,0 +1,12 @@
+PERBAIKAN PLAYER HOUSEDRAMA
+
+Perubahan:
+1. Swipe ke atas/bawah tetap pindah episode, dan autoplay sekarang menunggu canplay/loadeddata serta memeriksa readyState agar tidak kehilangan event ketika video sudah siap lebih dulu.
+2. Saat berpindah episode dengan autoplay, posisi video dipaksa mulai dari 00:00.
+3. Tombol Play/Pause tersedia di tengah video, terlihat ketika pause dan tetap terlihat redup saat video berjalan.
+4. Video memakai object-cover untuk mengisi layar; tombol fullscreen memakai Fullscreen API dengan fallback WebKit.
+
+Catatan:
+- Autoplay bersuara dapat diblokir browser. Kode mencoba sekali lagi dalam mode mute.
+- Jika URL stream/CDN gagal atau tidak bisa diakses, perubahan UI tidak dapat memperbaiki server sumber tersebut.
+- Build dan tes playback perangkat nyata belum dapat dijalankan di lingkungan ini.

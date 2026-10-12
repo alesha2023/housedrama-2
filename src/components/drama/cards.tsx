@@ -1,0 +1,189 @@
+import { Link } from "@tanstack/react-router";
+import { Clapperboard } from "lucide-react";
+import type { ReactNode } from "react";
+import type { DramaCard, ProviderId } from "@/lib/drama/types";
+import { usePrefs } from "@/lib/drama/i18n";
+import { pickTitle } from "@/lib/drama/display";
+import { providerLabel } from "@/lib/drama/providers";
+import { cn } from "@/lib/utils";
+
+export { providerLabel };
+
+export function ProviderBadge({ provider, className }: { provider: ProviderId; className?: string }) {
+  const tones = ["bg-primary/12 text-ink", "bg-coral/12 text-ink", "bg-violet/12 text-ink"];
+  const tone = tones[[...provider].reduce((sum, char) => sum + char.charCodeAt(0), 0) % tones.length];
+  return (
+    <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", tone, className)}>
+      {providerLabel(provider)}
+    </span>
+  );
+}
+
+export function Poster({
+  src,
+  alt,
+  className,
+  priority = false,
+}: {
+  src: string | null;
+  alt: string;
+  className?: string;
+  priority?: boolean;
+}) {
+  if (!src) {
+    return (
+      <div className={cn("grid place-items-center bg-surface text-muted", className)}>
+        <Clapperboard className="size-8" aria-hidden="true" />
+        <span className="sr-only">{alt}</span>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading={priority ? "eager" : "lazy"}
+      className={cn("h-full w-full object-cover", className)}
+    />
+  );
+}
+
+export function DramaCardView({ item, className }: { item: DramaCard; className?: string }) {
+  const { t, contentLang } = usePrefs();
+  const title = pickTitle(item, contentLang);
+  return (
+    <Link
+      to="/drama/$provider/$seriesId"
+      params={{ provider: item.provider, seriesId: item.seriesId }}
+      className={cn("drama-card group block w-36 shrink-0 snap-start sm:w-44", className)}
+    >
+      <div className="drama-card__poster rise relative overflow-hidden rounded-card shadow-[0_10px_30px_rgb(32_33_42_/_0.06)]">
+        <div className="drama-card__image aspect-poster">
+          <Poster src={item.posterUrl} alt={title} />
+        </div>
+        <div className="absolute left-2 top-2 flex max-w-[90%] flex-wrap gap-1">
+          <ProviderBadge provider={item.provider} />
+          {item.badge ? (
+            <span className="rounded-full bg-bg/90 px-2 py-0.5 text-xs font-semibold text-ink">{item.badge}</span>
+          ) : null}
+        </div>
+      </div>
+      <h3 className="drama-card__title mt-2 line-clamp-2 text-sm font-semibold leading-snug text-ink group-hover:text-primary">
+        {title}
+      </h3>
+      <p className="drama-card__meta mt-1 text-xs text-muted">
+        {[item.episodeCount ? `${item.episodeCount} ${t.eps}` : null, item.completed ? t.completed : null, item.playCount]
+          .filter(Boolean)
+          .join(" · ") || item.tags[0] || t.shortDrama}
+      </p>
+    </Link>
+  );
+}
+
+export function DramaGrid({ items }: { items: DramaCard[] }) {
+  return (
+    <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      {items.map((item) => (
+        <DramaCardView key={`${item.provider}-${item.seriesId}`} item={item} className="w-auto" />
+      ))}
+    </div>
+  );
+}
+
+export function Rail({
+  title,
+  action,
+  items,
+  more,
+}: {
+  title: string;
+  action?: string;
+  items: DramaCard[];
+  more?: ReactNode;
+}) {
+  if (!items.length) return null;
+  return (
+    <section className="mt-8">
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <h2 className="text-2xl text-ink">{title}</h2>
+        {more ?? (action ? <span className="text-sm font-semibold text-primary">{action}</span> : null)}
+      </div>
+      <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 snap-x sm:mx-0 sm:px-0">
+        {items.map((item) => (
+          <DramaCardView key={`${item.provider}-${item.seriesId}`} item={item} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function PageIntro({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <header className="max-w-2xl">
+      {eyebrow ? <p className="text-sm font-semibold text-primary">{eyebrow}</p> : null}
+      <h1 className="mt-1 text-4xl text-ink sm:text-5xl">{title}</h1>
+      {description ? <p className="mt-3 text-base text-muted">{description}</p> : null}
+    </header>
+  );
+}
+
+export function EmptyState({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
+  return (
+    <div className="mt-8 rounded-card border border-line bg-surface px-6 py-12 text-center">
+      <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-bg text-primary">
+        <Clapperboard className="size-7" aria-hidden="true" />
+      </div>
+      <h2 className="text-2xl text-ink">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted">{body}</p>
+      {action ? <div className="mt-5">{action}</div> : null}
+    </div>
+  );
+}
+
+export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <div className="rounded-card border border-coral/30 bg-coral/8 px-4 py-3 text-sm text-ink">
+      <p>{message}</p>
+      {onRetry ? (
+        <button type="button" onClick={onRetry} className="mt-2 font-semibold text-primary">
+          Try again
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+export function SkeletonRail() {
+  return (
+    <div className="mt-8">
+      <div className="skeleton mb-3 h-8 w-48 rounded-full" />
+      <div className="flex gap-3 overflow-hidden">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className="w-36 shrink-0 sm:w-44">
+            <div className="skeleton aspect-poster rounded-card" />
+            <div className="skeleton mt-2 h-4 rounded-full" />
+            <div className="skeleton mt-2 h-3 w-2/3 rounded-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function PageSkeleton() {
+  return (
+    <div>
+      <div className="skeleton h-72 rounded-card sm:h-96" />
+      <SkeletonRail />
+      <SkeletonRail />
+    </div>
+  );
+}

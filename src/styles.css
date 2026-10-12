@@ -1,0 +1,161 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Outfit:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #ffffff;
+  --color-surface: #fff7f2;
+  --color-ink: #20212a;
+  --color-muted: #777987;
+  --color-line: #f0e6df;
+  --color-primary: #ff6b35;
+  --color-primary-ink: #fffaf7;
+  --color-coral: #ff477e;
+  --color-violet: #7c5cfc;
+  --color-player: #1a1b22;
+  --color-player-ink: #fff7f2;
+  --font-sans: "Outfit", system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+  --radius-card: 1.25rem;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+@utility aspect-poster {
+  aspect-ratio: 2 / 3;
+}
+
+@utility aspect-drama {
+  aspect-ratio: 9 / 16;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+  .rise:hover {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #f6efe9;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.7), transparent);
+  animation: shimmer 1.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+
+/* Robust drama cards: keep layout readable even if utility CSS is partially cached. */
+.drama-card {
+  display: block;
+  flex: 0 0 9rem;
+  width: 9rem;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.drama-card__poster {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+.drama-card__image {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+}
+.drama-card__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.drama-card__title {
+  display: -webkit-box;
+  margin: .5rem 0 0;
+  overflow: hidden;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: .875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: normal;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.drama-card__meta {
+  display: block;
+  margin: .25rem 0 0;
+  color: var(--color-muted);
+  font-family: var(--font-sans);
+  font-size: .75rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (min-width: 640px) {
+  .drama-card { flex-basis: 11rem; width: 11rem; }
+}

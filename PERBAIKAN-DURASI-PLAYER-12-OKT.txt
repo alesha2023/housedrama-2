@@ -1,0 +1,11 @@
+PERBAIKAN DURASI PLAYER HOUSEDRAMA
+
+- Durasi di-reset ketika sumber/episode berubah agar tidak memakai durasi episode sebelumnya.
+- Event durationchange ikut memperbarui durasi setelah browser membaca metadata.
+- Untuk HLS, gunakan totalduration dari playlist level sebagai fallback jika video.duration belum tersedia.
+- Durasi yang belum diketahui ditampilkan sebagai --:--, bukan 0:00 yang menyesatkan.
+- Slider seek dinonaktifkan secara efektif sampai durasi yang valid tersedia.
+- Riwayat hanya menyimpan durasi jika nilainya finite dan lebih besar dari nol.
+
+Catatan: jika provider tidak menyediakan playlist berdurasi tetap (misalnya live/playlist terpotong),
+durasi total memang bisa tidak diketahui sampai playlist memberi informasi yang cukup.
