@@ -1,15 +1,18 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { PrefsProvider } from "@/lib/drama/i18n";
 import { Shell } from "@/components/drama/shell";
 import appCss from "../styles.css?url";
 
+const getInitialCatalogLang = createServerFn({ method: "GET" }).handler(async () => {
+  const { resolveCatalogLang } = await import("@/lib/drama/server/locale");
+  return resolveCatalogLang();
+});
+
 export const Route = createRootRoute({
-  loader: async () => {
-    const { resolveCatalogLang } = await import("@/lib/drama/server/locale");
-    return { lang: await resolveCatalogLang() };
-  },
+  loader: async () => ({ lang: await getInitialCatalogLang() }),
   head: () => ({
     meta: [
       { charSet: "utf-8" },
