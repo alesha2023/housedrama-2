@@ -20,7 +20,7 @@ import { previewPathPrefix } from "@/lib/preview-path-prefix";
 import { readProgress, readWatchlist, toggleWatchlist, upsertHistory, writeProgress } from "@/lib/drama/storage";
 import type { DramaCard, Episode, ProviderId, StreamCandidate, StreamPayload } from "@/lib/drama/types";
 import { cn } from "@/lib/utils";
-import { maybeOpenAdsterraEveryThreeEpisodes, maybeOpenMonetagAd, openMonetagAd } from "@/lib/drama/monetag";
+import { maybeOpenAdsterraEveryThreeEpisodes } from "@/lib/drama/monetag";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -86,7 +86,6 @@ export function Player({
   const [saved, setSaved] = useState(false);
   const [autoplay, setAutoplay] = useState(true);
   const [retrying, setRetrying] = useState(false);
-  const [pendingAdEpisodeId, setPendingAdEpisodeId] = useState<string | null>(null);
   const candidate = payload.candidates[index] ?? null;
   const currentIndex = episodes.findIndex((item) => item.episodeId === episode.episodeId);
   const previous = currentIndex > 0 ? episodes[currentIndex - 1] : null;
@@ -388,15 +387,9 @@ export function Player({
   }, [autoplay, drama, episode, next]);
 
   function go(episodeId: string, auto = false) {
-    // Monetag remains the sponsor shown at the start of every new episode.
-    // Adsterra Popunder is requested on every third episode transition.
+    // Adsterra is requested only on every third episode transition.
+    // Monetag is kept for starting/opening a drama, not each episode change.
     maybeOpenAdsterraEveryThreeEpisodes();
-    if (auto) {
-      // Browsers often block a popup after autoplay; ask for a direct tap.
-      setPendingAdEpisodeId(episodeId);
-      return;
-    }
-    maybeOpenMonetagAd();
     void navigate({
       to: "/watch/$provider/$seriesId/$episodeId",
       params: { provider: drama.provider, seriesId: drama.seriesId, episodeId },
@@ -799,31 +792,6 @@ export function Player({
           </div>
         </div>
       ) : null}
-      {pendingAdEpisodeId ? (
-        <div className="absolute inset-0 z-[100] grid place-items-center bg-black/80 p-5 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#1b1b20] p-6 text-center text-white shadow-2xl">
-            <img src="/logo.png?v=4" alt="HouseDrama" className="mx-auto mb-5 h-12 w-auto" />
-            <h2 className="text-2xl font-bold">Lanjutkan episode berikutnya</h2>
-            <p className="mt-3 text-sm leading-6 text-white/70">Buka halaman sponsor, lalu lanjutkan menonton episode berikutnya.</p>
-            <button
-              type="button"
-              className="mt-6 w-full rounded-full bg-[#ff4d6d] px-5 py-4 font-bold text-white"
-              onClick={() => {
-                openMonetagAd();
-                const target = pendingAdEpisodeId;
-                setPendingAdEpisodeId(null);
-                void navigate({
-                  to: "/watch/$provider/$seriesId/$episodeId",
-                  params: { provider: drama.provider, seriesId: drama.seriesId, episodeId: target },
-                  search: { auto: true, lang: contentLang },
-                });
-              }}
-            >
-              Buka Sponsor & Lanjutkan
-            </button>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -853,7 +821,7 @@ export function EpisodeGrid({
               key={item.episodeId}
               to="/watch/$provider/$seriesId/$episodeId"
               params={{ provider, seriesId, episodeId: item.episodeId }}
-              onClick={() => { maybeOpenMonetagAd(); maybeOpenAdsterraEveryThreeEpisodes(); onPick?.(); }}
+              onClick={() => { maybeOpenAdsterraEveryThreeEpisodes(); onPick?.(); }}
               className={cn(
                 "relative grid aspect-square place-items-center rounded-xl bg-[#3a3a3a] text-base font-medium text-white",
                 active && "border-2 border-[#ff4d6d]",
@@ -873,7 +841,7 @@ export function EpisodeGrid({
           key={item.episodeId}
           to="/watch/$provider/$seriesId/$episodeId"
           params={{ provider, seriesId, episodeId: item.episodeId }}
-          onClick={() => { maybeOpenMonetagAd(); maybeOpenAdsterraEveryThreeEpisodes(); onPick?.(); }}
+          onClick={() => { maybeOpenAdsterraEveryThreeEpisodes(); onPick?.(); }}
           className={cn(
             "flex h-12 items-center justify-center rounded-xl border text-sm font-semibold",
             item.episodeId === current ? "border-primary bg-primary text-primary-ink" : "border-line bg-surface text-ink",

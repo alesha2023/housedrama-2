@@ -10,7 +10,7 @@ export function openMonetagAd() {
 }
 
 /**
- * Load Adsterra Popunder on every third episode transition.
+ * Request Adsterra Popunder only on every third episode transition.
  * Browser popup policies and Adsterra frequency caps can affect whether an ad
  * is actually displayed; this only requests the official Adsterra script.
  */

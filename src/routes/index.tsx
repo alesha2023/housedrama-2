@@ -37,6 +37,24 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
+
+function AdsterraSocialBar() {
+  useEffect(() => {
+    // Load Social Bar only while the home/drama-listing page is mounted.
+    if (document.querySelector('script[data-housedrama-adsterra="social-bar"]')) return;
+    const script = document.createElement("script");
+    script.async = true;
+    script.dataset.housedramaAdsterra = "social-bar";
+    script.setAttribute("data-cfasync", "false");
+    script.src = "https://bancadeltempoidea.org/14/5808bda18c6576e92ccd7bab89448cc3";
+    document.body.appendChild(script);
+    return () => {
+      script.remove();
+    };
+  }, []);
+  return null;
+}
+
 function HomePage() {
   const initial = Route.useLoaderData();
   const search = Route.useSearch();
@@ -75,6 +93,7 @@ function HomePage() {
 
   return (
     <div>
+      <AdsterraSocialBar />
       {down.length ? <ErrorNote message={`${t.providersDown} (${down.map((item) => item.id).join(", ")})`} /> : null}
       <div className="mb-3">
         <p className="mb-2 text-sm font-semibold">{t.providerLabel}</p>
