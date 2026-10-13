@@ -276,8 +276,8 @@ function ShortClip({
           <Link
             to="/watch/$provider/$seriesId/$episodeId"
             params={{ provider: item.provider, seriesId: item.seriesId, episodeId }}
-            search={{ auto: true }}
             onClick={() => maybeOpenMonetagAd()}
+            search={{ auto: true }}
             className="grid place-items-center gap-1 text-xs font-semibold"
           >
             <Play className="size-8" />

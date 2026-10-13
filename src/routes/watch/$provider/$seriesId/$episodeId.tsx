@@ -64,7 +64,6 @@ function WatchPage() {
       access: "open",
     };
 
-
   return (
     <Player drama={detail.drama} episodes={detail.episodes.length ? detail.episodes : [episode]} episode={episode} initial={stream} alsoOn={detail.alsoOn} autoStart={auto !== false} />
   );

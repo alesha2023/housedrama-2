@@ -781,7 +781,9 @@ export async function pingProviders() {
       const path = id === "freereels" ? "/health" : "/health";
       try {
         const body = await providerFetch<Record<string, unknown>>(id, path, { cacheTtl: 15_000, timeout: 8000 });
-        const ok = body.ok === true || body.success === true || body.status === "ok";
+        const ok = id === "freereels"
+          ? body.ok !== false && body.success !== false && body.status !== "error" && body.status !== "unhealthy"
+          : body.ok === true || body.success === true || body.status === "ok";
         return { id, ok, error: ok ? null : "Health check did not report ok" };
       } catch (error) {
         return { id, ok: false, error: error instanceof Error ? error.message : "Health check failed" };

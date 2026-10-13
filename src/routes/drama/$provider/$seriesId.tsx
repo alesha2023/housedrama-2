@@ -71,8 +71,8 @@ function DetailPage() {
             <Link
               to="/watch/$provider/$seriesId/$episodeId"
               params={{ provider: drama.provider, seriesId: drama.seriesId, episodeId: first.episodeId }}
-              search={{ auto: true }}
               onClick={() => maybeOpenMonetagAd()}
+              search={{ auto: true }}
               aria-label={t.start}
               className="relative block aspect-poster"
             >

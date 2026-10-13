@@ -20,7 +20,7 @@ import { previewPathPrefix } from "@/lib/preview-path-prefix";
 import { readProgress, readWatchlist, toggleWatchlist, upsertHistory, writeProgress } from "@/lib/drama/storage";
 import type { DramaCard, Episode, ProviderId, StreamCandidate, StreamPayload } from "@/lib/drama/types";
 import { cn } from "@/lib/utils";
-import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
+import { maybeOpenMonetagAd, openMonetagAd, recordMonetagWatchAction } from "@/lib/drama/monetag";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -86,6 +86,7 @@ export function Player({
   const [saved, setSaved] = useState(false);
   const [autoplay, setAutoplay] = useState(true);
   const [retrying, setRetrying] = useState(false);
+  const [pendingAdEpisodeId, setPendingAdEpisodeId] = useState<string | null>(null);
   const candidate = payload.candidates[index] ?? null;
   const currentIndex = episodes.findIndex((item) => item.episodeId === episode.episodeId);
   const previous = currentIndex > 0 ? episodes[currentIndex - 1] : null;
@@ -387,7 +388,16 @@ export function Player({
   }, [autoplay, drama, episode, next]);
 
   function go(episodeId: string, auto = false) {
-    if (!auto) maybeOpenMonetagAd();
+    // On automatic transitions a browser may block popups. Pause at the ad
+    // boundary and ask for one tap; ordinary user clicks open the ad directly.
+    if (auto) {
+      if (recordMonetagWatchAction()) {
+        setPendingAdEpisodeId(episodeId);
+        return;
+      }
+    } else {
+      maybeOpenMonetagAd();
+    }
     void navigate({
       to: "/watch/$provider/$seriesId/$episodeId",
       params: { provider: drama.provider, seriesId: drama.seriesId, episodeId },
@@ -787,6 +797,31 @@ export function Player({
               seriesId={drama.seriesId}
               onPick={() => setOpenList(false)}
             />
+          </div>
+        </div>
+      ) : null}
+      {pendingAdEpisodeId ? (
+        <div className="absolute inset-0 z-[100] grid place-items-center bg-black/80 p-5 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#1b1b20] p-6 text-center text-white shadow-2xl">
+            <img src="/logo.png?v=4" alt="HouseDrama" className="mx-auto mb-5 h-12 w-auto" />
+            <h2 className="text-2xl font-bold">Lanjutkan episode berikutnya</h2>
+            <p className="mt-3 text-sm leading-6 text-white/70">Buka halaman sponsor, lalu lanjutkan menonton episode berikutnya.</p>
+            <button
+              type="button"
+              className="mt-6 w-full rounded-full bg-[#ff4d6d] px-5 py-4 font-bold text-white"
+              onClick={() => {
+                openMonetagAd();
+                const target = pendingAdEpisodeId;
+                setPendingAdEpisodeId(null);
+                void navigate({
+                  to: "/watch/$provider/$seriesId/$episodeId",
+                  params: { provider: drama.provider, seriesId: drama.seriesId, episodeId: target },
+                  search: { auto: true, lang: contentLang },
+                });
+              }}
+            >
+              Buka Sponsor & Lanjutkan
+            </button>
           </div>
         </div>
       ) : null}
