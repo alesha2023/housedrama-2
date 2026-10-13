@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { PrefsProvider } from "@/lib/drama/i18n";
@@ -68,6 +69,7 @@ function RootLayout() {
             </Shell>
           </PrefsProvider>
         </AuthProvider>
+        <Analytics />
         <Scripts />
       </body>
     </html>
