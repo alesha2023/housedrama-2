@@ -20,7 +20,7 @@ import { previewPathPrefix } from "@/lib/preview-path-prefix";
 import { readProgress, readWatchlist, toggleWatchlist, upsertHistory, writeProgress } from "@/lib/drama/storage";
 import type { DramaCard, Episode, ProviderId, StreamCandidate, StreamPayload } from "@/lib/drama/types";
 import { cn } from "@/lib/utils";
-import { maybeOpenMonetagAd, openMonetagAd, recordMonetagWatchAction } from "@/lib/drama/monetag";
+import { loadAdsterraPopunder } from "@/lib/drama/monetag";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -388,15 +388,13 @@ export function Player({
   }, [autoplay, drama, episode, next]);
 
   function go(episodeId: string, auto = false) {
-    // On automatic transitions a browser may block popups. Pause at the ad
-    // boundary and ask for one tap; ordinary user clicks open the ad directly.
-    if (auto) {
-      if (recordMonetagWatchAction()) {
-        setPendingAdEpisodeId(episodeId);
-        return;
-      }
-    } else {
-      maybeOpenMonetagAd();
+    // Gate the NEXT episode after each group of three completed/current episodes.
+    // Do not fire Monetag here: Monetag belongs to starting a drama from the catalog.
+    const isThirdEpisodeBoundary = currentIndex >= 0 && (currentIndex + 1) % 3 === 0;
+    if (isThirdEpisodeBoundary) {
+      setPendingAdEpisodeId(episodeId);
+      loadAdsterraPopunder();
+      return;
     }
     void navigate({
       to: "/watch/$provider/$seriesId/$episodeId",
@@ -805,12 +803,11 @@ export function Player({
           <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#1b1b20] p-6 text-center text-white shadow-2xl">
             <img src="/logo.png?v=4" alt="HouseDrama" className="mx-auto mb-5 h-12 w-auto" />
             <h2 className="text-2xl font-bold">Lanjutkan episode berikutnya</h2>
-            <p className="mt-3 text-sm leading-6 text-white/70">Buka halaman sponsor, lalu lanjutkan menonton episode berikutnya.</p>
+            <p className="mt-3 text-sm leading-6 text-white/70">Iklan sponsor mungkin terbuka di tab baru. Setelah itu, lanjutkan menonton episode berikutnya.</p>
             <button
               type="button"
               className="mt-6 w-full rounded-full bg-[#ff4d6d] px-5 py-4 font-bold text-white"
               onClick={() => {
-                openMonetagAd();
                 const target = pendingAdEpisodeId;
                 setPendingAdEpisodeId(null);
                 void navigate({
@@ -820,7 +817,7 @@ export function Player({
                 });
               }}
             >
-              Buka Sponsor & Lanjutkan
+              Lanjutkan Episode
             </button>
           </div>
         </div>
@@ -854,7 +851,7 @@ export function EpisodeGrid({
               key={item.episodeId}
               to="/watch/$provider/$seriesId/$episodeId"
               params={{ provider, seriesId, episodeId: item.episodeId }}
-              onClick={() => { maybeOpenMonetagAd(); onPick?.(); }}
+              onClick={() => { onPick?.(); }}
               className={cn(
                 "relative grid aspect-square place-items-center rounded-xl bg-[#3a3a3a] text-base font-medium text-white",
                 active && "border-2 border-[#ff4d6d]",
@@ -874,7 +871,7 @@ export function EpisodeGrid({
           key={item.episodeId}
           to="/watch/$provider/$seriesId/$episodeId"
           params={{ provider, seriesId, episodeId: item.episodeId }}
-          onClick={() => { maybeOpenMonetagAd(); onPick?.(); }}
+          onClick={() => { onPick?.(); }}
           className={cn(
             "flex h-12 items-center justify-center rounded-xl border text-sm font-semibold",
             item.episodeId === current ? "border-primary bg-primary text-primary-ink" : "border-line bg-surface text-ink",
