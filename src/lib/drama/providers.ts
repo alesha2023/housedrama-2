@@ -143,13 +143,7 @@ export function isCoreProvider(id: ProviderId) {
 export function providerOrigin(id: ProviderId) {
   const envKey = `${id.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_API_URL`;
   const env = process.env[envKey];
-  if (env) {
-    const normalized = env.trim().replace(/\/+$/, "");
-    // FreeReels routes are mounted under /api. Be tolerant of a Vercel env
-    // value that contains only the host instead of the complete API base URL.
-    if (id === "freereels") return /\/api$/i.test(normalized) ? normalized : `${normalized}/api`;
-    return normalized;
-  }
+  if (env) return env.replace(/\/$/, "");
   const host = `https://${id}.narto-drama.com`;
   return API_PREFIX.has(id) ? `${host}/api` : host;
 }
