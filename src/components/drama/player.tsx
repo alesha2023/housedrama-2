@@ -87,6 +87,7 @@ export function Player({
   const [autoplay, setAutoplay] = useState(true);
   const [retrying, setRetrying] = useState(false);
   const [pendingAdEpisodeId, setPendingAdEpisodeId] = useState<string | null>(null);
+  const [adsterraReady, setAdsterraReady] = useState(false);
   const candidate = payload.candidates[index] ?? null;
   const currentIndex = episodes.findIndex((item) => item.episodeId === episode.episodeId);
   const previous = currentIndex > 0 ? episodes[currentIndex - 1] : null;
@@ -387,13 +388,25 @@ export function Player({
     };
   }, [autoplay, drama, episode, next]);
 
+  useEffect(() => {
+    if (!pendingAdEpisodeId) {
+      setAdsterraReady(false);
+      return;
+    }
+    let active = true;
+    void loadAdsterraPopunder().then((loaded) => {
+      if (active) setAdsterraReady(loaded);
+    });
+    return () => { active = false; };
+  }, [pendingAdEpisodeId]);
+
   function go(episodeId: string, auto = false) {
     // Gate the NEXT episode after each group of three completed/current episodes.
     // Do not fire Monetag here: Monetag belongs to starting a drama from the catalog.
     const isThirdEpisodeBoundary = currentIndex >= 0 && (currentIndex + 1) % 3 === 0;
     if (isThirdEpisodeBoundary) {
+      setAdsterraReady(false);
       setPendingAdEpisodeId(episodeId);
-      loadAdsterraPopunder();
       return;
     }
     void navigate({
@@ -806,8 +819,10 @@ export function Player({
             <p className="mt-3 text-sm leading-6 text-white/70">Iklan sponsor mungkin terbuka di tab baru. Setelah itu, lanjutkan menonton episode berikutnya.</p>
             <button
               type="button"
-              className="mt-6 w-full rounded-full bg-[#ff4d6d] px-5 py-4 font-bold text-white"
+              className="mt-6 w-full rounded-full bg-[#ff4d6d] px-5 py-4 font-bold text-white disabled:cursor-wait disabled:opacity-60"
+              disabled={!adsterraReady}
               onClick={() => {
+                if (!adsterraReady) return;
                 const target = pendingAdEpisodeId;
                 setPendingAdEpisodeId(null);
                 void navigate({
@@ -817,7 +832,7 @@ export function Player({
                 });
               }}
             >
-              Lanjutkan Episode
+              {adsterraReady ? "Lanjutkan & Buka Iklan" : "Menyiapkan iklan…"}
             </button>
           </div>
         </div>
