@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DramaGrid, EmptyState, ErrorNote, PageIntro } from "@/components/drama/cards";
+import { ProviderPicker } from "@/components/drama/provider-picker";
 import { getSearchData } from "@/lib/drama/api";
 import { usePrefs } from "@/lib/drama/i18n";
 import type { ProviderId, SearchPayload } from "@/lib/drama/types";
 import { PROVIDERS } from "@/lib/drama/types";
-import { providerLabel } from "@/lib/drama/providers";
 
 export const Route = createFileRoute("/search")({
   validateSearch: (search: Record<string, unknown>): { q?: string; provider?: string } => ({
@@ -61,6 +62,23 @@ function SearchPage() {
     return () => window.clearTimeout(handle);
   }, [draft, navigate, provider, query]);
 
+  async function searchFor(nextQuery: string) {
+    const q = nextQuery.trim();
+    setDraft(q);
+    setLoading(true);
+    void navigate({
+      to: "/search",
+      search: { ...(q ? { q } : {}), ...(provider === "all" ? {} : { provider }) },
+    });
+    try {
+      const next = await getSearchData({ data: { q, lang: "id", provider, page: 1 } });
+      setData(next);
+      setPage(1);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function more() {
     const nextPage = page + 1;
     setLoading(true);
@@ -81,41 +99,40 @@ function SearchPage() {
         className="mt-5 flex flex-col gap-3 sm:flex-row"
         onSubmit={(event) => {
           event.preventDefault();
-          void navigate({ to: "/search", search: { q: draft.trim(), provider } });
+          void searchFor(draft);
         }}
       >
-        <input
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder={t.searchPlaceholder}
-          className="h-12 flex-1 rounded-full border border-line bg-surface px-5"
-          aria-label={t.search}
-        />
-        <select
+        <div className="flex gap-2">
+          <input
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder={t.searchPlaceholder}
+            className="h-12 min-w-0 flex-1 rounded-full border border-line bg-white px-5"
+            aria-label={t.search}
+          />
+          <button type="submit" disabled={loading} className="h-12 shrink-0 rounded-full bg-primary px-5 font-semibold text-primary-ink disabled:opacity-60">
+            {t.search}
+          </button>
+        </div>
+        <ProviderPicker
           value={provider}
-          onChange={(event) => void navigate({ to: "/search", search: { q: query, provider: event.target.value } })}
-          className="h-12 rounded-full border border-line bg-bg px-4"
-          aria-label={t.providerLabel}
-        >
-          <option value="all">{t.allProviders}</option>
-          {PROVIDERS.map((id) => (
-            <option key={id} value={id}>
-              {providerLabel(id)}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => void navigate({ to: "/search", search: { q: query, ...(value === "all" ? {} : { provider: value }) } })}
+          className="w-full sm:w-56"
+          label={t.providerLabel}
+        />
       </form>
       <div className="mt-4">{data.providers.some((item) => !item.ok) ? <ErrorNote message={t.providersDown} /> : null}</div>
       {!query && data.suggestions.length ? (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="relative z-10 mt-4 flex flex-col gap-2">
           {data.suggestions.map((suggestion) => (
             <button
               key={suggestion}
               type="button"
-              onClick={() => void navigate({ to: "/search", search: { q: suggestion, provider } })}
-              className="rounded-full bg-surface px-3 py-2 text-sm font-medium"
+              onClick={() => void searchFor(suggestion)}
+              className="flex w-full items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3 text-left text-sm font-semibold active:bg-ink active:text-player-ink"
             >
-              {suggestion}
+              <span>{suggestion}</span>
+              <ChevronRight className="size-4 shrink-0 text-muted" />
             </button>
           ))}
         </div>

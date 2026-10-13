@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "@tanstack/react-router";
 
 export const UI_LANGS = [
   { id: "en", label: "English" },
@@ -100,7 +101,7 @@ const COPY = {
     searching: "Searching…",
     retrying: "Retrying",
     close: "Close",
-    footerNote: "HouseDrama plays publicly available short dramas. We do not own the shows.",
+    footerNote: "A catalog of Chinese short dramas from many providers. Search, save, and watch episodes on HouseDrama.",
     noMatches: "No matches",
     noMatchesBody: "Try a shorter title, or another provider. One catalog being down does not hide the others.",
     allProviders: "All providers",
@@ -209,7 +210,7 @@ const COPY = {
     searching: "Mencari…",
     retrying: "Mencoba lagi",
     close: "Tutup",
-    footerNote: "HouseDrama memutar drama pendek yang tersedia untuk umum. Kami tidak memiliki acaranya.",
+    footerNote: "Katalog drama pendek Tiongkok dari berbagai penyedia. Cari, simpan, dan tonton episodenya di HouseDrama.",
     noMatches: "Tidak ada hasil",
     noMatchesBody: "Coba judul yang lebih pendek, atau penyedia lain. Satu katalog yang mati tidak menyembunyikan yang lain.",
     allProviders: "Semua penyedia",
@@ -296,34 +297,42 @@ function isUiLang(value: string | null): value is UiLang {
   return value === "en" || value === "id";
 }
 
-export function PrefsProvider({ children }: { children: ReactNode }) {
-  const [uiLang, setUiLangState] = useState<UiLang>("id");
-  const [contentLang, setContentLangState] = useState("id");
+function writeLangCookie(lang: UiLang, manual: boolean) {
+  if (typeof document === "undefined") return;
+  document.cookie = `hd_lang=${lang}; path=/; max-age=31536000; samesite=lax`;
+  document.cookie = manual
+    ? "hd_manual=1; path=/; max-age=31536000; samesite=lax"
+    : "hd_manual=; path=/; max-age=0; samesite=lax";
+}
+
+export function PrefsProvider({ initialLang = "id", children }: { initialLang?: UiLang; children: ReactNode }) {
+  const router = useRouter();
+  const [uiLang, setUiLangState] = useState<UiLang>(initialLang);
+  const [contentLang, setContentLangState] = useState(initialLang);
 
   useEffect(() => {
     let cancelled = false;
-
-    // A manually selected language always wins. Otherwise, choose a default from
-    // the visitor's IP country, with the browser language as a network-failure fallback.
     const manualChoice = localStorage.getItem("dramaluma.ui.manual") === "1";
     if (manualChoice) {
       const ui = localStorage.getItem("dramaluma.ui");
       const content = localStorage.getItem("dramaluma.content");
-      if (isUiLang(ui)) setUiLangState(ui);
-      if (content === "en" || content === "id") setContentLangState(content);
+      const lang: UiLang = isUiLang(ui) ? ui : content === "en" ? "en" : "id";
+      setUiLangState(lang);
+      setContentLangState(content === "en" || content === "id" ? content : lang);
+      writeLangCookie(lang, true);
       return () => { cancelled = true; };
     }
 
+    writeLangCookie(initialLang, false);
     const applyAutoLanguage = (lang: UiLang) => {
-      if (cancelled || localStorage.getItem("dramaluma.ui.manual") === "1") return;
+      if (cancelled || localStorage.getItem("dramaluma.ui.manual") === "1" || lang === initialLang) return;
       setUiLangState(lang);
       setContentLangState(lang);
       localStorage.setItem("dramaluma.ui", lang);
       localStorage.setItem("dramaluma.content", lang);
+      writeLangCookie(lang, false);
+      void router.invalidate();
     };
-
-    const browserLang: UiLang = navigator.language.toLowerCase().startsWith("id") ? "id" : "en";
-    applyAutoLanguage(browserLang);
 
     fetch("https://ipapi.co/json/", { headers: { Accept: "application/json" } })
       .then((response) => {
@@ -332,11 +341,11 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
       })
       .then((data) => applyAutoLanguage(data.country_code?.toUpperCase() === "ID" ? "id" : "en"))
       .catch(() => {
-        // Keep the browser-language fallback when the IP lookup is unavailable.
+        // The server already chose a language from the request IP when it could.
       });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [initialLang, router]);
 
   useEffect(() => {
     document.documentElement.lang = uiLang;
@@ -353,14 +362,21 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("dramaluma.ui", lang);
         localStorage.setItem("dramaluma.content", lang);
         localStorage.setItem("dramaluma.ui.manual", "1");
+        writeLangCookie(lang, true);
+        void router.invalidate();
       },
       setContentLang: (lang) => {
         const next = lang === "id" ? "id" : "en";
         setContentLangState(next);
+        setUiLangState(next);
+        localStorage.setItem("dramaluma.ui", next);
         localStorage.setItem("dramaluma.content", next);
+        localStorage.setItem("dramaluma.ui.manual", "1");
+        writeLangCookie(next, true);
+        void router.invalidate();
       },
     }),
-    [uiLang, contentLang],
+    [uiLang, contentLang, router],
   );
 
   return <PrefsContext.Provider value={value}>{children}</PrefsContext.Provider>;

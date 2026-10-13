@@ -289,23 +289,19 @@ export async function localizeCards(
   withDescription: boolean | ReadonlySet<string> = false,
 ): Promise<DramaCard[]> {
   if (!wantsIndonesian(lang)) return cards.map(asOriginal);
-  const titles: string[] = [];
   const labels: string[] = [];
   const descriptions: string[] = [];
   for (const card of cards) {
-    titles.push(card.originalTitle || card.title);
     labels.push(...card.tags, ...(card.badge ? [card.badge] : []));
     const description = card.originalDescription ?? card.description;
     if (wantsDescription(card, withDescription) && description) descriptions.push(description.slice(0, 700));
   }
-  enqueue(titles, 0);
   enqueue(descriptions, 1);
   enqueue(labels, 2);
   await ensureTranslated([]);
   return cards.map((card) => {
     const originalTitle = card.originalTitle || card.title;
     const originalDescription = card.originalDescription ?? card.description;
-    const titleHit = resolve(originalTitle);
     const includeDescription = wantsDescription(card, withDescription);
     const descriptionSource = includeDescription && originalDescription ? originalDescription.slice(0, 700) : null;
     const descriptionHit = descriptionSource ? resolve(descriptionSource) : null;
@@ -313,33 +309,25 @@ export async function localizeCards(
       ...card,
       originalTitle,
       originalDescription,
-      displayTitle: titleHit.text,
+      displayTitle: originalTitle,
       displayDescription: descriptionHit?.text ?? originalDescription,
-      title: titleHit.text,
+      title: originalTitle,
       description: descriptionHit?.text ?? originalDescription,
-      translationStatus: titleHit.status,
+      translationStatus: descriptionHit?.status ?? "original",
       tags: card.tags.map((tag) => resolve(tag).text),
       badge: card.badge ? resolve(card.badge).text : card.badge,
     };
   });
 }
 
-export async function localizeEpisodes(episodes: Episode[], lang: string): Promise<Episode[]> {
-  if (!wantsIndonesian(lang)) {
-    return episodes.map((episode) => ({
-      ...episode,
-      originalTitle: episode.originalTitle || episode.title,
-      displayTitle: episode.originalTitle || episode.title,
-      title: episode.originalTitle || episode.title,
-      translationStatus: "original" as const,
-    }));
-  }
-  await ensureTranslated(episodes.map((episode) => episode.originalTitle || episode.title));
-  return episodes.map((episode) => {
-    const originalTitle = episode.originalTitle || episode.title;
-    const hit = resolve(originalTitle);
-    return { ...episode, originalTitle, displayTitle: hit.text, title: hit.text, translationStatus: hit.status };
-  });
+export async function localizeEpisodes(episodes: Episode[], _lang: string): Promise<Episode[]> {
+  return episodes.map((episode) => ({
+    ...episode,
+    originalTitle: episode.originalTitle || episode.title,
+    displayTitle: episode.originalTitle || episode.title,
+    title: episode.originalTitle || episode.title,
+    translationStatus: "original" as const,
+  }));
 }
 
 export async function localizeTexts(values: string[], lang: string) {

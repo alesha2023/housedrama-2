@@ -6,6 +6,10 @@ import { Shell } from "@/components/drama/shell";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
+  loader: async () => {
+    const { resolveCatalogLang } = await import("@/lib/drama/server/locale");
+    return { lang: await resolveCatalogLang() };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -17,30 +21,36 @@ export const Route = createRootRoute({
           "HouseDrama is a free catalog for Chinese short dramas from AnyReel, DramaBox, and FreeReels. Browse, search, and play publicly available episodes.",
       },
       { name: "theme-color", content: "#b34bff" },
-      { name: "clckd", content: "b86b3437af86d5b83d01555a9a1fc4c0" },
-      {
-        name: "412633c87d3c8dcbede86172bf4995dc1662b985",
-        content: "412633c87d3c8dcbede86172bf4995dc1662b985",
-      },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-      { rel: "icon", type: "image/png", sizes: "64x64", href: "/favicon.png" },
-      { rel: "shortcut icon", href: "/favicon.ico" },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg?v=4" },
+      { rel: "icon", type: "image/png", sizes: "64x64", href: "/favicon.png?v=4" },
+      { rel: "shortcut icon", href: "/favicon.ico?v=4" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png?v=4" },
     ],
   }),
-  component: () => (
-    <html lang="id" suppressHydrationWarning>
+  component: RootLayout,
+});
+
+function RootLayout() {
+  const { lang } = Route.useLoaderData();
+  return (
+    <html lang={lang} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.__boot=Date.now();setTimeout(function(){var n=document.querySelector('.boot-splash');if(n)n.classList.add('is-done');},1000);",
+          }}
+        />
         <PreviewHostBridge />
         <AuthProvider>
-          <PrefsProvider>
+          <PrefsProvider initialLang={lang}>
             <Shell>
               <Outlet />
             </Shell>
@@ -49,5 +59,5 @@ export const Route = createRootRoute({
         <Scripts />
       </body>
     </html>
-  ),
-});
+  );
+}

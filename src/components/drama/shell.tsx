@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Clock3, Compass, House, Menu, Search, Sparkles, X } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { CONTENT_LANGS, UI_LANGS, usePrefs } from "@/lib/drama/i18n";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,8 @@ const LINKS = [
 export function Shell({ children }: { children: ReactNode }) {
   const { t, uiLang, setUiLang, contentLang, setContentLang } = usePrefs();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const watching = pathname.startsWith("/watch");
+  const watching = pathname.startsWith("/watch/");
+  const shorts = pathname === "/shorts";
   const [open, setOpen] = useState(false);
   const labels: Record<string, string> = {
     home: t.home,
@@ -27,12 +28,13 @@ export function Shell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className={cn("min-h-dvh", watching ? "bg-player text-player-ink" : "bg-bg text-ink")}>
-      {watching ? null : (
-      <header className="sticky top-0 z-40 border-b border-line/80 bg-bg/90 backdrop-blur-md">
-        <div className="mx-auto flex h-20 max-w-6xl items-center gap-3 px-4">
+    <div className={cn("min-h-dvh", watching ? "bg-player text-player-ink" : shorts ? "bg-black text-white" : "page-bg text-ink")}>
+      <BootSplash />
+      {watching || shorts ? null : (
+      <header className="sticky top-0 z-40 border-b border-line/70 bg-white/75 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
           <Link to="/" className="flex shrink-0 items-center" onClick={() => setOpen(false)}>
-            <Logo className="h-16 w-auto" />
+            <Logo className="h-10 w-auto" />
           </Link>
           <nav className="ml-4 hidden items-center gap-1 lg:flex" aria-label="Primary">
             {LINKS.map((link) => (
@@ -138,8 +140,8 @@ export function Shell({ children }: { children: ReactNode }) {
         ) : null}
       </header>
       )}
-      <main className={cn(watching ? "h-dvh overflow-hidden" : "mx-auto max-w-6xl px-4 py-6 pb-28 lg:pb-16")}>{children}</main>
-      {watching ? null : (
+      <main className={cn(watching || shorts ? "h-dvh overflow-hidden" : "mx-auto max-w-6xl px-4 pt-5 pb-28 lg:pb-16")}>{children}</main>
+      {watching || shorts ? null : (
       <footer className="border-t border-line pb-28 lg:pb-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 py-6 text-center">
           <div className="flex items-center gap-2.5" aria-label="Social">
@@ -170,7 +172,13 @@ export function Shell({ children }: { children: ReactNode }) {
       </footer>
       )}
       {watching ? null : (
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/95 backdrop-blur lg:hidden" aria-label="Mobile">
+      <nav
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-40 lg:hidden",
+          shorts ? "bg-black/55 text-white backdrop-blur-md [&_a]:text-white/75 [&_a[data-status=active]]:text-white" : "border-t border-line/80 bg-white/90 backdrop-blur-xl",
+        )}
+        aria-label="Mobile"
+      >
         <div className="grid grid-cols-5 px-1 py-1">
           <Tab to="/" label={t.home} icon={<House className="size-5" />} exact />
           <Tab to="/discover" label={t.discover} icon={<Compass className="size-5" />} />
@@ -180,6 +188,29 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </nav>
       )}
+    </div>
+  );
+}
+
+function BootSplash() {
+  const [gone, setGone] = useState(false);
+
+  useEffect(() => {
+    const started = (window as Window & { __boot?: number }).__boot ?? Date.now();
+    const left = Math.max(0, 1000 - (Date.now() - started));
+    const remove = window.setTimeout(() => setGone(true), left);
+    return () => window.clearTimeout(remove);
+  }, []);
+
+  if (gone) return null;
+
+  return (
+    <div className="boot-splash" role="status" aria-label="Loading HouseDrama">
+      <div className="boot-splash__glow" />
+      <Logo className="boot-splash__logo h-16 w-auto" />
+      <div className="boot-splash__track" aria-hidden="true">
+        <span />
+      </div>
     </div>
   );
 }

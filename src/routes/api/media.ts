@@ -8,8 +8,33 @@ const ALLOWED = [
   /(^|\.)dramaboxdb\.com$/i,
 ];
 
-function allowed(hostname: string) {
-  return ALLOWED.some((pattern) => pattern.test(hostname));
+function blockedHost(hostname: string) {
+  const host = hostname.toLowerCase().replace(/\.+$/, "");
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal")) return true;
+  if (host === "metadata.google.internal" || host === "169.254.169.254") return true;
+  const ipv4 = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (ipv4) {
+    const a = Number(ipv4[1]);
+    const b = Number(ipv4[2]);
+    if (a === 10 || a === 127 || a === 0 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31) || (a === 169 && b === 254)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function looksLikeMedia(url: URL) {
+  const path = `${url.pathname}${url.search}`;
+  return /\.(m3u8|mpd|mp4|m4s|ts|m4a|aac|vtt|webvtt|key)(\?|$)/i.test(url.pathname) || /m3u8|mpegurl|video|stream|playlist|\.ts\b/i.test(path);
+}
+
+function allowed(url: URL) {
+  if (blockedHost(url.hostname)) return false;
+  if (ALLOWED.some((pattern) => pattern.test(url.hostname))) return true;
+  // Melolo's playable edge is melolo2.narto-drama.com and the path is an opaque token, not a .mp4 name.
+  if (/(^|\.)narto-drama\.com$/i.test(url.hostname)) return true;
+  // Playback falls back to this proxy when a CDN omits CORS. Only media-shaped URLs are accepted.
+  return looksLikeMedia(url);
 }
 
 function isPlaylist(contentType: string, pathname: string) {
@@ -48,7 +73,7 @@ async function handle({ request }: { request: Request }) {
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
     return new Response("Unsupported protocol", { status: 400 });
   }
-  if (!allowed(parsed.hostname)) return new Response("Host is not allowed", { status: 403 });
+  if (!allowed(parsed)) return new Response("Host is not allowed", { status: 403 });
 
   const headers = new Headers({ "user-agent": "HouseDrama/1.0", accept: "*/*" });
   const range = request.headers.get("range");

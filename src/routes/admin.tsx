@@ -28,7 +28,7 @@ function AdminPage() {
     setBusy(true);
     const result = await adminLogin({ data: { password } });
     if (!result.ok || !result.token) {
-      setError("That password was not accepted.");
+      setError("Sandi tidak diterima.");
       setBusy(false);
       return;
     }

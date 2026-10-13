@@ -1,27 +1,39 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import {
-  Captions,
+  AudioLines,
   ChevronLeft,
-  ChevronRight,
-  Expand,
-  Info,
-  ListVideo,
-  LoaderCircle,
-  Minimize2,
-  Pause,
+  Globe,
+  Menu,
   Play,
   RotateCcw,
+  Share2,
+  Star,
   Volume2,
   VolumeX,
+  X,
 } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { reportPlayback } from "@/lib/drama/api";
-import { pickDescription, pickTitle } from "@/lib/drama/display";
+import { pickTitle } from "@/lib/drama/display";
 import { usePrefs } from "@/lib/drama/i18n";
 import { previewPathPrefix } from "@/lib/preview-path-prefix";
-import { readProgress, upsertHistory, writeProgress } from "@/lib/drama/storage";
+import { readProgress, readWatchlist, toggleWatchlist, upsertHistory, writeProgress } from "@/lib/drama/storage";
 import type { DramaCard, Episode, ProviderId, StreamCandidate, StreamPayload } from "@/lib/drama/types";
 import { cn } from "@/lib/utils";
+
+const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+function showSubtitle(video: HTMLVideoElement, lang: string | null) {
+  const tracks = video.textTracks;
+  const want = lang?.toLowerCase() ?? "";
+  let shown = false;
+  for (let index = 0; index < tracks.length; index += 1) {
+    const track = tracks[index];
+    const match = Boolean(want) && !shown && (track.language.toLowerCase() === want || track.label === lang);
+    track.mode = match ? "showing" : "disabled";
+    if (match) shown = true;
+  }
+}
 
 function withBase(path: string) {
   if (typeof window === "undefined") return path;
@@ -48,7 +60,7 @@ export function Player({
   alsoOn: DramaCard[];
   autoStart?: boolean;
 }) {
-  const { t, contentLang } = usePrefs();
+  const { t, contentLang, uiLang } = usePrefs();
   const navigate = useNavigate();
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -64,9 +76,13 @@ export function Player({
   const [volume, setVolume] = useState(1);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState<number | null>(null);
+  const [openSpeed, setOpenSpeed] = useState(false);
+  const [openSubs, setOpenSubs] = useState(false);
   const [openList, setOpenList] = useState(false);
-  const [openInfo, setOpenInfo] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
+  const [rate, setRate] = useState(1);
+  const [subtitleLang, setSubtitleLang] = useState<string | null>(null);
+  const [rangePage, setRangePage] = useState(0);
+  const [saved, setSaved] = useState(false);
   const [autoplay, setAutoplay] = useState(true);
   const [retrying, setRetrying] = useState(false);
   const candidate = payload.candidates[index] ?? null;
@@ -75,17 +91,24 @@ export function Player({
   const next = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
 
   useEffect(() => {
-    const onChange = () => setFullscreen(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", onChange);
-    return () => document.removeEventListener("fullscreenchange", onChange);
-  }, []);
-
-  useEffect(() => {
     setAutoplay(localStorage.getItem("dramaluma.autoplay") !== "0");
     const storedVolume = Number(localStorage.getItem("dramaluma.volume") ?? "1");
     if (Number.isFinite(storedVolume)) setVolume(storedVolume);
+    const storedRate = Number(localStorage.getItem("dramaluma.rate") ?? "1");
+    if (SPEEDS.includes(storedRate)) setRate(storedRate);
+    const storedSubtitle = localStorage.getItem("dramaluma.subtitle");
+    if (storedSubtitle === "off") setSubtitleLang(null);
+    else if (storedSubtitle) setSubtitleLang(storedSubtitle);
     setMuted(localStorage.getItem("dramaluma.muted") === "1");
   }, []);
+
+  useEffect(() => {
+    setSaved(readWatchlist().some((item) => item.provider === drama.provider && item.seriesId === drama.seriesId));
+  }, [drama.provider, drama.seriesId]);
+
+  useEffect(() => {
+    if (currentIndex >= 0) setRangePage(Math.floor(currentIndex / 30));
+  }, [currentIndex]);
 
   useEffect(() => {
     setPayload(initial);
@@ -217,6 +240,15 @@ export function Player({
     const onLoaded = () => {
       syncDuration();
       remember();
+      video.playbackRate = rate;
+      const saved = localStorage.getItem("dramaluma.subtitle");
+      const chosen = saved === "off"
+        ? null
+        : saved || [...video.textTracks].find((track) => track.language.toLowerCase().startsWith(contentLang))?.language
+          || video.textTracks[0]?.language
+          || null;
+      if (!saved && chosen) setSubtitleLang(chosen);
+      showSubtitle(video, chosen);
       setLoading(false);
     };
     const onPlaying = () => {
@@ -270,7 +302,14 @@ export function Player({
     if (!video) return;
     video.volume = volume;
     video.muted = muted;
-  }, [volume, muted]);
+    video.playbackRate = rate;
+  }, [volume, muted, rate]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    showSubtitle(video, subtitleLang);
+  }, [subtitleLang, candidate]);
 
   useEffect(() => {
     if (!autoStart) return;
@@ -328,6 +367,7 @@ export function Player({
         title: drama.displayTitle || drama.title,
         originalTitle: drama.originalTitle || drama.title,
         posterUrl: drama.posterUrl,
+        tags: drama.tags.slice(0, 3),
         positionSec: video.currentTime,
         durationSec: Number.isFinite(video.duration) && video.duration > 0 ? video.duration : null,
         updatedAt: Date.now(),
@@ -353,6 +393,45 @@ export function Player({
     });
   }
 
+  function saveDrama() {
+    const nextSaved = toggleWatchlist({
+      provider: drama.provider,
+      seriesId: drama.seriesId,
+      title: drama.title,
+      originalTitle: drama.originalTitle,
+      posterUrl: drama.posterUrl,
+      episodeCount: drama.episodeCount,
+      savedAt: Date.now(),
+    });
+    setSaved(nextSaved.some((item) => item.provider === drama.provider && item.seriesId === drama.seriesId));
+  }
+
+  function pickSubtitle(lang: string | null) {
+    setSubtitleLang(lang);
+    localStorage.setItem("dramaluma.subtitle", lang ?? "off");
+    const video = videoRef.current;
+    if (video) showSubtitle(video, lang);
+    setOpenSubs(false);
+  }
+
+  async function shareDrama() {
+    const url = window.location.href;
+    const title = pickTitle(drama, contentLang);
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+      } catch {
+        /* dismissed */
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      /* clipboard blocked */
+    }
+  }
+
   useEffect(() => {
     if (!next) return;
     void router.preloadRoute({
@@ -371,7 +450,7 @@ export function Player({
     let startY = 0;
 
     const jump = (direction: 1 | -1) => {
-      if (locked || openList || openInfo) return;
+      if (locked || openList) return;
       const target = direction > 0 ? next : previous;
       if (!target) return;
       locked = true;
@@ -424,7 +503,7 @@ export function Player({
       stage.removeEventListener("touchmove", onMove);
       stage.removeEventListener("touchend", onEnd);
     };
-  }, [contentLang, drama.provider, drama.seriesId, navigate, next, openInfo, openList, previous]);
+  }, [contentLang, drama.provider, drama.seriesId, navigate, next, openList, previous]);
 
   async function playContent() {
     const video = videoRef.current;
@@ -486,25 +565,34 @@ export function Player({
             ignoreClick.current = false;
             return;
           }
+          if (openSpeed || openSubs) {
+            setOpenSpeed(false);
+            setOpenSubs(false);
+            return;
+          }
           void toggle();
         }}
       />
       {loading && !error ? (
-        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-player/40">
-          <LoaderCircle className="size-10 animate-spin" />
+        <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center bg-linear-to-b from-black/25 via-black/35 to-black/55">
+          <div className="grid place-items-center gap-4">
+            <div className="relative grid size-20 place-items-center">
+              <span className="absolute inset-0 rounded-full border border-white/15" />
+              <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#ff4d6d] border-r-[#ffb3c1]" />
+              <img src="/logo.png?v=4" alt="" className="h-9 w-auto" />
+            </div>
+            <p className="text-sm font-medium text-white/85">{uiLang === "id" ? "Memuat video…" : "Loading video…"}</p>
+          </div>
         </div>
       ) : null}
-      {!error && !loading ? (
+      {!error && !loading && !playing && !openList ? (
         <button
           type="button"
-          aria-label={playing ? "Pause video" : "Play video"}
+          aria-label="Play video"
           onClick={() => void toggle()}
-          className={cn(
-            "absolute left-1/2 top-1/2 z-10 grid size-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur-sm transition-opacity",
-            playing ? "opacity-70 hover:opacity-100 focus:opacity-100" : "opacity-100",
-          )}
+          className="absolute left-1/2 top-1/2 z-10 grid size-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-black/45 text-white"
         >
-          {playing ? <Pause className="size-8 fill-current" /> : <Play className="ml-1 size-8 fill-current" />}
+          <Play className="ml-1 size-8 fill-current" />
         </button>
       ) : null}
       {error ? (
@@ -526,72 +614,100 @@ export function Player({
         </div>
       ) : null}
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-linear-to-b from-player via-player/55 to-transparent px-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-10">
-        <div className="pointer-events-auto flex items-center gap-1">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-linear-to-b from-black/75 to-transparent px-1 pt-[max(0.25rem,env(safe-area-inset-top))] pb-16 text-white">
+        <div className="pointer-events-auto flex items-center drop-shadow">
           <Link
             to="/drama/$provider/$seriesId"
             params={{ provider: drama.provider, seriesId: drama.seriesId }}
             aria-label={t.details}
-            className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-player-ink/10"
+            className="grid size-11 shrink-0 place-items-center"
           >
-            <ChevronLeft className="size-6" />
+            <ChevronLeft className="size-7" />
           </Link>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{pickTitle(drama, contentLang)}</p>
-            <p className="truncate text-xs text-player-ink/75">
-              {pickTitle(episode, contentLang)}
-              {candidate?.quality ? ` · ${candidate.quality}` : ""}
-            </p>
-          </div>
-          <IconButton label={t.details} onClick={() => setOpenInfo(true)}>
-            <Info className="size-5" />
-          </IconButton>
+          <p className="min-w-0 flex-1 truncate text-[17px] font-semibold">{pickTitle(drama, contentLang)}</p>
+          <button
+            type="button"
+            aria-label={uiLang === "id" ? "Kecepatan" : "Speed"}
+            onClick={() => {
+              setOpenSpeed((open) => !open);
+              setOpenSubs(false);
+            }}
+            className="h-8 shrink-0 rounded-lg bg-black/50 px-2 text-xs font-bold"
+          >
+            {rate.toFixed(1)}X
+          </button>
+          <button
+            type="button"
+            aria-label={uiLang === "id" ? "Subtitle" : "Subtitles"}
+            onClick={() => {
+              setOpenSubs((open) => !open);
+              setOpenSpeed(false);
+            }}
+            className="grid size-10 shrink-0 place-items-center"
+          >
+            <Globe className={cn("size-5", subtitleLang && "text-[#ff4d6d]")} />
+          </button>
+          <p className="px-2 text-sm tabular-nums">
+            {Math.max(currentIndex + 1, 1)}/{episodes.length || 1}
+          </p>
         </div>
+        {openSpeed ? (
+          <div className="pointer-events-auto grid grid-cols-3 gap-2 px-3 pt-2">
+            {SPEEDS.map((speed) => (
+              <button
+                key={speed}
+                type="button"
+                onClick={() => {
+                  setRate(speed);
+                  const video = videoRef.current;
+                  if (video) video.playbackRate = speed;
+                  localStorage.setItem("dramaluma.rate", String(speed));
+                  setOpenSpeed(false);
+                }}
+                className={cn("h-11 rounded-xl bg-black/55 text-sm font-semibold", rate === speed && "bg-white/30")}
+              >
+                {speed}X
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {openSubs ? (
+          <div className="pointer-events-auto mx-3 mt-2 max-h-64 overflow-auto rounded-2xl bg-black/75 p-1">
+            <button
+              type="button"
+              onClick={() => pickSubtitle(null)}
+              className={cn("block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold", !subtitleLang && "text-[#ff4d6d]")}
+            >
+              {uiLang === "id" ? "Mati" : "Off"}
+            </button>
+            {(candidate?.subtitles ?? []).map((track, trackIndex) => (
+              <button
+                key={`${track.lang}-${track.label}-${trackIndex}`}
+                type="button"
+                onClick={() => pickSubtitle(track.lang || track.label)}
+                className={cn(
+                  "block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold",
+                  subtitleLang === (track.lang || track.label) && "text-[#ff4d6d]",
+                )}
+              >
+                {track.label || track.lang}
+              </button>
+            ))}
+            {candidate?.subtitles.length ? null : (
+              <p className="px-3 py-2 text-sm text-white/70">{uiLang === "id" ? "Subtitle tidak tersedia" : "No subtitles"}</p>
+            )}
+          </div>
+        ) : null}
       </div>
 
-      {previous ? (
-        <button
-          type="button"
-          aria-label={t.prev}
-          onClick={() => go(previous.episodeId)}
-          className="absolute top-1/2 left-2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-player/50 hover:bg-player/80"
-        >
-          <ChevronLeft className="size-6" />
-        </button>
-      ) : null}
-      {next ? (
-        <button
-          type="button"
-          aria-label={t.next}
-          onClick={() => go(next.episodeId)}
-          className="absolute top-1/2 right-2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-player/50 hover:bg-player/80"
-        >
-          <ChevronRight className="size-6" />
-        </button>
-      ) : null}
-
-      <div className="absolute inset-x-0 bottom-0 z-10 bg-linear-to-t from-player via-player/75 to-transparent p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <input
-          aria-label="Seek"
-          className="h-1 w-full accent-primary"
-          type="range"
-          min={0}
-          max={duration ?? 0}
-          step={0.1}
-          value={duration === null ? 0 : Math.min(progress, duration)}
-          onChange={(event) => {
-            const video = videoRef.current;
-            if (!video) return;
-            video.currentTime = Number(event.target.value);
-            setProgress(video.currentTime);
-          }}
-        />
-        <div className="mt-2 flex items-center gap-1">
-          <IconButton label={playing ? "Pause" : "Play"} onClick={() => void toggle()}>
-            {playing ? <Pause className="size-5" /> : <Play className="size-5" />}
-          </IconButton>
-          <IconButton
-            label={muted ? "Unmute" : "Mute"}
+      {!error ? (
+        <div className="absolute right-2 bottom-20 z-20 flex flex-col items-center gap-4 text-white drop-shadow">
+          <button type="button" aria-label={saved ? t.saved : t.save} onClick={saveDrama} className="grid size-11 place-items-center">
+            <Star className={cn("size-7", saved && "fill-current text-[#ff4d6d]")} />
+          </button>
+          <button
+            type="button"
+            aria-label={muted ? "Unmute" : "Mute"}
             onClick={() => {
               const video = videoRef.current;
               const nextMuted = !muted;
@@ -599,118 +715,71 @@ export function Player({
               if (video) video.muted = nextMuted;
               localStorage.setItem("dramaluma.muted", nextMuted ? "1" : "0");
             }}
+            className="grid size-11 place-items-center"
           >
-            {muted || volume === 0 ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
-          </IconButton>
-          <input
-            aria-label="Volume"
-            className="hidden h-1 w-16 accent-primary sm:block"
-            type="range"
-            min={0}
-            max={1}
-            step={0.05}
-            value={muted ? 0 : volume}
-            onChange={(event) => {
-              const nextVolume = Number(event.target.value);
-              setVolume(nextVolume);
-              setMuted(nextVolume === 0);
-              const video = videoRef.current;
-              if (video) {
-                video.volume = nextVolume;
-                video.muted = nextVolume === 0;
-              }
-              localStorage.setItem("dramaluma.volume", String(nextVolume));
-            }}
-          />
-          <span className="ml-1 text-xs tabular-nums">
-            {mins(progress)} / {mins(duration)}
-          </span>
-          <span className="ml-auto" />
-          <label className="mr-1 hidden items-center gap-2 text-xs font-medium sm:inline-flex">
-            <input
-              type="checkbox"
-              checked={autoplay}
-              onChange={(event) => {
-                setAutoplay(event.target.checked);
-                localStorage.setItem("dramaluma.autoplay", event.target.checked ? "1" : "0");
-              }}
-            />
-            {t.autoplay}
-          </label>
-          {candidate?.subtitles.length ? <Captions className="size-4 opacity-80" aria-label="Subtitles available" /> : null}
-          <IconButton label="Episodes" onClick={() => setOpenList(true)}>
-            <ListVideo className="size-5" />
-          </IconButton>
-          <IconButton
-            label="Fullscreen"
-            onClick={() => {
-              const stage = stageRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => void }) | null;
-              const video = videoRef.current as (HTMLVideoElement & { webkitEnterFullscreen?: () => void }) | null;
-              if (document.fullscreenElement) {
-                void document.exitFullscreen();
-                return;
-              }
-              if (stage?.requestFullscreen) {
-                void stage.requestFullscreen().catch(() => {
-                  if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
-                  else video?.webkitEnterFullscreen?.();
-                });
-              } else if (stage?.webkitRequestFullscreen) stage.webkitRequestFullscreen();
-              else video?.webkitEnterFullscreen?.();
-            }}
-          >
-            {fullscreen ? <Minimize2 className="size-5" /> : <Expand className="size-5" />}
-          </IconButton>
-        </div>
-      </div>
-
-      {openInfo ? (
-        <div className="fixed inset-0 z-50 grid items-end bg-ink/40 sm:items-center sm:justify-center" onClick={() => setOpenInfo(false)}>
-          <div className="max-h-[80vh] w-full overflow-auto rounded-t-card bg-bg p-4 text-ink sm:max-w-lg sm:rounded-card" onClick={(event) => event.stopPropagation()}>
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-2xl">{pickTitle(drama, contentLang)}</h2>
-              <button type="button" className="h-11 shrink-0 px-3 font-semibold" onClick={() => setOpenInfo(false)}>
-                {t.close}
-              </button>
-            </div>
-            <p className="text-sm text-muted">
-              {pickTitle(episode, contentLang)}
-              {episode.access === "limited" ? ` · ${t.episodeLimited}` : ""}
-            </p>
-            <p className="mt-3 text-sm text-muted">{pickDescription(drama, contentLang) || t.noSynopsis}</p>
-            <Link
-              to="/drama/$provider/$seriesId"
-              params={{ provider: drama.provider, seriesId: drama.seriesId }}
-              className="mt-4 inline-flex h-11 items-center font-semibold text-primary"
-            >
-              {t.details}
-            </Link>
-          </div>
+            {muted || volume === 0 ? <VolumeX className="size-6" /> : <Volume2 className="size-6" />}
+          </button>
+          <button type="button" onClick={() => void shareDrama()} className="grid place-items-center gap-1">
+            <Share2 className="size-7" />
+            <span className="text-[11px] font-medium">{uiLang === "id" ? "Bagikan" : "Share"}</span>
+          </button>
+          <button type="button" onClick={() => setOpenList(true)} className="grid place-items-center gap-1">
+            <Menu className="size-7" />
+            <span className="text-[11px] font-medium">{uiLang === "id" ? "Daftar" : "List"}</span>
+          </button>
         </div>
       ) : null}
 
+      <button
+        type="button"
+        aria-label="Seek"
+        className="absolute inset-x-0 bottom-0 z-20 h-4"
+        onClick={(event) => {
+          const video = videoRef.current;
+          if (!video || !duration) return;
+          const rect = event.currentTarget.getBoundingClientRect();
+          const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+          video.currentTime = ratio * duration;
+          setProgress(video.currentTime);
+        }}
+      >
+        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-white/30">
+          <span className="block h-full bg-[#ff4d6d]" style={{ width: `${duration ? Math.min(100, (progress / duration) * 100) : 0}%` }} />
+        </span>
+      </button>
+
       {openList ? (
-        <div className="fixed inset-0 z-50 grid items-end bg-ink/40 sm:items-center sm:justify-center" onClick={() => setOpenList(false)}>
-          <div className="max-h-[80vh] w-full overflow-auto rounded-t-card bg-bg p-4 text-ink sm:max-w-lg sm:rounded-card" onClick={(event) => event.stopPropagation()}>
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-2xl">{t.episodes}</h2>
-              <label className="inline-flex items-center gap-2 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  checked={autoplay}
-                  onChange={(event) => {
-                    setAutoplay(event.target.checked);
-                    localStorage.setItem("dramaluma.autoplay", event.target.checked ? "1" : "0");
-                  }}
-                />
-                {t.autoplay}
-              </label>
-              <button type="button" className="h-11 px-3 font-semibold" onClick={() => setOpenList(false)}>
-                {t.close}
+        <div className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={() => setOpenList(false)}>
+          <div
+            className="max-h-[78vh] w-full overflow-auto rounded-t-3xl bg-[#2a2a2a] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-white"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center gap-2">
+              <h2 className="min-w-0 truncate text-lg font-semibold">{pickTitle(drama, contentLang)}</h2>
+              <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-xs text-white/80">{episodes.length}</span>
+              <button type="button" aria-label={t.close} onClick={() => setOpenList(false)} className="ml-auto grid size-9 place-items-center">
+                <X className="size-5" />
               </button>
             </div>
+            <div className="mb-3 flex gap-4 overflow-x-auto text-sm font-semibold">
+              {Array.from({ length: Math.max(1, Math.ceil(episodes.length / 30)) }, (_, page) => {
+                const start = page * 30 + 1;
+                const end = Math.min(episodes.length, (page + 1) * 30);
+                return (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setRangePage(page)}
+                    className={page === rangePage ? "text-[#ff4d6d]" : "text-white/70"}
+                  >
+                    {start}-{end}
+                  </button>
+                );
+              })}
+            </div>
             <EpisodeGrid
-              episodes={episodes}
+              sheet
+              episodes={episodes.slice(rangePage * 30, rangePage * 30 + 30)}
               current={episode.episodeId}
               provider={drama.provider}
               seriesId={drama.seriesId}
@@ -723,27 +792,44 @@ export function Player({
   );
 }
 
-function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
-  return (
-    <button type="button" aria-label={label} onClick={onClick} className="grid size-11 place-items-center rounded-full hover:bg-player-ink/10">
-      {children}
-    </button>
-  );
-}
-
 export function EpisodeGrid({
   episodes,
   current,
   provider,
   seriesId,
   onPick,
+  sheet = false,
 }: {
   episodes: Episode[];
   current?: string;
   provider: ProviderId;
   seriesId: string;
   onPick?: () => void;
+  sheet?: boolean;
 }) {
+  if (sheet) {
+    return (
+      <div className="grid grid-cols-5 gap-2.5">
+        {episodes.map((item) => {
+          const active = item.episodeId === current;
+          return (
+            <Link
+              key={item.episodeId}
+              to="/watch/$provider/$seriesId/$episodeId"
+              params={{ provider, seriesId, episodeId: item.episodeId }}
+              onClick={onPick}
+              className={cn(
+                "relative grid aspect-square place-items-center rounded-xl bg-[#3a3a3a] text-base font-medium text-white",
+                active && "border-2 border-[#ff4d6d]",
+              )}
+            >
+              {active ? <AudioLines className="size-6 text-[#ff4d6d]" /> : item.index}
+            </Link>
+          );
+        })}
+      </div>
+    );
+  }
   return (
     <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
       {episodes.map((item) => (
@@ -757,10 +843,7 @@ export function EpisodeGrid({
             item.episodeId === current ? "border-primary bg-primary text-primary-ink" : "border-line bg-surface text-ink",
           )}
         >
-          <span>
-            {item.index}
-            {item.access === "limited" ? <span className="ml-1 text-[10px] font-medium opacity-80">·</span> : null}
-          </span>
+          <span>{item.index}</span>
         </Link>
       ))}
     </div>

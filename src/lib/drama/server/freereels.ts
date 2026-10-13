@@ -21,6 +21,7 @@ function mapCard(raw: unknown): DramaCard | null {
   if (!seriesId || !title) return null;
   const tags = [...tagList(record.content_tags), ...tagList(record.tag), ...tagList(record.series_tag)];
   const finish = num(record.finish_status);
+  const nested = asRecord(record.episode_info) ?? asRecord(asRecord(record.container)?.episode_info);
   return {
     provider: "freereels",
     seriesId,
@@ -35,7 +36,7 @@ function mapCard(raw: unknown): DramaCard | null {
     scoreLabel: str(record.hot_score),
     playCount: str(record.view_count) || str(record.follow_count),
     badge: record.free === true ? "Free" : null,
-    firstEpisodeId: null,
+    firstEpisodeId: str(nested?.id),
   };
 }
 
@@ -191,14 +192,14 @@ function subtitlesOf(value: unknown): SubtitleTrack[] {
 export async function freereelsStream(seriesId: string, episodeKey: string, lang: string) {
   const payload = await providerFetch<Record<string, unknown>>(
     "freereels",
-    `/get-stream/${enc(seriesId)}/${enc(episodeKey)}?lang=${enc(frLang(lang))}&proxy=1&unlock=0`,
+    `/get-stream/${enc(seriesId)}/${enc(episodeKey)}?lang=${enc(frLang(lang))}`,
     { cacheTtl: 20_000, cacheKey: `fr-stream:${lang}:${seriesId}:${episodeKey}` },
   );
   const data = asRecord(payload.data) ?? payload;
   const subs = subtitlesOf(data.subtitles);
   const candidates: StreamCandidate[] = [];
-  const h264 = str(data.h264_m3u8);
-  const h265 = str(data.h265_m3u8);
+  const h264 = str(data.h264_m3u8) || str(data.external_audio_h264_m3u8);
+  const h265 = str(data.h265_m3u8) || str(data.external_audio_h265_m3u8);
   if (h264) candidates.push({ url: upgradeHttps(h264), format: guessFormat(h264), quality: "h264", subtitles: subs });
   if (h265) candidates.push({ url: upgradeHttps(h265), format: guessFormat(h265), quality: "h265", subtitles: subs });
   const blocked = data.unlock === false && candidates.length === 0;

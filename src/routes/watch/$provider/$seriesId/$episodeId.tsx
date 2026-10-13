@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { EmptyState } from "@/components/drama/cards";
 import { Player } from "@/components/drama/player";
@@ -66,14 +65,21 @@ function WatchPage() {
     };
 
   return (
-    <Player drama={detail.drama} episodes={detail.episodes.length ? detail.episodes : [episode]} episode={episode} initial={stream} alsoOn={detail.alsoOn} autoStart={auto} />
+    <Player drama={detail.drama} episodes={detail.episodes.length ? detail.episodes : [episode]} episode={episode} initial={stream} alsoOn={detail.alsoOn} autoStart={auto !== false} />
   );
 }
 
 function WatchPending() {
   return (
     <div className="grid h-dvh place-items-center bg-player text-player-ink">
-      <LoaderCircle className="size-10 animate-spin" />
+      <div className="grid place-items-center gap-4">
+        <div className="relative grid size-20 place-items-center">
+          <span className="absolute inset-0 rounded-full border border-white/15" />
+          <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#ff4d6d] border-r-[#ffb3c1]" />
+          <img src="/logo.png?v=4" alt="" className="h-9 w-auto" />
+        </div>
+        <p className="text-sm font-medium text-white/80">Memuat video…</p>
+      </div>
     </div>
   );
 }

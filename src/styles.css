@@ -2,20 +2,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #ffffff;
-  --color-surface: #fff7f2;
-  --color-ink: #20212a;
-  --color-muted: #777987;
-  --color-line: #f0e6df;
-  --color-primary: #ff6b35;
+  --color-bg: #fff6f4;
+  --color-surface: #f6f7f9;
+  --color-ink: #17181d;
+  --color-muted: #6d7280;
+  --color-line: #e7e9ee;
+  --color-primary: #ff5a36;
   --color-primary-ink: #fffaf7;
   --color-coral: #ff477e;
   --color-violet: #7c5cfc;
-  --color-player: #1a1b22;
-  --color-player-ink: #fff7f2;
+  --color-player: #111216;
+  --color-player-ink: #f7f7f8;
   --font-sans: "Outfit", system-ui, sans-serif;
   --font-display: "Fraunces", Georgia, serif;
-  --radius-card: 1.25rem;
+  --radius-card: 1rem;
 }
 
 @layer base {
@@ -31,24 +31,37 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--color-bg);
+    background: #fff1ee;
     color: var(--color-ink);
     font-family: var(--font-sans);
     line-height: 1.5;
   }
 
   h1,
-  h2,
-  h3,
   .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.03em;
+  }
+
+  h2,
+  h3 {
+    font-family: var(--font-sans);
+    letter-spacing: -0.02em;
   }
 
   :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
+}
+
+.page-bg {
+  background-color: #fff1ee;
+  background-image:
+    radial-gradient(80% 420px at 0% 0%, #ffd0df 0%, transparent 58%),
+    radial-gradient(70% 380px at 100% 0%, #ffd8c8 0%, transparent 55%),
+    radial-gradient(60% 480px at 50% 100%, #ffe4ee 0%, transparent 50%);
+  background-attachment: fixed;
 }
 
 @utility aspect-poster {
@@ -84,7 +97,7 @@
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: #f6efe9;
+  background: #f3e7e4;
 }
 
 .skeleton::after {
@@ -102,8 +115,6 @@
   }
 }
 
-
-/* Robust drama cards: keep layout readable even if utility CSS is partially cached. */
 .drama-card {
   display: block;
   flex: 0 0 9rem;
@@ -158,4 +169,76 @@
 }
 @media (min-width: 640px) {
   .drama-card { flex-basis: 11rem; width: 11rem; }
+}
+
+.boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse at 50% 40%, #ffd0df 0%, transparent 58%),
+    linear-gradient(180deg, #fff6f8 0%, #fff1ee 100%);
+  animation: boot-dismiss 1s linear forwards;
+}
+
+@keyframes boot-dismiss {
+  0%,
+  72% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+.boot-splash.is-done {
+  display: none;
+}
+
+.boot-splash__glow {
+  position: absolute;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(255 71 126 / 0.35), transparent 68%);
+  filter: blur(8px);
+}
+
+.boot-splash__logo {
+  position: relative;
+  z-index: 1;
+}
+
+.boot-splash__track {
+  position: absolute;
+  bottom: 18%;
+  width: 9rem;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(255 90 54 / 0.18);
+}
+
+.boot-splash__track span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff5a36, #ff477e);
+  animation: boot-bar 1s ease-in-out infinite;
+}
+
+@keyframes boot-bar {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(280%); }
+}
+
+video::cue {
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
 }

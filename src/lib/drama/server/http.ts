@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import type { ProviderId } from "../types";
 import { providerOrigin } from "../providers";
 import { providerEnabled, recordFailure, recordSuccess, setCacheEntries } from "./metrics";
@@ -8,6 +9,14 @@ const g = globalThis as typeof globalThis & {
   __dramalumaCache?: Map<string, CacheEntry>;
   __dramalumaInflight?: Map<string, Promise<unknown>>;
 };
+
+const fetchDeadlines = new AsyncLocalStorage<number>();
+
+/** Stop starting new provider calls once the budget is gone, so one slow catalog cannot hang the page. */
+export function withFetchBudget<T>(ms: number, run: () => Promise<T>): Promise<T> {
+  if (fetchDeadlines.getStore()) return run();
+  return fetchDeadlines.run(Date.now() + ms, run);
+}
 
 function cache() {
   g.__dramalumaCache ??= new Map();
@@ -60,13 +69,21 @@ export async function providerFetch<T>(
 
   const job = (async () => {
     let lastError: unknown;
-    const retries = Math.max(0, Math.min(2, opts?.retries ?? 1));
+    const deadline = fetchDeadlines.getStore();
+    let retries = Math.max(0, Math.min(2, opts?.retries ?? 1));
+    let timeout = opts?.timeout ?? 5500;
+    if (deadline) {
+      const budget = deadline - Date.now();
+      if (budget < 400) throw new Error(`${id} timed out`);
+      timeout = Math.min(timeout, budget);
+      retries = 0;
+    }
     for (let attempt = 0; attempt <= retries; attempt += 1) {
       const started = Date.now();
       try {
         const response = await fetch(url, {
           headers: { accept: "application/json", "user-agent": "HouseDrama/1.0" },
-          signal: AbortSignal.timeout(opts?.timeout ?? 5500),
+          signal: AbortSignal.timeout(timeout),
         });
         if (!response.ok) throw new Error(`${id} HTTP ${response.status}`);
         const data = (await response.json()) as T;

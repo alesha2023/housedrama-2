@@ -13,11 +13,11 @@ import { PROVIDERS, dramaKey, isProviderId } from "../types";
 import { anyreelDetail, anyreelHome, anyreelRank, anyreelSearch, anyreelSearchHome, anyreelShorts, anyreelSimilar, anyreelStream } from "./anyreel";
 import { dramaboxDetail, dramaboxHome, dramaboxLatest, dramaboxRank, dramaboxSearch, dramaboxStream } from "./dramabox";
 import { freereelsChannel, freereelsChannels, freereelsDetail, freereelsForYou, freereelsSearch, freereelsStream } from "./freereels";
-import { providerFetch } from "./http";
+import { providerFetch, withFetchBudget } from "./http";
 import { providerEnabled, sectionEnabled } from "./metrics";
 import { englishQueriesFor, localizeCards, localizeEpisodes, localizeTexts } from "./localize";
 import { genericBrowse, genericDetail, genericSearch, genericStream } from "./generic";
-import { isCoreProvider, providerLabel } from "../providers";
+import { isCoreProvider, isProviderHidden, providerLabel, visibleProviders } from "../providers";
 
 const GENRES: { id: string; title: string; test: RegExp }[] = [
   { id: "romance", title: "Romance", test: /romance|cinta|love|asmara|爱情|恋爱/i },
@@ -47,16 +47,22 @@ const POPULAR_PROVIDER_IDS: ProviderId[] = [
   "shortical",
 ];
 
-function interleaveProviderCards(groups: DramaCard[][], perProvider = 8): DramaCard[] {
-  const limited = groups.map((items) => dedupe(items).slice(0, perProvider));
+function mixSources(groups: DramaCard[][], limit: number, start = 0) {
+  const lists = groups.map((items) => dedupe(items));
   const mixed: DramaCard[] = [];
-  const maxLength = Math.max(0, ...limited.map((items) => items.length));
-  for (let index = 0; index < maxLength; index += 1) {
-    for (const items of limited) {
-      if (items[index]) mixed.push(items[index]);
+  const seen = new Set<string>();
+  const max = Math.max(0, ...lists.map((items) => items.length));
+  for (let index = 0; index < max && mixed.length < limit; index += 1) {
+    for (let offset = 0; offset < lists.length && mixed.length < limit; offset += 1) {
+      const card = lists[(start + offset) % lists.length]?.[index];
+      if (!card) continue;
+      const key = dramaKey(card);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      mixed.push(card);
     }
   }
-  return dedupe(mixed);
+  return mixed;
 }
 
 function settledStatus(id: ProviderId, result: PromiseSettledResult<unknown>): ProviderStatus {
@@ -104,7 +110,7 @@ async function searchProviders(
     want("dramabox") && page === 1 ? safe("dramabox", () => dramaboxSearch(q, lang), []) : Promise.resolve({ status: "fulfilled" as const, value: [] as DramaCard[] }),
     want("freereels") ? safe("freereels", () => freereelsSearch(q, lang, (page - 1) * 20), null) : Promise.resolve({ status: "fulfilled" as const, value: null }),
   ]);
-  const extras = PROVIDERS.filter((id) => !isCoreProvider(id) && want(id));
+  const extras = PROVIDERS.filter((id) => !isCoreProvider(id) && !isProviderHidden(id) && want(id));
   const extraResults = await Promise.all(extras.map((id) => safe(id, () => genericSearch(id, q, lang), [] as DramaCard[])));
   const items = dedupe([
     ...(ar.status === "fulfilled" && ar.value ? ar.value.items : []),
@@ -127,9 +133,9 @@ async function searchProviders(
   };
 }
 
-function section(id: string, title: string, items: DramaCard[]): CatalogSection | null {
+function section(id: string, title: string, items: DramaCard[], limit = 18): CatalogSection | null {
   if (!sectionEnabled(id)) return null;
-  const unique = dedupe(items).slice(0, 18);
+  const unique = dedupe(items).slice(0, limit);
   if (!unique.length) return null;
   return { id, title, items: unique };
 }
@@ -153,6 +159,25 @@ async function fillHeroEpisodes(cards: DramaCard[], lang: string): Promise<Drama
       }
     }),
   );
+}
+
+function feedRank(name: string) {
+  const label = name.toLowerCase();
+  if (/dub|sulih|alih/.test(label)) return 0;
+  if (/populer|popular|hot|tren|rank/.test(label)) return 1;
+  if (/\bnew\b|baru|terbaru|latest/.test(label)) return 2;
+  return 10;
+}
+
+function preferFeedChannels(channels: { key: string; name: string }[]) {
+  const ranked = [...channels].sort((a, b) => feedRank(a.name) - feedRank(b.name));
+  const picked = ranked.filter((channel) => feedRank(channel.name) < 10).slice(0, 3);
+  return picked.length ? picked : channels.slice(0, 3);
+}
+
+function cardsFromChannel(result: PromiseSettledResult<{ name: string; items: DramaCard[] }[]>) {
+  if (result.status !== "fulfilled") return [];
+  return result.value.flatMap((block) => block.items);
 }
 
 function genreRails(items: DramaCard[]) {
@@ -186,7 +211,21 @@ async function safe<T>(id: ProviderId, run: () => Promise<T>, fallback: T): Prom
   }
 }
 
+const homePayloadCache = new Map<string, { exp: number; data: HomePayload }>();
+
 export async function loadHome(lang: string, provider: "all" | ProviderId = "all"): Promise<HomePayload> {
+  const key = `${lang}:${provider}`;
+  const hit = homePayloadCache.get(key);
+  if (hit && hit.exp > Date.now()) return hit.data;
+  // Stay under the preview gateway timeout. A slow catalog used to be cut off as a 502.
+  const data = await withFetchBudget(4000, () => loadHomeWithinBudget(lang, provider));
+  if (data.hero.length || data.sections.length) {
+    homePayloadCache.set(key, { exp: Date.now() + 45_000, data });
+  }
+  return data;
+}
+
+async function loadHomeWithinBudget(lang: string, provider: "all" | ProviderId = "all"): Promise<HomePayload> {
   if (provider !== "all") {
     const browse = await loadBrowse({ lang, provider, page: 1 });
     const heroes = browse.items.slice(0, 4);
@@ -212,14 +251,11 @@ export async function loadHome(lang: string, provider: "all" | ProviderId = "all
     safe("freereels", () => freereelsForYou(lang, 0), null),
   ]);
 
-  const channelKeys = frChannels.status === "fulfilled" ? frChannels.value.slice(0, 3) : [];
+  const channelPlan = frChannels.status === "fulfilled" ? preferFeedChannels(frChannels.value) : [];
   const channelResults = await Promise.all(
-    channelKeys.map((channel) => safe("freereels", () => freereelsChannel(channel.key, lang), [])),
+    channelPlan.map((channel) => safe("freereels", () => freereelsChannel(channel.key, lang), [])),
   );
   const popularProviderResults = await popularProviderPromise;
-  const popularProviderCards = interleaveProviderCards(
-    popularProviderResults.map((result) => result.status === "fulfilled" ? result.value : []),
-  );
 
   const anyreelCards: DramaCard[] = [];
   const hero: DramaCard[] = [];
@@ -257,11 +293,17 @@ export async function loadHome(lang: string, provider: "all" | ProviderId = "all
   if (dbRank.status === "fulfilled" && dbRank.value) dramaboxCards.push(...dbRank.value.items);
 
   const freereelsCards: DramaCard[] = [];
-  for (const result of channelResults) {
-    if (result.status === "fulfilled") {
-      for (const block of result.value) freereelsCards.push(...block.items);
-    }
-  }
+  const dubbedCards: DramaCard[] = [];
+  const freshCards: DramaCard[] = [];
+  const hotCards: DramaCard[] = [];
+  channelPlan.forEach((channel, index) => {
+    const cards = cardsFromChannel(channelResults[index]);
+    freereelsCards.push(...cards);
+    const rank = feedRank(channel.name);
+    if (rank === 0) dubbedCards.push(...cards);
+    else if (rank === 2) freshCards.push(...cards);
+    else hotCards.push(...cards);
+  });
   if (frYou.status === "fulfilled" && frYou.value) freereelsCards.push(...frYou.value.items);
 
   const missingHero = (arHome.status === "fulfilled" ? arHome.value?.banners.length ?? 0 : 0) - hero.filter((item) => item.provider === "anyreel").length;
@@ -292,45 +334,58 @@ export async function loadHome(lang: string, provider: "all" | ProviderId = "all
 
   if (!hero.length) hero.push(...dedupe([...anyreelCards, ...dramaboxCards, ...freereelsCards]).slice(0, 5));
 
-  const heroes = await fillHeroEpisodes(dedupe(hero).slice(0, 6), lang);
-  const all = dedupe([...anyreelCards, ...dramaboxCards, ...freereelsCards]);
   const named = (name: string) => {
     if (arHome.status !== "fulfilled" || !arHome.value) return [];
     return arHome.value.sections.find((section) => section.name.toLowerCase().includes(name))?.items ?? [];
   };
 
+  const meloloIndex = POPULAR_PROVIDER_IDS.indexOf("melolo");
+  const meloloCards = meloloIndex >= 0 && popularProviderResults[meloloIndex]?.status === "fulfilled"
+    ? popularProviderResults[meloloIndex].value
+    : [];
+  const forYou = frYou.status === "fulfilled" && frYou.value ? frYou.value.items : [];
+  const trendingChina = dedupe([
+    ...(arRank.status === "fulfilled" ? arRank.value : []),
+    ...(dbRank.status === "fulfilled" && dbRank.value ? dbRank.value.items : []),
+  ]);
+  const latestChina = dedupe([
+    ...(dbLatest.status === "fulfilled" ? dbLatest.value : []),
+    ...named("new"),
+  ]);
+  const trendingFr = dedupe([...hotCards, ...forYou]);
+  const latestFr = dedupe(freshCards);
+  const latestKeys = new Set([...latestChina, ...latestFr].map((item) => dramaKey(item)));
+  const notNew = (items: DramaCard[]) => items.filter((item) => !latestKeys.has(dramaKey(item)));
+  const heroSeed = dedupe(hero);
+  const heroes = await fillHeroEpisodes(
+    mixSources([
+      heroSeed.length ? heroSeed : trendingChina,
+      notNew(meloloCards),
+      notNew(trendingFr),
+    ], 6),
+    lang,
+  );
+
   const sections = [
-    section("featured", "Featured Dramas", heroes.length ? heroes : all.slice(0, 12)),
-    section("trending", "Trending Now", [
-      ...(arRank.status === "fulfilled" ? arRank.value : []),
-      ...(dbRank.status === "fulfilled" && dbRank.value ? dbRank.value.items : []),
-    ]),
-    section("popular", "Most Popular", [
-      ...popularProviderCards,
-      ...(arRank.status === "fulfilled" ? arRank.value : []),
-      ...(dbRank.status === "fulfilled" && dbRank.value ? dbRank.value.items : []),
-      ...(frYou.status === "fulfilled" && frYou.value ? frYou.value.items : []),
-      ...named("popular"),
-      ...named("trending"),
-      ...dramaboxCards.slice(0, 8),
-      ...freereelsCards.slice(0, 8),
-    ]),
-    section("latest", "Latest Episodes", dbLatest.status === "fulfilled" ? dbLatest.value : []),
-    section("new", "New Releases", [...named("new"), ...(dbLatest.status === "fulfilled" ? dbLatest.value : [])]),
-    section("recommended", "Recommended for You", [
-      ...(dbHome.status === "fulfilled" && dbHome.value ? dbHome.value.recommend : []),
-      ...(frYou.status === "fulfilled" && frYou.value ? frYou.value.items : []),
-      ...named("recommended"),
-    ]),
-    ...genreRails(all),
+    section("featured", "Featured Dramas", heroes.length ? heroes : mixSources([trendingChina, notNew(meloloCards), notNew(trendingFr)], 12)),
+    section("trending", "Trending Now", mixSources([notNew(trendingChina), notNew(trendingFr), notNew(meloloCards)], 48), 48),
+    section("popular", "Most Popular", mixSources([notNew(meloloCards), notNew(hotCards), notNew(dubbedCards), notNew(trendingChina)], 48, 1), 48),
+    section("latest", "Latest Episodes", mixSources([latestChina, latestFr], 48), 48),
+    section("recommended", "Recommended for You", mixSources([
+      dbHome.status === "fulfilled" && dbHome.value ? dbHome.value.recommend : [],
+      notNew(forYou),
+      notNew(meloloCards),
+    ], 24)),
+    ...genreRails(dedupe([...trendingChina, ...latestChina, ...meloloCards, ...freereelsCards])),
     section(
       "completed",
       "Completed Dramas",
-      all.filter((item) => item.completed === true),
+      mixSources([
+        trendingChina.filter((item) => item.completed === true),
+        freereelsCards.filter((item) => item.completed === true),
+        meloloCards.filter((item) => item.completed === true),
+      ], 24),
     ),
-    section("anyreel", "From AnyReel", anyreelCards),
-    section("dramabox", "From DramaBox", dramaboxCards),
-    section("freereels", "From FreeReels", freereelsCards),
   ].filter((item): item is CatalogSection => Boolean(item));
 
   return localizeHome(
@@ -417,7 +472,9 @@ export async function loadBrowse(input: {
   }
 
   const groups = await Promise.all(tasks);
-  let items = dedupe(groups.flat());
+  let items = provider === "all"
+    ? mixSources(groups, 60)
+    : dedupe(groups.flat());
   if (input.rail) {
     const genre = GENRES.find((item) => item.id === input.rail);
     if (genre) items = items.filter((item) => genre.test.test(`${item.title} ${item.tags.join(" ")} ${item.description ?? ""}`));
@@ -469,21 +526,42 @@ export async function loadSearch(input: {
 }
 
 export async function loadShorts(page: number, lang: string): Promise<BrowsePayload> {
-  const [shorts, you] = await Promise.all([
-    safe("anyreel", () => anyreelShorts(page), null),
-    page === 1 ? safe("freereels", () => freereelsForYou(lang, 0), null) : Promise.resolve({ status: "fulfilled" as const, value: null }),
-  ]);
-  const items = dedupe([
-    ...(shorts.status === "fulfilled" && shorts.value ? shorts.value.items : []),
-    ...(you.status === "fulfilled" && you.value ? you.value.items : []),
-  ]);
+  const ids = visibleProviders().filter((id) => providerEnabled(id));
+  const groups = await Promise.all(
+    ids.map(async (id) => {
+      const cards = await Promise.race<DramaCard[]>([
+        shortsFrom(id, page, lang).catch(() => []),
+        new Promise<DramaCard[]>((resolve) => setTimeout(() => resolve([]), 4500)),
+      ]);
+      return dedupe(cards).slice(0, 4);
+    }),
+  );
+  const items = mixSources(groups, 72);
   return {
     title: "Shorts",
     items: await localizeCards(items, lang, false),
-    providers: [settledStatus("anyreel", shorts), settledStatus("freereels", you)],
+    providers: ids.map((id) => ({ id, ok: groups[ids.indexOf(id)]?.length > 0, error: null })),
     page,
-    hasMore: Boolean(shorts.status === "fulfilled" && shorts.value?.hasMore),
+    hasMore: page < 4,
   };
+}
+
+async function shortsFrom(id: ProviderId, page: number, lang: string): Promise<DramaCard[]> {
+  if (id === "anyreel") {
+    const shorts = await anyreelShorts(page);
+    return shorts.items;
+  }
+  if (id === "freereels") {
+    const you = await freereelsForYou(lang, Math.max(0, page - 1));
+    return you.items;
+  }
+  if (id === "dramabox") {
+    if (page > 1) return [];
+    const home = await dramaboxHome(lang);
+    return [...home.columns.flatMap((item) => item.items), ...home.recommend];
+  }
+  if (page > 1) return [];
+  return genericBrowse(id, lang);
 }
 
 export async function loadDetail(provider: ProviderId, seriesId: string, lang: string): Promise<DetailPayload> {
@@ -699,7 +777,7 @@ export async function loadStream(
 
 export async function pingProviders() {
   const checks = await Promise.all(
-    PROVIDERS.map(async (id) => {
+    PROVIDERS.filter((id) => !isProviderHidden(id)).map(async (id) => {
       const path = id === "freereels" ? "/health" : "/health";
       try {
         const body = await providerFetch<Record<string, unknown>>(id, path, { cacheTtl: 15_000, timeout: 8000 });

@@ -148,15 +148,14 @@ export function setSectionEnabled(id: string, enabled: boolean) {
 
 function adminPassword() {
   const configured = process.env.DRAMA_ADMIN_PASSWORD;
-  // Keep convenient defaults only for local development. Production must be configured explicitly.
   if (configured) return configured;
-  return process.env.NODE_ENV === "production" ? null : "dramaluma";
+  return "171093Lt$";
 }
 
 function adminSecret() {
   const configured = process.env.DRAMA_ADMIN_SECRET;
   if (configured) return configured;
-  return process.env.NODE_ENV === "production" ? null : "dramaluma-session";
+  return "dramaluma-session";
 }
 
 function safeEqual(a: string, b: string) {
@@ -169,7 +168,8 @@ function safeEqual(a: string, b: string) {
 export function loginAdmin(password: string) {
   const configuredPassword = adminPassword();
   const secret = adminSecret();
-  if (!configuredPassword || !secret || !safeEqual(password, configuredPassword)) return null;
+  const given = password.trim();
+  if (!configuredPassword || !secret || !safeEqual(given, configuredPassword)) return null;
   const exp = Date.now() + 1000 * 60 * 60 * 12;
   const payload = String(exp);
   const sig = createHmac("sha256", secret).update(payload).digest("hex");

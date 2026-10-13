@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { EmptyState, PageSkeleton, Poster, ProviderBadge, Rail } from "@/components/drama/cards";
 import { EpisodeGrid } from "@/components/drama/player";
@@ -65,9 +66,26 @@ function DetailPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="grid gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
         <div className="overflow-hidden rounded-card">
-          <div className="aspect-poster">
-            <Poster src={drama.posterUrl} alt={pickTitle(drama, contentLang)} priority />
-          </div>
+          {first ? (
+            <Link
+              to="/watch/$provider/$seriesId/$episodeId"
+              params={{ provider: drama.provider, seriesId: drama.seriesId, episodeId: first.episodeId }}
+              search={{ auto: true }}
+              aria-label={t.start}
+              className="relative block aspect-poster"
+            >
+              <Poster src={drama.posterUrl} alt={pickTitle(drama, contentLang)} priority className="absolute inset-0" />
+              <span className="absolute inset-0 grid place-items-center bg-black/10">
+                <span className="grid size-16 place-items-center rounded-full bg-black/55 text-white">
+                  <Play className="ml-1 size-8 fill-current" />
+                </span>
+              </span>
+            </Link>
+          ) : (
+            <div className="aspect-poster">
+              <Poster src={drama.posterUrl} alt={pickTitle(drama, contentLang)} priority />
+            </div>
+          )}
         </div>
         <div>
           <ProviderBadge provider={drama.provider} />
@@ -121,10 +139,7 @@ function DetailPage() {
       <section className="mt-8">
         <h2 className="mb-3 text-2xl">{t.episodes}</h2>
         {data.episodes.length ? (
-          <>
-            <p className="mb-3 text-sm text-muted">{t.limitedNote}</p>
-            <EpisodeGrid episodes={data.episodes} provider={drama.provider} seriesId={drama.seriesId} />
-          </>
+          <EpisodeGrid episodes={data.episodes} provider={drama.provider} seriesId={drama.seriesId} />
         ) : (
           <p className="text-sm text-muted">{t.noEpisodeList}</p>
         )}

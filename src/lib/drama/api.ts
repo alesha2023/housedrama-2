@@ -13,7 +13,8 @@ export const getHomeData = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const { loadHome } = await import("./server/catalog");
-    return loadHome(data.lang, data.provider);
+    const { resolveCatalogLang } = await import("./server/locale");
+    return loadHome(await resolveCatalogLang(data.lang), data.provider);
   });
 
 export const getBrowseData = createServerFn({ method: "GET" })
@@ -27,8 +28,9 @@ export const getBrowseData = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const { loadBrowse } = await import("./server/catalog");
+    const { resolveCatalogLang } = await import("./server/locale");
     return loadBrowse({
-      lang: data.lang,
+      lang: await resolveCatalogLang(data.lang),
       provider: data.provider,
       page: data.page,
       rail: data.rail ?? null,
@@ -46,7 +48,8 @@ export const getSearchData = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const { loadSearch } = await import("./server/catalog");
-    return loadSearch(data);
+    const { resolveCatalogLang } = await import("./server/locale");
+    return loadSearch({ ...data, lang: await resolveCatalogLang(data.lang) });
   });
 
 export const getShortsData = createServerFn({ method: "GET" })
@@ -58,7 +61,8 @@ export const getShortsData = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const { loadShorts } = await import("./server/catalog");
-    return loadShorts(data.page, data.lang);
+    const { resolveCatalogLang } = await import("./server/locale");
+    return loadShorts(data.page, await resolveCatalogLang(data.lang));
   });
 
 export const getDetailData = createServerFn({ method: "GET" })
@@ -71,7 +75,8 @@ export const getDetailData = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const { loadDetail } = await import("./server/catalog");
-    return loadDetail(data.provider, data.seriesId, data.lang);
+    const { resolveCatalogLang } = await import("./server/locale");
+    return loadDetail(data.provider, data.seriesId, await resolveCatalogLang(data.lang));
   });
 
 export const getWatchData = createServerFn({ method: "GET" })
@@ -85,7 +90,8 @@ export const getWatchData = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const { loadPlayback } = await import("./server/catalog");
-    return loadPlayback(data.provider, data.seriesId, data.episodeId, data.lang);
+    const { resolveCatalogLang } = await import("./server/locale");
+    return loadPlayback(data.provider, data.seriesId, data.episodeId, await resolveCatalogLang(data.lang));
   });
 
 export const getStreamData = createServerFn({ method: "GET" })
@@ -99,7 +105,8 @@ export const getStreamData = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const { loadStream } = await import("./server/catalog");
-    return loadStream(data.provider, data.seriesId, data.episodeId, data.lang);
+    const { resolveCatalogLang } = await import("./server/locale");
+    return loadStream(data.provider, data.seriesId, data.episodeId, await resolveCatalogLang(data.lang));
   });
 
 export const lookupDisplays = createServerFn({ method: "POST" })

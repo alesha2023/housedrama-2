@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { EmptyState, PageIntro, Poster, ProviderBadge } from "@/components/drama/cards";
 import { usePrefs } from "@/lib/drama/i18n";
@@ -36,22 +37,28 @@ function WatchlistPage() {
       {items.length ? (
         <div className="mt-6 grid gap-3">
           {items.map((item) => (
-            <div key={`${item.provider}-${item.seriesId}`} className="flex items-center gap-3 rounded-card border border-line p-2">
-              <Link to="/drama/$provider/$seriesId" params={{ provider: item.provider, seriesId: item.seriesId }} className="flex min-w-0 flex-1 items-center gap-3">
-                <div className="h-20 w-14 overflow-hidden rounded-xl">
+            <div key={`${item.provider}-${item.seriesId}`} className="flex items-center gap-3 rounded-3xl border border-line bg-surface p-3">
+              <Link
+                to="/drama/$provider/$seriesId"
+                params={{ provider: item.provider, seriesId: item.seriesId }}
+                className="flex min-w-0 flex-1 items-center gap-3"
+              >
+                <div className="h-24 w-16 shrink-0 overflow-hidden rounded-2xl">
                   <Poster src={item.posterUrl} alt="" />
                 </div>
                 <span className="min-w-0">
                   <ProviderBadge provider={item.provider} />
-                  <span className="mt-1 block truncate font-semibold">{showTitle(item.title, item.originalTitle)}</span>
+                  <span className="mt-1.5 block text-base font-semibold leading-snug break-words">{showTitle(item.title, item.originalTitle)}</span>
+                  {item.episodeCount ? <span className="mt-1 block text-xs text-muted">{item.episodeCount} {t.eps}</span> : null}
                 </span>
               </Link>
               <button
                 type="button"
-                className="h-11 px-3 text-sm font-semibold text-coral"
+                aria-label={t.remove}
+                className="grid size-10 shrink-0 place-items-center rounded-full bg-bg text-muted"
                 onClick={() => setItems(toggleWatchlist({ ...item, savedAt: Date.now() }))}
               >
-                {t.remove}
+                <X className="size-4" />
               </button>
             </div>
           ))}

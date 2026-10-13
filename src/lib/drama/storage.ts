@@ -18,6 +18,7 @@ export type HistoryEntry = {
   title: string;
   originalTitle?: string;
   posterUrl: string | null;
+  tags?: string[];
   positionSec: number;
   durationSec: number | null;
   updatedAt: number;

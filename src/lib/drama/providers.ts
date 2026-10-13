@@ -1,4 +1,4 @@
-import type { ProviderId } from "./types";
+import { PROVIDERS, type ProviderId } from "./types";
 
 const LABELS: Record<ProviderId, string> = {
   anyreel: "AnyReel",
@@ -96,6 +96,44 @@ const API_PREFIX = new Set<ProviderId>([
 
 export function providerLabel(id: ProviderId) {
   return LABELS[id];
+}
+
+/** Hosts that failed the last health check. Hidden from the picker, not deleted. */
+const HIDDEN_PROVIDERS = new Set<ProviderId>([
+  "bonustv",
+  "dotdrama",
+  "dramabite-funorbit",
+  "dramabite-miniepisode",
+  "dramahub",
+  "dramashorts",
+  "dramatv",
+  "dreameshort",
+  "firedrama",
+  "flareflow",
+  "freedrama",
+  "fundrama",
+  "minidrama",
+  "minishorts",
+  "minutedrama",
+  "ohmytv",
+  "onedrama",
+  "rapidtv",
+  "raptdrama",
+  "serealplus",
+  "sixthshort",
+  "soonshot",
+  "storeel",
+  "storyreel",
+  "topdrama",
+  "vibeshort",
+]);
+
+export function isProviderHidden(id: ProviderId) {
+  return HIDDEN_PROVIDERS.has(id);
+}
+
+export function visibleProviders() {
+  return PROVIDERS.filter((id) => !HIDDEN_PROVIDERS.has(id));
 }
 
 export function isCoreProvider(id: ProviderId) {

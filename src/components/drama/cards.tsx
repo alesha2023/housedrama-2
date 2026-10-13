@@ -10,10 +10,8 @@ import { cn } from "@/lib/utils";
 export { providerLabel };
 
 export function ProviderBadge({ provider, className }: { provider: ProviderId; className?: string }) {
-  const tones = ["bg-primary/12 text-ink", "bg-coral/12 text-ink", "bg-violet/12 text-ink"];
-  const tone = tones[[...provider].reduce((sum, char) => sum + char.charCodeAt(0), 0) % tones.length];
   return (
-    <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", tone, className)}>
+    <span className={cn("rounded-full bg-ink/75 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white backdrop-blur", className)}>
       {providerLabel(provider)}
     </span>
   );
@@ -57,7 +55,7 @@ export function DramaCardView({ item, className }: { item: DramaCard; className?
       params={{ provider: item.provider, seriesId: item.seriesId }}
       className={cn("drama-card group block w-36 shrink-0 snap-start sm:w-44", className)}
     >
-      <div className="drama-card__poster rise relative overflow-hidden rounded-card shadow-[0_10px_30px_rgb(32_33_42_/_0.06)]">
+      <div className="drama-card__poster rise relative overflow-hidden rounded-2xl bg-surface ring-1 ring-black/5">
         <div className="drama-card__image aspect-poster">
           <Poster src={item.posterUrl} alt={title} />
         </div>
@@ -72,12 +70,45 @@ export function DramaCardView({ item, className }: { item: DramaCard; className?
         {title}
       </h3>
       <p className="drama-card__meta mt-1 text-xs text-muted">
-        {[item.episodeCount ? `${item.episodeCount} ${t.eps}` : null, item.completed ? t.completed : null, item.playCount]
+        {[item.episodeCount ? `${item.episodeCount} ${t.eps}` : null, item.completed ? t.completed : null]
           .filter(Boolean)
-          .join(" · ") || item.tags[0] || t.shortDrama}
+          .join(" · ") || t.shortDrama}
       </p>
+      {item.tags.length ? <TagPills tags={item.tags} /> : null}
     </Link>
   );
+}
+
+export function TagPills({ tags }: { tags: string[] }) {
+  const clean = [...new Set(tags.map((tag) => tag.trim()).filter((tag) => tag.length > 1))].slice(0, 2);
+  if (!clean.length) return null;
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1">
+      {clean.map((tag) => (
+        <span
+          key={tag}
+          className="max-w-full rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold leading-snug break-words text-primary"
+        >
+          {tag}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function popularity(item: DramaCard) {
+  const raw = (item.playCount ?? "").replace(/,/g, "").trim().toLowerCase();
+  const match = raw.match(/([\d.]+)\s*(k|m|b|jt|rb)?/);
+  if (!match) return 0;
+  const value = Number(match[1]);
+  if (!Number.isFinite(value)) return 0;
+  const unit = match[2] ?? "";
+  const scale = unit === "b" ? 1_000_000_000 : unit === "m" || unit === "jt" ? 1_000_000 : unit === "k" || unit === "rb" ? 1_000 : 1;
+  return value * scale;
+}
+
+export function byPopularity(items: DramaCard[]) {
+  return [...items].sort((a, b) => popularity(b) - popularity(a));
 }
 
 export function DramaGrid({ items }: { items: DramaCard[] }) {
@@ -101,15 +132,16 @@ export function Rail({
   items: DramaCard[];
   more?: ReactNode;
 }) {
-  if (!items.length) return null;
+  const ordered = byPopularity(items);
+  if (!ordered.length) return null;
   return (
     <section className="mt-8">
       <div className="mb-3 flex items-end justify-between gap-3">
-        <h2 className="text-2xl text-ink">{title}</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-ink">{title}</h2>
         {more ?? (action ? <span className="text-sm font-semibold text-primary">{action}</span> : null)}
       </div>
       <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 snap-x sm:mx-0 sm:px-0">
-        {items.map((item) => (
+        {ordered.map((item) => (
           <DramaCardView key={`${item.provider}-${item.seriesId}`} item={item} />
         ))}
       </div>

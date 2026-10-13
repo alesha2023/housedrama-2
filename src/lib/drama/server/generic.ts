@@ -1,6 +1,6 @@
 import type { DramaCard, Episode, ProviderId, StreamCandidate } from "../types";
 import { homeCandidates } from "../providers";
-import { absoluteUrl, asArray, asRecord, enc, guessFormat, num, providerFetch, str, tagList, upgradeHttps } from "./http";
+import { absoluteUrl, asArray, asRecord, enc, guessFormat, num, providerFetch, str, tagList, upgradeHttps, withFetchBudget } from "./http";
 
 const TITLE_KEYS = [
   "book_title",
@@ -97,6 +97,7 @@ function descriptionOf(record: Record<string, unknown>) {
   return (
     str(record.description) ||
     str(record.abstract) ||
+    str(record.intro) ||
     str(record.introduction) ||
     str(record.synopsis) ||
     str(record.logLine) ||
@@ -169,6 +170,8 @@ export function toCard(record: Record<string, unknown> | null, provider: Provide
     tags: tagsOf(record),
     language: str(record.language) || str(record.lang),
     episodeCount:
+      num(record.episode_cnt) ??
+      num(record.episodes) ??
       num(record.episodeTotal) ??
       num(record.total_episodes) ??
       num(record.totalEpisodes) ??
@@ -241,126 +244,132 @@ async function read(provider: ProviderId, path: string, lang: string) {
   return data;
 }
 
-function meloloLangCodes(lang: string) {
-  if (lang === "id") return ["id", "in", "Indonesian"];
-  if (lang === "en") return ["en", "English"];
-  if (lang === "zh") return ["zh", "Chinese"];
-  return [lang || "en"];
+const MELOLO_CHANNEL_LANGS = new Set(["en", "id", "th", "es", "pt"]);
+
+function meloloLang(lang: string) {
+  const code = (lang || "en").toLowerCase().split("-")[0];
+  return MELOLO_CHANNEL_LANGS.has(code) ? code : "en";
 }
 
 async function meloloRead(path: string, cacheTtl = 90_000) {
   return providerFetch<unknown>("melolo", path, {
     cacheTtl,
     timeout: 6500,
-    retries: 1,
+    retries: 0,
     cacheKey: `melolo:${path}`,
   });
 }
 
-function meloloCategories(root: unknown): string[] {
-  const found: string[] = [];
+function meloloChannelNames(root: unknown) {
+  const names: string[] = [];
+  for (const tab of asArray(asRecord(root)?.data)) {
+    for (const category of asArray(asRecord(tab)?.categories)) {
+      const name = str(asRecord(category)?.name);
+      if (name && !names.includes(name)) names.push(name);
+    }
+  }
+  return names;
+}
+
+function meloloCards(root: unknown): DramaCard[] {
+  return asArray(asRecord(root)?.data).flatMap((item) => {
+    const record = asRecord(item);
+    if (!record) return [];
+    const title = usableTitle(str(record.title) || str(record.name));
+    const seriesId = str(record.series_id) || str(record.seriesId);
+    const posterUrl = imageOf(record);
+    if (!title || !seriesId || !posterUrl) return [];
+    return [{
+      provider: "melolo" as const,
+      seriesId,
+      title,
+      posterUrl,
+      bannerUrl: posterUrl,
+      description: descriptionOf(record),
+      tags: tagsOf(record),
+      language: str(record.language),
+      episodeCount: num(record.episodes) ?? num(record.episode_cnt) ?? num(record.episode_count),
+      completed: record.status === 2 ? true : null,
+      scoreLabel: null,
+      playCount: str(record.play_cnt),
+      badge: null,
+      firstEpisodeId: null,
+    }];
+  });
+}
+
+function meloloEpisodeRows(root: unknown) {
+  const data = asRecord(root)?.data ?? root;
+  if (Array.isArray(data)) return data;
+  const record = asRecord(data);
+  return record && Array.isArray(record.episodes) ? record.episodes : [];
+}
+
+function meloloEpisodes(root: unknown): Episode[] {
+  return meloloEpisodeRows(root).flatMap((item, index) => {
+    const record = asRecord(item);
+    if (!record) return [];
+    const episodeId = str(record.vid) || str(record.video_id);
+    if (!episodeId) return [];
+    const order = num(record.order) ?? num(record.index) ?? index + 1;
+    return [{
+      episodeId,
+      index: order,
+      title: `Episode ${order}`,
+      coverUrl: imageOf(record),
+      durationSec: num(record.duration),
+      access: record.locked === true ? "limited" as const : "open" as const,
+    }];
+  });
+}
+
+function meloloStreams(root: unknown): StreamCandidate[] {
+  const data = asRecord(asRecord(root)?.data) ?? asRecord(root);
+  if (!data) return [];
+  const lists = Array.isArray(data.qualities) ? [data.qualities] : [];
+  if (!lists.length) {
+    for (const value of Object.values(data)) {
+      const record = asRecord(value);
+      if (record && Array.isArray(record.qualities)) lists.push(record.qualities);
+    }
+  }
   const seen = new Set<string>();
-  const visit = (node: unknown, depth = 0) => {
-    if (depth > 7 || node == null) return;
-    if (Array.isArray(node)) {
-      node.forEach((item) => visit(item, depth + 1));
-      return;
-    }
-    const rec = asRecord(node);
-    if (!rec) return;
-    const name = str(rec.category) || str(rec.category_name) || str(rec.channel_name) || str(rec.channelName) || str(rec.name) || str(rec.title) || str(rec.label);
-    const id = str(rec.category_id) || str(rec.channel_id) || str(rec.id);
-    // Only take labels from likely channel objects; avoid interpreting drama titles as categories.
-    if (name && (rec.category != null || rec.category_name != null || rec.channel_name != null || rec.channelName != null || rec.channel_id != null || rec.category_id != null || (id && rec.series_id == null && rec.seriesId == null && rec.book_id == null && rec.bookId == null && rec.episode_id == null && rec.vid == null))) {
-      const key = name.toLowerCase();
-      if (!seen.has(key) && name.length < 70) { seen.add(key); found.push(name); }
-    }
-    for (const [key, value] of Object.entries(rec)) {
-      if (value && typeof value === "object") visit(value, depth + 1);
-      // Some APIs return channel names as plain strings in named arrays.
-      if (/channels?|categories|tabs|data/i.test(key) && Array.isArray(value)) {
-        for (const item of value) if (typeof item === "string" && item.trim() && item.length < 70) {
-          const label = item.trim(); const k = label.toLowerCase(); if (!seen.has(k)) { seen.add(k); found.push(label); }
-        }
-      }
-    }
-  };
-  visit(root);
-  return found.slice(0, 20);
+  const ranked = lists.flatMap((list) => list.flatMap((item) => {
+    const row = asRecord(item);
+    const raw = str(row?.proxy_url);
+    if (!row || !raw || !/^https?:\/\//i.test(raw)) return [];
+    const url = upgradeHttps(raw);
+    if (seen.has(url)) return [];
+    seen.add(url);
+    return [{
+      url,
+      format: guessFormat(url) === "hls" ? "hls" as const : "mp4" as const,
+      quality: num(row.height) ? `${num(row.height)}p` : null,
+      height: num(row.height) ?? 0,
+      subtitles: [],
+    }];
+  })).sort((a, b) => b.height - a.height);
+  return ranked.slice(0, 4).map(({ height: _height, ...candidate }) => candidate);
 }
 
 async function meloloBrowse(lang: string): Promise<DramaCard[]> {
-  // Confirmed working route: /get-channel-content?category=Popular&lang=en
-  const languageCodes = [...new Set(["en", ...meloloLangCodes(lang)])];
-  const categories = ["Popular"];
+  const code = meloloLang(lang);
+  let categories = ["Popular"];
   try {
-    const channelPayload = await meloloRead("/get-channels", 120_000);
-    const discovered = meloloCategories(channelPayload);
-    for (const item of discovered) {
-      if (item.toLowerCase() !== "popular" && categories.length < 6) categories.push(item);
-    }
+    const discovered = meloloChannelNames(await meloloRead(`/get-channels?lang=${enc(code)}`, 120_000));
+    if (discovered.length) categories = discovered;
   } catch {
-    // Keep using the known working Popular category.
+    // Popular is the documented fallback when channel discovery is down.
   }
-
-  const allCards: DramaCard[] = [];
-  for (const category of categories) {
-    let categoryFound = false;
-    for (const code of languageCodes) {
-      try {
-        const payload = await meloloRead(
-          `/get-channel-content?category=${enc(category)}&lang=${enc(code)}`,
-          120_000,
-        );
-        const record = asRecord(payload);
-        const directData = asArray(record?.data);
-        const directCards = directData
-          .map((item) => asRecord(item))
-          .filter((item): item is Record<string, unknown> => Boolean(item))
-          .map((item) => {
-            const title = usableTitle(str(item.title) || str(item.series_title) || str(item.name));
-            const seriesId = str(item.series_id) || str(item.seriesId) || str(item.id);
-            const posterUrl = imageOf(item);
-            if (!title || !seriesId || (!posterUrl && !descriptionOf(item))) return null;
-            return toCard({
-              ...item,
-              title,
-              series_id: seriesId,
-              cover: posterUrl || item.cover,
-              abstract: descriptionOf(item) || item.abstract,
-              episodeCount: item.episodes ?? item.episode_count ?? item.episodeCount,
-            }, "melolo");
-          })
-          .filter((item): item is DramaCard => Boolean(item));
-        const extracted = directCards.length ? directCards : extractCards(payload, "melolo");
-        if (extracted.length) {
-          allCards.push(...extracted);
-          categoryFound = true;
-          break;
-        }
-      } catch {
-        // Try another language or category.
-      }
+  const picked = categories.slice(0, 3);
+  const groups = await Promise.all(picked.map(async (category) => {
+    try {
+      return meloloCards(await meloloRead(`/get-channel-content?category=${enc(category)}&lang=${enc(code)}`, 90_000));
+    } catch {
+      return [];
     }
-    if (categoryFound && allCards.length >= 20) break;
-  }
-
-  const cards = dedupeCards(allCards);
-  if (cards.length) return cards;
-
-  for (const path of ["/suggest", "/search?keyword=love", "/search?keyword=romance"]) {
-    for (const code of languageCodes) {
-      try {
-        const separator = path.includes("?") ? "&" : "?";
-        const data = await meloloRead(`${path}${separator}lang=${enc(code)}`, 60_000);
-        const result = extractCards(data, "melolo");
-        if (result.length) return result;
-      } catch {
-        // Continue fallback.
-      }
-    }
-  }
-  return [];
+  }));
+  return dedupeCards(groups.flat());
 }
 
 function dedupeCards(cards: DramaCard[]) {
@@ -373,6 +382,10 @@ function dedupeCards(cards: DramaCard[]) {
 }
 
 export async function genericBrowse(provider: ProviderId, lang: string) {
+  return withFetchBudget(7000, () => browseProvider(provider, lang));
+}
+
+async function browseProvider(provider: ProviderId, lang: string) {
   if (provider === "melolo") return meloloBrowse(lang);
   const cached = homePath.get(`${provider}:${lang}`);
   const paths = cached ? [cached, ...homeCandidates(provider).filter((item) => item !== cached)] : homeCandidates(provider);
@@ -406,12 +419,11 @@ export async function genericBrowse(provider: ProviderId, lang: string) {
 export async function genericSearch(provider: ProviderId, query: string, lang: string) {
   const q = enc(query);
   if (provider === "melolo") {
-    for (const code of meloloLangCodes(lang)) {
-      for (const path of [`/search?keyword=${q}&language=${enc(code)}`, `/search?keyword=${q}&lang=${enc(code)}`, `/search?keyword=${q}`]) {
-        try { const data = await meloloRead(path, 45_000); const cards = extractCards(data, "melolo"); if (cards.length) return cards; } catch { /* try next documented query shape */ }
-      }
+    try {
+      return meloloCards(await meloloRead(`/search?keyword=${q}&lang=${enc(meloloLang(lang))}`, 45_000));
+    } catch {
+      return [];
     }
-    return [];
   }
   const paths = [`/search/${q}`, `/search?keyword=${q}`, `/search?q=${q}`, `/search?query=${q}`];
   for (const path of paths) {
@@ -472,18 +484,19 @@ export function extractEpisodes(root: unknown): Episode[] {
 
 export async function genericDetail(provider: ProviderId, seriesId: string, lang: string) {
   if (provider === "melolo") {
-    let detail: unknown = null;
-    for (const code of meloloLangCodes(lang)) {
-      try { detail = await meloloRead(`/get-detail/${enc(seriesId)}?language=${enc(code)}`, 90_000); break; } catch { /* next language alias */ }
+    const code = meloloLang(lang);
+    const detail = await meloloRead(`/get-detail/${enc(seriesId)}?lang=${enc(code)}`, 90_000);
+    let episodes = meloloEpisodes(detail);
+    if (!episodes.length) {
+      try {
+        episodes = meloloEpisodes(await meloloRead(`/get-episodes/${enc(seriesId)}`, 90_000));
+      } catch {
+        episodes = [];
+      }
     }
-    if (!detail) detail = await meloloRead(`/get-detail/${enc(seriesId)}`, 90_000);
-    let episodePayload: unknown = null;
-    try { episodePayload = await meloloRead(`/get-episodes/${enc(seriesId)}`, 90_000); } catch { /* detail may include episodes */ }
-    let episodes = extractEpisodes(episodePayload ?? detail);
-    if (!episodes.length) episodes = extractEpisodes(detail);
-    const cards = extractCards(detail, provider);
-    const card = cards.find((item) => item.seriesId === seriesId) ?? cards[0] ?? null;
-    if (card && !card.firstEpisodeId && episodes[0]) card.firstEpisodeId = episodes[0].episodeId;
+    const data = asRecord(asRecord(detail)?.data);
+    const card = data ? meloloCards({ data: [{ ...data, series_id: str(data.series_id) || seriesId }] })[0] ?? null : null;
+    if (card && episodes[0]) card.firstEpisodeId = episodes[0].episodeId;
     if (card && episodes.length && !card.episodeCount) card.episodeCount = episodes.length;
     return { card, episodes };
   }
@@ -538,24 +551,19 @@ export function extractStreams(root: unknown): StreamCandidate[] {
 
 export async function genericStream(provider: ProviderId, seriesId: string, episodeId: string, lang: string) {
   if (provider === "melolo") {
-    const paths = [
-      `/get-streams-proxy/${enc(episodeId)}`,
-      `/get-stream/${enc(episodeId)}`,
-      `/get-streams-proxy/${enc(seriesId)}?vid=${enc(episodeId)}`,
-    ];
-    for (const path of paths) {
-      try {
-        const data = await meloloRead(path, 0);
-        const streams = extractStreams(data);
-        if (streams.length) return streams;
-      } catch { /* try the next supported stream endpoint */ }
-    }
+    // /get-stream often 502s, and the bulk routes want a vid, not a series id.
+    // The edge route returns one playable proxy_url per quality.
     try {
-      const data = await providerFetch<unknown>("melolo", "/get-all-streams-proxy/" + enc(seriesId), { timeout: 8000, retries: 0, cacheTtl: 0 });
-      const all = extractStreams(data);
-      if (all.length) return all;
-    } catch { /* no proxy stream available */ }
-    return [];
+      const data = await providerFetch<unknown>("melolo", `/get-streams-proxy/${enc(episodeId)}`, {
+        timeout: 8000,
+        retries: 0,
+        cacheTtl: 15_000,
+        cacheKey: `melolo:proxy:${episodeId}`,
+      });
+      return meloloStreams(data);
+    } catch {
+      return [];
+    }
   }
   const paths = [`/get-stream/${enc(seriesId)}/${enc(episodeId)}`, `/get-stream/${enc(episodeId)}?seriesId=${enc(seriesId)}`];
   // Stream endpoints are often the slowest part of playback. Probe both known
