@@ -5,6 +5,7 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { PrefsProvider } from "@/lib/drama/i18n";
 import { Shell } from "@/components/drama/shell";
 import appCss from "../styles.css?url";
+import { useEffect } from "react";
 
 const getInitialCatalogLang = createServerFn({ method: "GET" }).handler(async () => {
   const { resolveCatalogLang } = await import("@/lib/drama/server/locale");
@@ -37,6 +38,16 @@ export const Route = createRootRoute({
   component: RootLayout,
 });
 
+function MonetagServiceWorker() {
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((error) => {
+      console.error("[Monetag] Service Worker registration failed:", error);
+    });
+  }, []);
+  return null;
+}
+
 function RootLayout() {
   const { lang } = Route.useLoaderData();
   return (
@@ -51,6 +62,7 @@ function RootLayout() {
               "window.__boot=Date.now();setTimeout(function(){var n=document.querySelector('.boot-splash');if(n)n.classList.add('is-done');},1000);",
           }}
         />
+        <MonetagServiceWorker />
         <PreviewHostBridge />
         <AuthProvider>
           <PrefsProvider initialLang={lang}>
