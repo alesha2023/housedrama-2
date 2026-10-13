@@ -17,11 +17,11 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "HouseDrama — Chinese short dramas" },
+      { title: "HouseDrama — Drama China Gratis" },
       {
         name: "description",
         content:
-          "HouseDrama is a free catalog for Chinese short dramas from AnyReel, DramaBox, and FreeReels. Browse, search, and play publicly available episodes.",
+          "Jelajahi drama China pendek populer, terbaru, dan tamat. Temukan cerita favoritmu dan tonton episode di HouseDrama.",
       },
       { name: "theme-color", content: "#b34bff" },
     ],

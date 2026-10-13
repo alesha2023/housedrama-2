@@ -154,3 +154,53 @@ export const updateAdminSettings = createServerFn({ method: "POST" })
     const { applySettings } = await import("./server/admin");
     return applySettings(data);
   });
+
+
+export const testFreeReelsApi = createServerFn({ method: "POST" })
+  .validator(z.object({
+    token: z.string().min(8),
+    baseUrl: z.string().url().max(300).default("https://freereels.narto-drama.com/api"),
+  }))
+  .handler(async ({ data }) => {
+    const { verifyAdminToken } = await import("./server/admin");
+    if (!verifyAdminToken(data.token)) return { ok: false as const, error: "Sesi admin berakhir. Login kembali." };
+
+    let parsed: URL;
+    try { parsed = new URL(data.baseUrl); } catch {
+      return { ok: false as const, error: "URL API tidak valid.", checks: [] };
+    }
+    if (parsed.protocol !== "https:" || parsed.hostname !== "freereels.narto-drama.com") {
+      return { ok: false as const, error: "Demi keamanan, pemeriksaan hanya diizinkan untuk freereels.narto-drama.com melalui HTTPS.", checks: [] };
+    }
+    const base = `${parsed.origin}${parsed.pathname.replace(/\/+$/, "")}`;
+    const endpoints = [
+      { path: "/health", label: "Health" },
+      { path: "/get-languages", label: "Bahasa" },
+      { path: "/get-channels", label: "Channel" },
+      { path: "/get-foryou", label: "For You" },
+      { path: "/search?keyword=love", label: "Search" },
+    ];
+    const checks = await Promise.all(endpoints.map(async ({ path, label }) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 9000);
+      const started = Date.now();
+      try {
+        const response = await fetch(`${base}${path}`, {
+          method: "GET",
+          headers: { accept: "application/json" },
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        const text = await response.text();
+        let json: unknown = null;
+        try { json = JSON.parse(text); } catch { /* Report non-JSON responses below. */ }
+        const jsonOk = json !== null && (typeof json === "object" || Array.isArray(json));
+        return { label, path, status: response.status, ok: response.ok && jsonOk, ms: Date.now() - started, detail: !response.ok ? `HTTP ${response.status}` : jsonOk ? "Respons JSON diterima" : "Respons bukan JSON" };
+      } catch (error) {
+        return { label, path, status: 0, ok: false, ms: Date.now() - started, detail: error instanceof Error && error.name === "AbortError" ? "Timeout 9 detik" : error instanceof Error ? error.message : "Request gagal" };
+      } finally {
+        clearTimeout(timer);
+      }
+    }));
+    return { ok: checks.some((item) => item.ok), baseUrl: base, checks };
+  });

@@ -19,11 +19,11 @@ export const Route = createFileRoute("/")({
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
-      { title: "HouseDrama — Watch Chinese short dramas" },
+      { title: "HouseDrama — Drama China Gratis" },
       {
         name: "description",
         content:
-          "Browse trending, new, and completed Chinese short dramas from AnyReel, DramaBox, and FreeReels. No subscription or coins.",
+          "Jelajahi drama China pendek populer, terbaru, dan tamat. Temukan cerita favoritmu dan tonton episode di HouseDrama.",
       },
     ],
   }),

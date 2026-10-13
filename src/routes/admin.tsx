@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { PageIntro } from "@/components/drama/cards";
-import { adminLogin, getAdminData, updateAdminSettings } from "@/lib/drama/api";
+import { adminLogin, getAdminData, testFreeReelsApi, updateAdminSettings } from "@/lib/drama/api";
 import type { ProviderId } from "@/lib/drama/types";
 
 type Snapshot = Awaited<ReturnType<typeof getAdminData>>;
@@ -22,6 +22,9 @@ function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Snapshot | null>(null);
   const [busy, setBusy] = useState(false);
+  const [apiBaseUrl, setApiBaseUrl] = useState("https://freereels.narto-drama.com/api");
+  const [apiBusy, setApiBusy] = useState(false);
+  const [apiResult, setApiResult] = useState<Awaited<ReturnType<typeof testFreeReelsApi>> | null>(null);
 
   async function enter(event: FormEvent) {
     event.preventDefault();
@@ -48,6 +51,14 @@ function AdminPage() {
       setToken(null);
       sessionStorage.removeItem("dramaluma.admin");
     }
+  }
+
+  async function checkFreeReelsApi(event: FormEvent) {
+    event.preventDefault();
+    if (!token) return;
+    setApiBusy(true);
+    setApiResult(await testFreeReelsApi({ data: { token, baseUrl: apiBaseUrl } }));
+    setApiBusy(false);
   }
 
   async function toggleProvider(id: ProviderId, enabled: boolean) {
@@ -129,6 +140,30 @@ function AdminPage() {
               </tbody>
             </table>
           </div>
+          <section className="rounded-card border border-line p-4 sm:p-5">
+            <h2 className="text-xl font-semibold">Periksa API FreeReels</h2>
+            <p className="mt-1 text-sm text-muted">Tes koneksi API dan endpoint utama dari server HouseDrama. Ini membantu mengetahui endpoint mana yang gagal sebelum mengubah konfigurasi.</p>
+            <form onSubmit={(event) => void checkFreeReelsApi(event)} className="mt-4 space-y-3">
+              <label className="block text-sm font-semibold">Alamat dasar API
+                <input value={apiBaseUrl} onChange={(event) => setApiBaseUrl(event.target.value)} className="mt-1 h-12 w-full rounded-xl border border-line bg-surface px-3 font-normal" placeholder="https://freereels.narto-drama.com/api" inputMode="url" />
+              </label>
+              <button type="submit" disabled={apiBusy} className="h-11 rounded-full bg-primary px-5 font-semibold text-ink disabled:opacity-60">{apiBusy ? "Memeriksa endpoint…" : "Tes & Diagnosis API"}</button>
+            </form>
+            {apiResult ? (
+              <div className="mt-4 space-y-3" aria-live="polite">
+                {"error" in apiResult && apiResult.error ? <p className="rounded-xl bg-coral/10 p-3 text-sm">{apiResult.error}</p> : null}
+                {"checks" in apiResult && apiResult.checks ? (
+                  <div className="overflow-x-auto rounded-xl border border-line">
+                    <table className="w-full min-w-[28rem] text-left text-sm">
+                      <thead className="bg-surface text-muted"><tr><th className="p-3">Endpoint</th><th className="p-3">Status</th><th className="p-3">Waktu</th><th className="p-3">Hasil</th></tr></thead>
+                      <tbody>{apiResult.checks.map((item) => <tr key={item.path} className="border-t border-line"><td className="p-3 font-mono text-xs">{item.path}</td><td className="p-3">{item.status || "Gagal"}</td><td className="p-3">{item.ms} ms</td><td className={`p-3 ${item.ok ? "text-green-700" : "text-coral"}`}>{item.detail}</td></tr>)}</tbody>
+                    </table>
+                  </div>
+                ) : null}
+                <p className="text-sm text-muted">Jika endpoint gagal, hasil tes ini hanya mendiagnosis masalah. Untuk mengganti alamat API yang dipakai seluruh website secara permanen, ubah variabel <code>FREEREELS_API_URL</code> di Vercel menjadi alamat yang benar, lalu redeploy.</p>
+              </div>
+            ) : null}
+          </section>
           <p className="text-sm text-muted">Cached catalog entries: {snapshot.cacheEntries}. Stream URLs are cached for well under a minute.</p>
           <div>
             <h2 className="text-2xl">Homepage sections</h2>
