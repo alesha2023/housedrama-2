@@ -8,6 +8,7 @@ import { railTitle, usePrefs } from "@/lib/drama/i18n";
 import { pickDescription, pickTitle, useDisplayTitles } from "@/lib/drama/display";
 import { readHistory } from "@/lib/drama/storage";
 import { isProviderId, type HomePayload, type ProviderId } from "@/lib/drama/types";
+import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): { provider?: ProviderId } => ({
@@ -106,6 +107,7 @@ function HomePage() {
                             to="/watch/$provider/$seriesId/$episodeId"
                             params={{ provider: item.provider, seriesId: item.seriesId, episodeId: item.firstEpisodeId }}
                             search={{ auto: true }}
+                            onClick={() => maybeOpenMonetagAd()}
                             className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-5 font-semibold text-primary-ink"
                           >
                             <Play className="size-4 fill-current" />
@@ -202,6 +204,7 @@ function HomePage() {
                 to="/watch/$provider/$seriesId/$episodeId"
                 params={{ provider: item.provider, seriesId: item.seriesId, episodeId: item.episodeId }}
                 search={{ auto: true }}
+                onClick={() => maybeOpenMonetagAd()}
                 className="w-36 shrink-0 sm:w-44"
               >
                 <div className="relative aspect-poster overflow-hidden rounded-card">

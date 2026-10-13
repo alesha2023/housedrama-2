@@ -8,6 +8,7 @@ import { providerLabel } from "@/lib/drama/providers";
 import { previewPathPrefix } from "@/lib/preview-path-prefix";
 import { readWatchlist, toggleWatchlist } from "@/lib/drama/storage";
 import type { DramaCard, StreamCandidate } from "@/lib/drama/types";
+import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
 
 export const Route = createFileRoute("/shorts")({
   loader: () => getShortsData({ data: { lang: "id", page: 1 } }),
@@ -276,6 +277,7 @@ function ShortClip({
             to="/watch/$provider/$seriesId/$episodeId"
             params={{ provider: item.provider, seriesId: item.seriesId, episodeId }}
             search={{ auto: true }}
+            onClick={() => maybeOpenMonetagAd()}
             className="grid place-items-center gap-1 text-xs font-semibold"
           >
             <Play className="size-8" />

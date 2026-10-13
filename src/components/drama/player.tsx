@@ -20,6 +20,7 @@ import { previewPathPrefix } from "@/lib/preview-path-prefix";
 import { readProgress, readWatchlist, toggleWatchlist, upsertHistory, writeProgress } from "@/lib/drama/storage";
 import type { DramaCard, Episode, ProviderId, StreamCandidate, StreamPayload } from "@/lib/drama/types";
 import { cn } from "@/lib/utils";
+import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -386,6 +387,7 @@ export function Player({
   }, [autoplay, drama, episode, next]);
 
   function go(episodeId: string, auto = false) {
+    if (!auto) maybeOpenMonetagAd();
     void navigate({
       to: "/watch/$provider/$seriesId/$episodeId",
       params: { provider: drama.provider, seriesId: drama.seriesId, episodeId },
@@ -817,7 +819,7 @@ export function EpisodeGrid({
               key={item.episodeId}
               to="/watch/$provider/$seriesId/$episodeId"
               params={{ provider, seriesId, episodeId: item.episodeId }}
-              onClick={onPick}
+              onClick={() => { maybeOpenMonetagAd(); onPick?.(); }}
               className={cn(
                 "relative grid aspect-square place-items-center rounded-xl bg-[#3a3a3a] text-base font-medium text-white",
                 active && "border-2 border-[#ff4d6d]",
@@ -837,7 +839,7 @@ export function EpisodeGrid({
           key={item.episodeId}
           to="/watch/$provider/$seriesId/$episodeId"
           params={{ provider, seriesId, episodeId: item.episodeId }}
-          onClick={onPick}
+          onClick={() => { maybeOpenMonetagAd(); onPick?.(); }}
           className={cn(
             "flex h-12 items-center justify-center rounded-xl border text-sm font-semibold",
             item.episodeId === current ? "border-primary bg-primary text-primary-ink" : "border-line bg-surface text-ink",

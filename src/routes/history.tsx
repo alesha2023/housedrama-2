@@ -4,6 +4,7 @@ import { EmptyState, PageIntro, Poster, ProviderBadge } from "@/components/drama
 import { usePrefs } from "@/lib/drama/i18n";
 import { useDisplayTitles } from "@/lib/drama/display";
 import { readHistory, type HistoryEntry } from "@/lib/drama/storage";
+import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
 
 export const Route = createFileRoute("/history")({
   head: () => ({
@@ -42,6 +43,7 @@ function HistoryPage() {
                 key={`${item.provider}-${item.seriesId}-${item.episodeId}`}
                 to="/watch/$provider/$seriesId/$episodeId"
                 params={{ provider: item.provider, seriesId: item.seriesId, episodeId: item.episodeId }}
+                onClick={() => maybeOpenMonetagAd()}
                 className="flex items-center gap-3 rounded-card border border-line p-2"
               >
                 <div className="h-20 w-14 overflow-hidden rounded-xl">

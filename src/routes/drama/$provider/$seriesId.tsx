@@ -8,6 +8,7 @@ import { usePrefs } from "@/lib/drama/i18n";
 import { pickDescription, pickTitle } from "@/lib/drama/display";
 import { readWatchlist, toggleWatchlist } from "@/lib/drama/storage";
 import { isProviderId } from "@/lib/drama/types";
+import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
 
 export const Route = createFileRoute("/drama/$provider/$seriesId")({
   loader: ({ params }) => {
@@ -71,6 +72,7 @@ function DetailPage() {
               to="/watch/$provider/$seriesId/$episodeId"
               params={{ provider: drama.provider, seriesId: drama.seriesId, episodeId: first.episodeId }}
               search={{ auto: true }}
+              onClick={() => maybeOpenMonetagAd()}
               aria-label={t.start}
               className="relative block aspect-poster"
             >
@@ -110,6 +112,7 @@ function DetailPage() {
               <Link
                 to="/watch/$provider/$seriesId/$episodeId"
                 params={{ provider: drama.provider, seriesId: drama.seriesId, episodeId: first.episodeId }}
+                onClick={() => maybeOpenMonetagAd()}
                 className="inline-flex h-12 items-center rounded-full bg-primary px-5 font-semibold text-primary-ink"
               >
                 {t.start}

@@ -44,31 +44,11 @@ function WatchPage() {
   const { t } = usePrefs();
   const [detail, setDetail] = useState(initial.detail);
   const [stream, setStream] = useState(initial.stream);
-  const [adOpened, setAdOpened] = useState(false);
-  const [returnedFromAd, setReturnedFromAd] = useState(false);
-  const [canWatch, setCanWatch] = useState(false);
 
   useEffect(() => {
     setDetail(initial.detail);
     setStream(initial.stream);
-    setAdOpened(false);
-    setReturnedFromAd(false);
-    setCanWatch(false);
   }, [initial]);
-
-  useEffect(() => {
-    if (!adOpened || canWatch) return;
-    const markReturned = () => setReturnedFromAd(true);
-    window.addEventListener("focus", markReturned);
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") markReturned();
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      window.removeEventListener("focus", markReturned);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [adOpened, canWatch]);
 
   if (!isProviderId(params.provider) || !detail.drama) {
     return <EmptyState title={t.cantOpen} body={detail.error || t.missingDrama} />;
@@ -84,42 +64,6 @@ function WatchPage() {
       access: "open",
     };
 
-  if (!canWatch) {
-    return (
-      <main className="grid min-h-dvh place-items-center bg-player px-5 py-10 text-player-ink">
-        <section className="w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-center shadow-2xl sm:p-8">
-          <img src="/logo.png?v=4" alt="HouseDrama" className="mx-auto mb-5 h-12 w-auto" />
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[#ff8b9e]">HouseDrama</p>
-          <h1 className="text-2xl font-bold text-white">Satu langkah lagi sebelum menonton</h1>
-          <p className="mt-3 text-sm leading-6 text-white/70">Buka halaman sponsor terlebih dahulu. Setelah kembali ke HouseDrama, tekan tombol lanjutkan untuk membuka episode.</p>
-          <button
-            type="button"
-            onClick={() => {
-              const popup = window.open("https://uplcm.com/4/12017844", "_blank", "noopener,noreferrer");
-              setAdOpened(true);
-              if (!popup) setReturnedFromAd(false);
-            }}
-            className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[#ff4d6d] px-5 py-3 font-bold text-white transition hover:bg-[#ff6680]"
-          >
-            Buka Sponsor &amp; Lanjutkan
-          </button>
-          {adOpened ? (
-            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="text-sm text-white/75">{returnedFromAd ? "Kamu sudah kembali ke HouseDrama." : "Jika sudah kembali dari tab sponsor, lanjutkan di sini."}</p>
-              <button
-                type="button"
-                onClick={() => setCanWatch(true)}
-                className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
-              >
-                Saya sudah kembali, lanjutkan menonton
-              </button>
-            </div>
-          ) : null}
-          <p className="mt-5 text-xs leading-5 text-white/45">Catatan: tautan sponsor tidak memberi konfirmasi apakah iklan selesai ditonton. HouseDrama hanya menyediakan langkah kembali secara manual.</p>
-        </section>
-      </main>
-    );
-  }
 
   return (
     <Player drama={detail.drama} episodes={detail.episodes.length ? detail.episodes : [episode]} episode={episode} initial={stream} alsoOn={detail.alsoOn} autoStart={auto !== false} />
