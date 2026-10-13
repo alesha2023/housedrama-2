@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Clapperboard } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { DramaCard, ProviderId } from "@/lib/drama/types";
 import { usePrefs } from "@/lib/drama/i18n";
 import { pickTitle } from "@/lib/drama/display";
@@ -28,19 +28,41 @@ export function Poster({
   className?: string;
   priority?: boolean;
 }) {
-  if (!src) {
+  const [activeSrc, setActiveSrc] = useState(src);
+  const [failed, setFailed] = useState(!src);
+
+  useEffect(() => {
+    setActiveSrc(src);
+    setFailed(!src);
+  }, [src]);
+
+  function handleImageError() {
+    // Some provider posters are HEIC or intermittently fail through wsrv.nl.
+    // Try the compatible Weserv endpoint once before showing a clean fallback.
+    if (activeSrc && activeSrc.includes("wsrv.nl")) {
+      setActiveSrc(activeSrc.replace("https://wsrv.nl/", "https://images.weserv.nl/"));
+      return;
+    }
+    setFailed(true);
+  }
+
+  if (!activeSrc || failed) {
     return (
-      <div className={cn("grid place-items-center bg-surface text-muted", className)}>
+      <div className={cn("grid place-items-center bg-surface text-muted", className)} role="img" aria-label={alt}>
         <Clapperboard className="size-8" aria-hidden="true" />
         <span className="sr-only">{alt}</span>
       </div>
     );
   }
+
   return (
     <img
-      src={src}
+      src={activeSrc}
       alt={alt}
       loading={priority ? "eager" : "lazy"}
+      decoding="async"
+      referrerPolicy="no-referrer"
+      onError={handleImageError}
       className={cn("h-full w-full object-cover", className)}
     />
   );
