@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { AuthProvider } from "@/lib/auth/provider";
@@ -46,6 +47,19 @@ export const Route = createRootRoute({
   component: RootLayout,
 });
 
+function AdsterraSocialBar() {
+  useEffect(() => {
+    if (document.querySelector('script[data-housedrama-adsterra="social-bar"]')) return;
+    const script = document.createElement("script");
+    script.async = true;
+    script.dataset.housedramaAdsterra = "social-bar";
+    script.setAttribute("data-cfasync", "false");
+    script.src = "https://bancadeltempoidea.org/14/5808bda18c6576e92ccd7bab89448cc3";
+    document.body.appendChild(script);
+  }, []);
+  return null;
+}
+
 function RootLayout() {
   const { lang } = Route.useLoaderData();
   return (
@@ -61,6 +75,7 @@ function RootLayout() {
           }}
         />
         <PreviewHostBridge />
+        <AdsterraSocialBar />
         <AuthProvider>
           <PrefsProvider initialLang={lang}>
             <Shell>
