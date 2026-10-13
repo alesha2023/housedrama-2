@@ -816,14 +816,16 @@ export function Player({
           <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#1b1b20] p-6 text-center text-white shadow-2xl">
             <img src="/logo.png?v=4" alt="HouseDrama" className="mx-auto mb-5 h-12 w-auto" />
             <h2 className="text-2xl font-bold">Lanjutkan episode berikutnya</h2>
-            <p className="mt-3 text-sm leading-6 text-white/70">Iklan sponsor mungkin terbuka di tab baru. Setelah itu, lanjutkan menonton episode berikutnya.</p>
+            <p className="mt-3 text-sm leading-6 text-white/70">Tekan tombol di bawah untuk membuka iklan sponsor di tab baru, lalu episode berikutnya akan dilanjutkan.</p>
             <button
               type="button"
-              className="mt-6 w-full rounded-full bg-[#ff4d6d] px-5 py-4 font-bold text-white disabled:cursor-wait disabled:opacity-60"
-              disabled={!adsterraReady}
+              className="mt-6 w-full rounded-full bg-[#ff4d6d] px-5 py-4 font-bold text-white"
               onClick={() => {
-                if (!adsterraReady) return;
                 const target = pendingAdEpisodeId;
+                if (!target) return;
+                // Open Smartlink directly inside the user's click gesture so
+                // browser popup blockers are less likely to suppress it.
+                window.open("https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2", "_blank", "noopener,noreferrer");
                 setPendingAdEpisodeId(null);
                 void navigate({
                   to: "/watch/$provider/$seriesId/$episodeId",
@@ -832,7 +834,7 @@ export function Player({
                 });
               }}
             >
-              {adsterraReady ? "Lanjutkan & Buka Iklan" : "Menyiapkan iklan…"}
+              Lanjutkan & Buka Iklan
             </button>
           </div>
         </div>
