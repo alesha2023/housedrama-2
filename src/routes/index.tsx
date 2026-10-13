@@ -19,13 +19,20 @@ export const Route = createFileRoute("/")({
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
-      { title: "HouseDrama — Drama China Gratis" },
+      { name: "robots", content: "index,follow,max-image-preview:large" },
+      { title: "HouseDrama — Nonton Drama China Pendek Subtitle Indonesia" },
       {
         name: "description",
         content:
-          "Jelajahi drama China pendek populer, terbaru, dan tamat. Temukan cerita favoritmu dan tonton episode di HouseDrama.",
+          "Nonton drama China pendek subtitle Indonesia di HouseDrama. Jelajahi drama romantis, kisah CEO, drama terbaru, dan episode favoritmu.",
       },
+      { property: "og:title", content: "HouseDrama — Nonton Drama China Pendek Subtitle Indonesia" },
+      { property: "og:description", content: "Jelajahi drama China pendek subtitle Indonesia, kisah romantis, dan drama CEO di HouseDrama." },
+      { property: "og:url", content: "https://house-drama.web.id/" },
+      { property: "og:image", content: "https://house-drama.web.id/og.jpg" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/" }],
   }),
   component: HomePage,
 });

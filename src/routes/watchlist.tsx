@@ -9,8 +9,8 @@ import { readWatchlist, toggleWatchlist, type SavedDrama } from "@/lib/drama/sto
 export const Route = createFileRoute("/watchlist")({
   head: () => ({
     meta: [
-      { title: "Watchlist — HouseDrama" },
-      { name: "description", content: "Dramas you saved in this browser." },
+      { title: "Daftar Tontonan — HouseDrama" },
+      { name: "robots", content: "noindex,follow" },
     ],
   }),
   component: WatchlistPage,

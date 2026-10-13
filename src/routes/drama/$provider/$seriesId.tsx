@@ -16,18 +16,34 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
     return getDetailData({ data: { provider: params.provider, seriesId: params.seriesId, lang: "id" } });
   },
   pendingComponent: PageSkeleton,
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: loaderData?.drama ? `${loaderData.drama.title} — HouseDrama` : "Drama — HouseDrama" },
-      {
-        name: "description",
-        content: loaderData?.drama?.displayDescription || loaderData?.drama?.description || "Drama details and episode list from the original provider.",
-      },
-      ...(loaderData?.drama?.originalTitle
-        ? [{ name: "keywords", content: `${loaderData.drama.originalTitle}, ${loaderData.drama.title}` }]
-        : []),
-    ],
-  }),
+  head: ({ loaderData, params }) => {
+    const drama = loaderData?.drama;
+    const title = drama ? `${drama.displayTitle || drama.title} — Nonton Drama di HouseDrama` : "Drama China — HouseDrama";
+    const description = (drama?.displayDescription || drama?.description || `Tonton ${drama?.displayTitle || drama?.title || "drama China"} dan lihat daftar episode di HouseDrama.`).replace(/\s+/g, " ").slice(0, 300);
+    const canonical = `https://house-drama.web.id/drama/${encodeURIComponent(params.provider)}/${encodeURIComponent(params.seriesId)}`;
+    const image = drama?.posterUrl || "https://house-drama.web.id/og.jpg";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { name: "robots", content: "index,follow,max-image-preview:large" },
+        { property: "og:type", content: "video.tv_show" },
+        { property: "og:site_name", content: "HouseDrama" },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: canonical },
+        { property: "og:image", content: image },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: image },
+        ...(drama?.originalTitle && drama.originalTitle !== drama.title
+          ? [{ name: "keywords", content: `${drama.originalTitle}, ${drama.displayTitle || drama.title}, drama China subtitle Indonesia` }]
+          : [{ name: "keywords", content: `${drama?.displayTitle || drama?.title || "drama China"}, drama China subtitle Indonesia` }]),
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+    };
+  },
   component: DetailPage,
 });
 

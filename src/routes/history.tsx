@@ -9,8 +9,8 @@ import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
 export const Route = createFileRoute("/history")({
   head: () => ({
     meta: [
-      { title: "Watch history — HouseDrama" },
-      { name: "description", content: "Episodes you recently watched in this browser." },
+      { title: "Riwayat Tontonan — HouseDrama" },
+      { name: "robots", content: "noindex,follow" },
     ],
   }),
   component: HistoryPage,

@@ -25,12 +25,13 @@ export const Route = createFileRoute("/watch/$provider/$seriesId/$episodeId")({
     meta: [
       {
         title: loaderData?.detail.drama
-          ? `Watch ${loaderData.detail.drama.title} — HouseDrama`
-          : "Watch — HouseDrama",
+          ? `Tonton ${loaderData.detail.drama.displayTitle || loaderData.detail.drama.title} — HouseDrama`
+          : "Tonton Drama — HouseDrama",
       },
+      { name: "robots", content: "noindex,follow" },
       {
         name: "description",
-        content: `Episode ${params.episodeId} from the ${params.provider} catalog.`,
+        content: `Tonton episode ${params.episodeId} di HouseDrama. Buka halaman detail drama untuk melihat informasi dan daftar episode.`,
       },
     ],
   }),

@@ -27,8 +27,9 @@ export const Route = createFileRoute("/search")({
     }),
   head: () => ({
     meta: [
-      { title: "Search short dramas — HouseDrama" },
-      { name: "description", content: "Search AnyReel, DramaBox, and FreeReels at the same time." },
+      { title: "Cari Drama China — HouseDrama" },
+      { name: "description", content: "Cari judul drama China pendek di katalog HouseDrama." },
+      { name: "robots", content: "noindex,follow" },
     ],
   }),
   component: SearchPage,
