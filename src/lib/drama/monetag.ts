@@ -35,34 +35,3 @@ export function maybeOpenMonetagAd() {
   if (due) openMonetagAd();
   return due;
 }
-
-
-const ADSTERRA_POPUNDER_SRC = "https://aarems.org/1/c3385b36514c59f43edafef236388eff";
-const ADSTERRA_EPISODE_COUNT_KEY = "housedrama.adsterra.episode-count.v1";
-
-/** Count episode transitions and request Adsterra on every third transition. */
-export function recordAdsterraEpisodeAction() {
-  if (typeof window === "undefined") return false;
-  let count = 0;
-  try {
-    count = Number(window.localStorage.getItem(ADSTERRA_EPISODE_COUNT_KEY) || "0");
-    if (!Number.isFinite(count) || count < 0) count = 0;
-    count += 1;
-    window.localStorage.setItem(ADSTERRA_EPISODE_COUNT_KEY, String(count));
-  } catch {
-    return false;
-  }
-  return count % 3 === 0;
-}
-
-/** Load the publisher-provided Popunder script after an explicit user tap. */
-export function requestAdsterraPopunder() {
-  if (typeof window === "undefined") return;
-  const existing = document.querySelector(`script[src="${ADSTERRA_POPUNDER_SRC}"]`);
-  if (existing) return;
-  const script = document.createElement("script");
-  script.async = true;
-  script.dataset.cfasync = "false";
-  script.src = ADSTERRA_POPUNDER_SRC;
-  document.body.appendChild(script);
-}

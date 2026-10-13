@@ -241,11 +241,5 @@
 video::cue {
   background: rgb(0 0 0 / 0.55);
   color: #fff;
-  font-size: 55%;
-}
-
-
-/* Subtitle only: keep the original player layout and controls unchanged. */
-video::cue {
-  font-size: 20%;
+  font-size: 2%;
 }
