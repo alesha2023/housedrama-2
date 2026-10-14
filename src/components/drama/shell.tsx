@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { Hash } from "lucide-react";
 import { Clock3, Compass, House, Menu, Search, Sparkles, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { CONTENT_LANGS, UI_LANGS, usePrefs } from "@/lib/drama/i18n";
@@ -188,9 +189,13 @@ export function Shell({ children }: { children: ReactNode }) {
                   key={topic.label}
                   to={topic.rail === "latest" ? "/latest" : "/discover"}
                   search={topic.rail === "latest" ? undefined : { rail: topic.rail }}
-                  className="rounded-full border border-line bg-white/70 px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary hover:text-primary"
+                  className="inline-flex items-center gap-2 rounded-full border border-line bg-white/80 px-3 py-1.5 text-xs text-muted shadow-sm transition-colors hover:border-primary hover:text-primary"
                 >
-                  {topic.label}
+                  <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
+                    <Hash className="size-3.5" />
+                  </span>
+                  <span>{topic.label}</span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">Topik</span>
                 </Link>
               ))}
             </div>
