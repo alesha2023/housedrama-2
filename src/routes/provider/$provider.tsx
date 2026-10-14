@@ -12,12 +12,24 @@ export const Route = createFileRoute("/provider/$provider")({
     return getBrowseData({ data: { lang: "id", provider, page: 1, rail: null } });
   },
   pendingComponent: PageSkeleton,
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.provider} catalog — HouseDrama` },
-      { name: "description", content: `Dramas currently available from ${params.provider}.` },
-    ],
-  }),
+  head: ({ params }) => {
+    const labels: Record<string, string> = {
+      anyreel: "AnyReel", dramabox: "DramaBox", freereels: "FreeReels", melolo: "Melolo",
+    };
+    const label = labels[params.provider] || params.provider;
+    const canonical = `https://house-drama.web.id/provider/${encodeURIComponent(params.provider)}`;
+    return {
+      meta: [
+        { title: `Drama ${label} Subtitle Indonesia — HouseDrama` },
+        { name: "description", content: `Jelajahi daftar drama ${label} di HouseDrama. Temukan sinopsis, informasi serial, dan episode drama pendek untuk ditonton.` },
+        { name: "robots", content: "index,follow" },
+        { property: "og:title", content: `Drama ${label} Subtitle Indonesia — HouseDrama` },
+        { property: "og:description", content: `Jelajahi daftar drama ${label}, sinopsis, dan episode di HouseDrama.` },
+        { property: "og:url", content: canonical },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+    };
+  },
   component: ProviderPage,
 });
 

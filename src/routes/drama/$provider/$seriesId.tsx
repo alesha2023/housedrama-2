@@ -18,16 +18,35 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
   pendingComponent: PageSkeleton,
   head: ({ loaderData, params }) => {
     const drama = loaderData?.drama;
-    const title = drama ? `${drama.displayTitle || drama.title} — Nonton Drama di HouseDrama` : "Drama China — HouseDrama";
-    const description = (drama?.displayDescription || drama?.description || `Tonton ${drama?.displayTitle || drama?.title || "drama China"} dan lihat daftar episode di HouseDrama.`).replace(/\s+/g, " ").slice(0, 300);
+    const dramaTitle = (drama?.displayTitle || drama?.title || "Drama China").replace(/\s+/g, " ").trim();
+    const title = drama
+      ? `${dramaTitle} — Sinopsis & Episode Subtitle Indonesia | HouseDrama`
+      : "Drama tidak tersedia — HouseDrama";
+    const sourceDescription = (drama?.displayDescription || drama?.description || "").replace(/\s+/g, " ").trim();
+    const description = (drama
+      ? `${sourceDescription ? `${sourceDescription} ` : `Tonton ${dramaTitle} di HouseDrama. `}Lihat sinopsis, informasi serial, dan daftar episode drama subtitle Indonesia.`
+      : "Informasi drama ini sementara tidak tersedia di HouseDrama.").slice(0, 300);
     const canonical = `https://house-drama.web.id/drama/${encodeURIComponent(params.provider)}/${encodeURIComponent(params.seriesId)}`;
-    const image = drama?.posterUrl || "https://house-drama.web.id/og.jpg";
+    // Keep image metadata absolute. If a provider URL is a wsrv.nl wrapper,
+    // unwrap it so Google/social crawlers are not sent to a proxy blocked by robots.txt.
+    let image = drama?.posterUrl || "https://house-drama.web.id/og.jpg";
+    try {
+      const parsedImage = new URL(image);
+      if (parsedImage.hostname === "wsrv.nl" || parsedImage.hostname === "images.weserv.nl") {
+        const original = parsedImage.searchParams.get("url");
+        if (original && /^https?:\/\//i.test(original)) image = original;
+      }
+    } catch {
+      image = "https://house-drama.web.id/og.jpg";
+    }
     return {
       meta: [
         { title },
         { name: "description", content: description },
-        { name: "robots", content: drama ? "index,follow,max-image-preview:large" : "noindex,follow" },
+        { name: "robots", content: drama && (drama.displayTitle || drama.title) ? "index,follow,max-image-preview:large" : "noindex,follow" },
+        { name: "googlebot", content: drama ? "index,follow,max-image-preview:large" : "noindex,follow" },
         { property: "og:type", content: "video.tv_show" },
+        { property: "og:locale", content: "id_ID" },
         { property: "og:site_name", content: "HouseDrama" },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
@@ -180,6 +199,12 @@ function DetailPage() {
           </div>
         </div>
       </div>
+      <nav aria-label="Jelajahi drama lainnya" className="mt-8 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+        <Link to="/discover" className="text-primary underline underline-offset-4">Jelajahi semua drama</Link>
+        <Link to="/provider/$provider" params={{ provider: drama.provider }} className="text-primary underline underline-offset-4">Drama lainnya dari {drama.provider}</Link>
+        <Link to="/trending" className="text-primary underline underline-offset-4">Drama populer</Link>
+        <Link to="/latest" className="text-primary underline underline-offset-4">Drama terbaru</Link>
+      </nav>
       <section className="mt-8">
         <h2 className="mb-3 text-2xl">{t.episodes}</h2>
         {data.episodes.length ? (

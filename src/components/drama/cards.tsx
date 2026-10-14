@@ -9,6 +9,20 @@ import { cn } from "@/lib/utils";
 
 export { providerLabel };
 
+function directPosterSource(value: string | null) {
+  if (!value) return null;
+  try {
+    const parsed = new URL(value);
+    if (parsed.hostname === "wsrv.nl" || parsed.hostname === "images.weserv.nl") {
+      const original = parsed.searchParams.get("url");
+      if (original && /^https?:\/\//i.test(original)) return original;
+    }
+  } catch {
+    return value;
+  }
+  return value;
+}
+
 export function ProviderBadge({ provider, className }: { provider: ProviderId; className?: string }) {
   return (
     <span className={cn("rounded-full bg-ink/75 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white backdrop-blur", className)}>
@@ -28,19 +42,19 @@ export function Poster({
   className?: string;
   priority?: boolean;
 }) {
-  const [activeSrc, setActiveSrc] = useState(src);
+  const [activeSrc, setActiveSrc] = useState(directPosterSource(src));
   const [failed, setFailed] = useState(!src);
 
   useEffect(() => {
-    setActiveSrc(src);
+    setActiveSrc(directPosterSource(src));
     setFailed(!src);
   }, [src]);
 
   function handleImageError() {
-    // Some provider posters are HEIC or intermittently fail through wsrv.nl.
-    // Try the compatible Weserv endpoint once before showing a clean fallback.
-    if (activeSrc && activeSrc.includes("wsrv.nl")) {
-      setActiveSrc(activeSrc.replace("https://wsrv.nl/", "https://images.weserv.nl/"));
+    // Retry through the image optimizer only when the original provider URL fails.
+    // This keeps the original URL as the first choice for Googlebot and social crawlers.
+    if (activeSrc && !activeSrc.includes("wsrv.nl") && !activeSrc.includes("images.weserv.nl")) {
+      setActiveSrc(`https://images.weserv.nl/?url=${encodeURIComponent(activeSrc)}`);
       return;
     }
     setFailed(true);
