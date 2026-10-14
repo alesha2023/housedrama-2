@@ -120,22 +120,22 @@ function PwaInstallPrompt() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="pwa-install-title">
-      <div className="relative w-full max-w-sm rounded-3xl border border-line bg-surface p-5 text-ink shadow-2xl sm:p-6">
-        <button type="button" onClick={dismiss} aria-label="Tutup popup" className="absolute right-3 top-3 grid size-9 place-items-center rounded-full text-muted hover:bg-surface-2">
+      <div className="relative w-full max-w-xs rounded-2xl border border-line bg-surface p-4 text-ink shadow-2xl">
+        <button type="button" onClick={dismiss} aria-label="Tutup popup" className="absolute right-2 top-2 grid size-8 place-items-center rounded-full text-muted hover:bg-surface-2">
           <X className="size-5" />
         </button>
-        <div className="mx-auto mb-4 grid size-16 place-items-center rounded-2xl bg-primary/12 text-primary">
-          <House className="size-8" />
+        <div className="mx-auto mb-3 grid size-12 place-items-center rounded-xl bg-primary/12 text-primary">
+          <House className="size-6" />
         </div>
-        <h2 id="pwa-install-title" className="text-center text-xl font-bold">Pasang HouseDrama</h2>
-        <p className="mt-2 text-center text-sm leading-6 text-muted">
+        <h2 id="pwa-install-title" className="text-center text-lg font-bold">Pasang HouseDrama</h2>
+        <p className="mt-1.5 text-center text-sm leading-5 text-muted">
           Tambahkan HouseDrama seperti aplikasi agar lebih mudah dibuka dari layar utama HP.
         </p>
-        <button type="button" onClick={() => { void (async () => { try { await installPrompt.prompt(); await installPrompt.userChoice; dismiss(); } catch { dismiss(); } })(); }} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 font-semibold text-white shadow-sm transition hover:opacity-90">
-          <Download className="size-5" />
+        <button type="button" onClick={() => { void (async () => { try { await installPrompt.prompt(); await installPrompt.userChoice; dismiss(); } catch { dismiss(); } })(); }} className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+          <Download className="size-4" />
           Pasang HouseDrama
         </button>
-        <button type="button" onClick={dismiss} className="mt-3 w-full rounded-full px-4 py-3 text-sm font-medium text-muted hover:bg-surface-2">
+        <button type="button" onClick={dismiss} className="mt-2 w-full rounded-full px-4 py-2 text-sm font-medium text-muted hover:bg-surface-2">
           Nanti saja
         </button>
       </div>
@@ -175,7 +175,8 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className={cn("min-h-dvh", watching ? "bg-player text-player-ink" : shorts ? "bg-black text-white" : "page-bg text-ink")}>
-      <BootSplash />\n      <PwaInstallPrompt />
+      <BootSplash />
+      <PwaInstallPrompt />
       {watching || shorts ? null : (
       <header className="sticky top-0 z-40 border-b border-line/70 bg-white/75 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
