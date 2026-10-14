@@ -1,5 +1,4 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Hash } from "lucide-react";
 import { Clock3, Compass, House, Menu, Search, Sparkles, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { CONTENT_LANGS, UI_LANGS, usePrefs } from "@/lib/drama/i18n";
@@ -13,6 +12,51 @@ const LINKS = [
   { to: "/trending", key: "trending" },
   { to: "/categories", key: "categories" },
 ] as const;
+
+function VisitorCounter() {
+  const [counts, setCounts] = useState<{ total: number; today: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const update = async () => {
+      try {
+        let visitorId = window.localStorage.getItem("housedrama_visitor_id");
+        if (!visitorId) {
+          visitorId = typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `hd-${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+          window.localStorage.setItem("housedrama_visitor_id", visitorId);
+        }
+        const response = await fetch("/api/visitor-count", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ visitorId }),
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as { total: number; today: number };
+        if (!cancelled && Number.isFinite(data.total) && Number.isFinite(data.today)) setCounts(data);
+      } catch {
+        // Keep the footer clean when storage or the counter service is unavailable.
+      }
+    };
+    void update();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (!counts) {
+    return (
+      <p className="text-xs text-muted" role="status">
+        Statistik pengunjung belum tersedia.
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted" aria-label="Statistik pengunjung">
+      <span>Pengunjung: <strong className="font-semibold text-ink">{counts.total.toLocaleString("id-ID")}</strong></span>
+      <span>Hari ini: <strong className="font-semibold text-ink">{counts.today.toLocaleString("id-ID")}</strong></span>
+    </div>
+  );
+}
 
 export function Shell({ children }: { children: ReactNode }) {
   const { t, uiLang, setUiLang, contentLang, setContentLang } = usePrefs();
@@ -189,17 +233,14 @@ export function Shell({ children }: { children: ReactNode }) {
                   key={topic.label}
                   to={topic.rail === "latest" ? "/latest" : "/discover"}
                   search={topic.rail === "latest" ? undefined : { rail: topic.rail }}
-                  className="inline-flex items-center gap-2 rounded-full border border-line bg-white/80 px-3 py-1.5 text-xs text-muted shadow-sm transition-colors hover:border-primary hover:text-primary"
+                  className="rounded-full border border-line bg-white/70 px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary hover:text-primary"
                 >
-                  <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
-                    <Hash className="size-3.5" />
-                  </span>
-                  <span>{topic.label}</span>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">Topik</span>
+                  {topic.label}
                 </Link>
               ))}
             </div>
           </section>
+          <VisitorCounter />
           <p className="max-w-md text-xs leading-relaxed text-muted">{t.footerNote}</p>
           <p className="text-[11px] text-muted">HouseDrama · Katalog drama pendek dari berbagai penyedia</p>
         </div>
