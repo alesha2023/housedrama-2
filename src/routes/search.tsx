@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DramaGrid, EmptyState, ErrorNote, PageIntro } from "@/components/drama/cards";
 import { ProviderPicker } from "@/components/drama/provider-picker";
@@ -83,14 +83,17 @@ function SearchPage() {
   async function more() {
     const nextPage = page + 1;
     setLoading(true);
-    const next = await getSearchData({ data: { q: query, lang: "id", provider, page: nextPage } });
-    setData((current) => ({
-      ...next,
-      items: [...current.items, ...next.items],
-      suggestions: current.suggestions,
-    }));
-    setPage(nextPage);
-    setLoading(false);
+    try {
+      const next = await getSearchData({ data: { q: query, lang: "id", provider, page: nextPage } });
+      setData((current) => ({
+        ...next,
+        items: [...current.items, ...next.items],
+        suggestions: current.suggestions,
+      }));
+      setPage(nextPage);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -111,8 +114,9 @@ function SearchPage() {
             className="h-12 min-w-0 flex-1 rounded-full border border-line bg-white px-5"
             aria-label={t.search}
           />
-          <button type="submit" disabled={loading} className="h-12 shrink-0 rounded-full bg-primary px-5 font-semibold text-primary-ink disabled:opacity-60">
-            {t.search}
+          <button type="submit" disabled={loading} className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 font-semibold text-primary-ink disabled:opacity-60" aria-busy={loading}>
+            {loading ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : null}
+            {loading ? t.searching : t.search}
           </button>
         </div>
         <ProviderPicker
@@ -141,7 +145,7 @@ function SearchPage() {
       {loading && !data.items.length ? <p className="mt-6 text-sm text-muted">{t.searching}</p> : null}
       {data.items.length ? (
         <DramaGrid items={data.items} />
-      ) : query ? (
+      ) : query && !loading ? (
         <EmptyState title={t.noMatches} body={t.noMatchesBody} />
       ) : null}
       {data.hasMore && query ? (

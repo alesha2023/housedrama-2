@@ -515,9 +515,22 @@ export async function loadSearch(input: {
   const queries = [q, ...englishQueriesFor(q).filter((item) => item.toLowerCase() !== q.toLowerCase())].slice(0, 2);
   const pages = await Promise.all(queries.map((query, index) => searchProviders(query, input.lang, index === 0 ? page : 1, want)));
   const items = dedupe(pages.flatMap((result) => result.items));
-  const hasMore = pages.some((result) => result.hasMore);
+  const localizedItems = await localizeCards(items, input.lang, false);
+  // Provider search endpoints can sometimes return trending/recommended items unrelated to the query.
+  // Keep only titles with meaningful overlap so unrelated dramas are not presented as search matches.
+  const normalizedQuery = normTitle(q);
+  const queryTokens = normalizedQuery.split(/\\s+/).filter((token) => token.length >= 2);
+  const matchedItems = localizedItems.filter((item) => {
+    const title = normTitle(item.originalTitle || item.title);
+    if (!title) return false;
+    if (title.includes(normalizedQuery) || normalizedQuery.includes(title)) return true;
+    const titleTokens = new Set(title.split(/\\s+/).filter((token) => token.length >= 2));
+    const matches = queryTokens.filter((token) => titleTokens.has(token)).length;
+    return queryTokens.length > 0 && matches >= Math.max(1, Math.ceil(queryTokens.length * 0.4));
+  });
+  const hasMore = pages.some((result) => result.hasMore) && matchedItems.length > 0;
   return {
-    items: await localizeCards(items, input.lang, false),
+    items: matchedItems,
     suggestions: [],
     providers: pages[0]?.providers ?? [],
     page,

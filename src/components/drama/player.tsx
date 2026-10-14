@@ -20,7 +20,6 @@ import { previewPathPrefix } from "@/lib/preview-path-prefix";
 import { readProgress, readWatchlist, toggleWatchlist, upsertHistory, writeProgress } from "@/lib/drama/storage";
 import type { DramaCard, Episode, ProviderId, StreamCandidate, StreamPayload } from "@/lib/drama/types";
 import { cn } from "@/lib/utils";
-import { loadAdsterraPopunder } from "@/lib/drama/monetag";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -86,8 +85,6 @@ export function Player({
   const [saved, setSaved] = useState(false);
   const [autoplay, setAutoplay] = useState(true);
   const [retrying, setRetrying] = useState(false);
-  const [pendingAdEpisodeId, setPendingAdEpisodeId] = useState<string | null>(null);
-  const [adsterraReady, setAdsterraReady] = useState(false);
   const candidate = payload.candidates[index] ?? null;
   const currentIndex = episodes.findIndex((item) => item.episodeId === episode.episodeId);
   const previous = currentIndex > 0 ? episodes[currentIndex - 1] : null;
@@ -388,26 +385,13 @@ export function Player({
     };
   }, [autoplay, drama, episode, next]);
 
-  useEffect(() => {
-    if (!pendingAdEpisodeId) {
-      setAdsterraReady(false);
-      return;
-    }
-    let active = true;
-    void loadAdsterraPopunder().then((loaded) => {
-      if (active) setAdsterraReady(loaded);
-    });
-    return () => { active = false; };
-  }, [pendingAdEpisodeId]);
 
   function go(episodeId: string, auto = false) {
-    // Gate the NEXT episode after each group of three completed/current episodes.
-    // Do not fire Monetag here: Monetag belongs to starting a drama from the catalog.
+    // Trigger Smartlink on the user's episode-navigation click at each 3-episode boundary,
+    // but never block navigation behind an ad gate. Browser may block popups during autoplay.
     const isThirdEpisodeBoundary = currentIndex >= 0 && (currentIndex + 1) % 3 === 0;
-    if (isThirdEpisodeBoundary) {
-      setAdsterraReady(false);
-      setPendingAdEpisodeId(episodeId);
-      return;
+    if (isThirdEpisodeBoundary && !auto) {
+      window.open("https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2", "_blank", "noopener,noreferrer");
     }
     void navigate({
       to: "/watch/$provider/$seriesId/$episodeId",
@@ -811,34 +795,7 @@ export function Player({
           </div>
         </div>
       ) : null}
-      {pendingAdEpisodeId ? (
-        <div className="absolute inset-0 z-[100] grid place-items-center bg-black/80 p-5 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#1b1b20] p-6 text-center text-white shadow-2xl">
-            <img src="/logo.png?v=4" alt="HouseDrama" className="mx-auto mb-5 h-12 w-auto" />
-            <h2 className="text-2xl font-bold">Lanjutkan episode berikutnya</h2>
-            <p className="mt-3 text-sm leading-6 text-white/70">Tekan tombol di bawah untuk membuka iklan sponsor di tab baru, lalu episode berikutnya akan dilanjutkan.</p>
-            <button
-              type="button"
-              className="mt-6 w-full rounded-full bg-[#ff4d6d] px-5 py-4 font-bold text-white"
-              onClick={() => {
-                const target = pendingAdEpisodeId;
-                if (!target) return;
-                // Open Smartlink directly inside the user's click gesture so
-                // browser popup blockers are less likely to suppress it.
-                window.open("https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2", "_blank", "noopener,noreferrer");
-                setPendingAdEpisodeId(null);
-                void navigate({
-                  to: "/watch/$provider/$seriesId/$episodeId",
-                  params: { provider: drama.provider, seriesId: drama.seriesId, episodeId: target },
-                  search: { auto: true, lang: contentLang },
-                });
-              }}
-            >
-              Lanjutkan & Buka Iklan
-            </button>
-          </div>
-        </div>
-      ) : null}
+
     </div>
   );
 }
