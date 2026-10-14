@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Clock3, Compass, House, Menu, Search, Sparkles, X } from "lucide-react";
+import { Clock3, Compass, House, Menu, Search, Sparkles, UserRound, Users, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { CONTENT_LANGS, UI_LANGS, usePrefs } from "@/lib/drama/i18n";
 import { Logo } from "./logo";
@@ -43,18 +43,27 @@ function VisitorCounter() {
     return () => { cancelled = true; };
   }, []);
 
-  if (!counts) {
-    return (
-      <p className="text-xs text-muted" role="status">
-        Statistik pengunjung belum tersedia.
-      </p>
-    );
-  }
+  if (!counts) return null;
+  const stats = [
+    { label: "Total pengunjung", value: counts.total, Icon: Users },
+    { label: "Pengunjung hari ini", value: counts.today, Icon: UserRound },
+  ];
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted" aria-label="Statistik pengunjung">
-      <span>Pengunjung: <strong className="font-semibold text-ink">{counts.total.toLocaleString("id-ID")}</strong></span>
-      <span>Hari ini: <strong className="font-semibold text-ink">{counts.today.toLocaleString("id-ID")}</strong></span>
-    </div>
+    <section className="mx-auto grid w-full max-w-md grid-cols-2 gap-3 py-2" aria-label="Statistik pengunjung">
+      {stats.map(({ label, value, Icon }) => (
+        <div key={label} className="flex min-w-0 items-center gap-3 rounded-2xl border border-primary/15 bg-white/75 p-3 shadow-sm">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Icon className="size-5" aria-hidden="true" />
+          </span>
+          <span className="min-w-0">
+            <strong className="block text-lg font-bold leading-tight tabular-nums text-primary">
+              {value.toLocaleString("id-ID")}
+            </strong>
+            <span className="mt-1 block text-[11px] leading-tight text-muted">{label}</span>
+          </span>
+        </div>
+      ))}
+    </section>
   );
 }
 
