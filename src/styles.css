@@ -238,8 +238,13 @@
   100% { transform: translateX(280%); }
 }
 
+/* Subtitle styling: readable and restrained on mobile and desktop.
+   This affects selectable WebVTT/HTML video tracks, not text burned into the video. */
 video::cue {
-  background: rgb(0 0 0 / 0.55);
+  background: rgba(0, 0, 0, 0.32);
   color: #fff;
-  font-size: 5%;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 2.6%;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
