@@ -772,12 +772,9 @@ export function Player({
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/65 p-5" role="dialog" aria-modal="true" aria-label="Iklan">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 text-center text-[#242424] shadow-2xl">
             <h2 className="text-lg font-bold">Dukung HouseDrama</h2>
-            <p className="mt-2 text-sm text-gray-600">Kamu bisa membuka iklan sebelum melanjutkan episode berikutnya.</p>
-            <button type="button" className="mt-4 w-full rounded-xl bg-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => { window.open("https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2", "_blank", "noopener,noreferrer"); }}>
-              Buka Iklan
-            </button>
-            <button type="button" className="mt-2 w-full rounded-xl bg-gray-100 px-4 py-3 font-semibold text-gray-800" onClick={continuePendingEpisode}>
-              Lanjutkan Episode
+            <p className="mt-2 text-sm text-gray-600">Klik sponsor untuk membuka iklan dan melanjutkan episode berikutnya.</p>
+            <button type="button" className="mt-4 w-full rounded-xl bg-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => { window.open("https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2", "_blank", "noopener,noreferrer"); continuePendingEpisode(); }}>
+              Buka Sponsor &amp; Lanjutkan Episode
             </button>
           </div>
         </div>
