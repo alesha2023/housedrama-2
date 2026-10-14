@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { DramaGrid, EmptyState, ErrorNote, PageIntro, PageSkeleton } from "@/components/drama/cards";
+import { SeoItemList } from "@/components/drama/seo-item-list";
 import { getBrowseData } from "@/lib/drama/api";
 import { railTitle, usePrefs } from "@/lib/drama/i18n";
 import type { BrowsePayload } from "@/lib/drama/types";
@@ -14,9 +15,14 @@ export const Route = createFileRoute("/discover")({
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
-      { title: "Discover short dramas — HouseDrama" },
-      { name: "description", content: "Browse Chinese short dramas from AnyReel, DramaBox, and FreeReels." },
+      { title: "Jelajahi Drama China Pendek Subtitle Indonesia — HouseDrama" },
+      { name: "description", content: "Jelajahi koleksi drama China pendek subtitle Indonesia dari berbagai provider. Temukan drama romantis, CEO, balas dendam, fantasi, dan lainnya." },
+      { name: "robots", content: "index,follow,max-image-preview:large" },
+      { property: "og:title", content: "Jelajahi Drama China Pendek — HouseDrama" },
+      { property: "og:description", content: "Temukan drama berdasarkan genre dan tema favoritmu di HouseDrama." },
+      { property: "og:url", content: "https://house-drama.web.id/discover" },
     ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/discover" }],
   }),
   component: DiscoverPage,
 });
@@ -52,6 +58,7 @@ function DiscoverPage() {
   return (
     <div>
       <PageIntro eyebrow="HouseDrama" title={title} description={t.discoverBody} />
+      <SeoItemList items={data.items} name={title} />
       <div className="mt-4">
         {data.providers.some((item) => !item.ok) ? <ErrorNote message={t.providersDown} /> : null}
       </div>

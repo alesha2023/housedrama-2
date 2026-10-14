@@ -607,9 +607,14 @@ export async function loadSearch(input: {
     }
   }
   const hasMore = pages.some((result) => result.hasMore) && matchedItems.length > 0;
+  // Return title suggestions for the autocomplete UI as well as full results.
+  // Suggestions are drawn only from matched catalog results, not invented titles.
+  const suggestions = page === 1
+    ? [...new Set(matchedItems.slice(0, 8).map((item) => (item.displayTitle || item.title || "").trim()).filter(Boolean))]
+    : [];
   return {
     items: matchedItems,
-    suggestions: [],
+    suggestions,
     providers: pages[0]?.providers ?? [],
     page,
     hasMore,

@@ -142,8 +142,12 @@ export function Player({
     setDuration(null);
 
     const remember = () => {
-      if (!autoStart && saved > 3 && (!video.duration || saved < video.duration - 4)) {
-        video.currentTime = saved;
+      // Restore this episode's own saved position even when autoplay is enabled.
+      // If there is no valid saved position, start the newly selected episode at 0.
+      if (saved > 3 && (!video.duration || saved < video.duration - 4)) {
+        try { video.currentTime = saved; } catch { /* wait for metadata */ }
+      } else {
+        try { video.currentTime = 0; } catch { /* wait for metadata */ }
       }
     };
 
@@ -328,8 +332,8 @@ export function Player({
     const tryPlay = async () => {
       if (cancelled || started || video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) return;
       started = true;
-      // A new episode must never inherit the previous episode's seek position.
-      try { video.currentTime = 0; } catch { /* metadata may still be settling */ }
+      // Position is set by the metadata handler: resume saved progress for this
+      // episode, or start at zero when this episode has no saved progress.
       try {
         await video.play();
       } catch {
@@ -696,6 +700,18 @@ export function Player({
                 {speed}X
               </button>
             ))}
+            <button
+              type="button"
+              aria-pressed={autoplay}
+              onClick={() => {
+                const enabled = !autoplay;
+                setAutoplay(enabled);
+                localStorage.setItem("dramaluma.autoplay", enabled ? "1" : "0");
+              }}
+              className={cn("col-span-3 min-h-10 rounded-xl px-3 text-left text-xs font-semibold", autoplay ? "bg-white/20 text-white" : "bg-black/55 text-white/75")}
+            >
+              {autoplay ? "✓ Putar episode berikutnya otomatis" : "○ Autoplay episode berikutnya mati"}
+            </button>
           </div>
         ) : null}
         {openSubs ? (

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { DramaGrid, PageIntro, PageSkeleton } from "@/components/drama/cards";
+import { SeoItemList } from "@/components/drama/seo-item-list";
 import { getBrowseData } from "@/lib/drama/api";
 import { railTitle, usePrefs } from "@/lib/drama/i18n";
 
@@ -10,9 +11,14 @@ export const Route = createFileRoute("/categories")({
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
-      { title: "Categories — HouseDrama" },
-      { name: "description", content: "Browse short dramas by genre tags returned from the catalogs." },
+      { title: "Kategori Drama China: Romantis, CEO, Balas Dendam — HouseDrama" },
+      { name: "description", content: "Cari drama China pendek berdasarkan genre dan tema: romantis, CEO, balas dendam, fantasi, keluarga, komedi, dan drama tamat. Tonton dengan subtitle Indonesia di HouseDrama." },
+      { name: "robots", content: "index,follow,max-image-preview:large" },
+      { property: "og:title", content: "Kategori Drama China — HouseDrama" },
+      { property: "og:description", content: "Pilih genre drama favorit dan temukan cerita yang ingin kamu tonton." },
+      { property: "og:url", content: "https://house-drama.web.id/categories" },
     ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/categories" }],
   }),
   component: CategoriesPage,
 });
@@ -28,6 +34,7 @@ function CategoriesPage() {
   return (
     <div>
       <PageIntro title={t.categories} description={t.categoriesDesc} />
+      <SeoItemList items={data.items} name="Kategori Drama China Pendek" />
       <div className="mt-5 flex flex-wrap gap-2">
         {GENRES.map((genre) => (
           <Link key={genre} to="/discover" search={{ rail: genre }} className="rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-ink">
