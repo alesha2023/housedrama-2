@@ -79,6 +79,7 @@ export function Player({
   const [openSpeed, setOpenSpeed] = useState(false);
   const [openSubs, setOpenSubs] = useState(false);
   const [openList, setOpenList] = useState(false);
+  const [pendingAdEpisode, setPendingAdEpisode] = useState<string | null>(null);
   const [rate, setRate] = useState(1);
   const [subtitleLang, setSubtitleLang] = useState<string | null>(null);
   const [rangePage, setRangePage] = useState(0);
@@ -387,16 +388,28 @@ export function Player({
 
 
   function go(episodeId: string, auto = false) {
-    // Trigger Smartlink on the user's episode-navigation click at each 3-episode boundary,
-    // but never block navigation behind an ad gate. Browser may block popups during autoplay.
+    // Show a lightweight Smartlink prompt after each 3rd episode for manual navigation.
+    // Continuing is always allowed; no forced ad gate and no blank ad slot is inserted.
     const isThirdEpisodeBoundary = currentIndex >= 0 && (currentIndex + 1) % 3 === 0;
     if (isThirdEpisodeBoundary && !auto) {
-      window.open("https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2", "_blank", "noopener,noreferrer");
+      setPendingAdEpisode(episodeId);
+      return;
     }
     void navigate({
       to: "/watch/$provider/$seriesId/$episodeId",
       params: { provider: drama.provider, seriesId: drama.seriesId, episodeId },
       search: auto ? { auto: true, lang: contentLang } : { lang: contentLang },
+    });
+  }
+
+  function continuePendingEpisode() {
+    const episodeId = pendingAdEpisode;
+    setPendingAdEpisode(null);
+    if (!episodeId) return;
+    void navigate({
+      to: "/watch/$provider/$seriesId/$episodeId",
+      params: { provider: drama.provider, seriesId: drama.seriesId, episodeId },
+      search: { lang: contentLang },
     });
   }
 
@@ -754,6 +767,21 @@ export function Player({
           <span className="block h-full bg-[#ff4d6d]" style={{ width: `${duration ? Math.min(100, (progress / duration) * 100) : 0}%` }} />
         </span>
       </button>
+
+      {pendingAdEpisode ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/65 p-5" role="dialog" aria-modal="true" aria-label="Iklan">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 text-center text-[#242424] shadow-2xl">
+            <h2 className="text-lg font-bold">Dukung HouseDrama</h2>
+            <p className="mt-2 text-sm text-gray-600">Kamu bisa membuka iklan sebelum melanjutkan episode berikutnya.</p>
+            <button type="button" className="mt-4 w-full rounded-xl bg-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => { window.open("https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2", "_blank", "noopener,noreferrer"); }}>
+              Buka Iklan
+            </button>
+            <button type="button" className="mt-2 w-full rounded-xl bg-gray-100 px-4 py-3 font-semibold text-gray-800" onClick={continuePendingEpisode}>
+              Lanjutkan Episode
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {openList ? (
         <div className="fixed inset-0 z-50 flex items-end bg-black/50" onClick={() => setOpenList(false)}>
