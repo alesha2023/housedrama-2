@@ -291,3 +291,18 @@ html[data-theme="dark"] .skeleton { background: #292530; }
 html[data-theme="dark"] .skeleton::after {
   background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent);
 }
+
+
+/* Small, centered PWA install prompt with a gentle floating motion. */
+.hd-pwa-popup {
+  transform-origin: center;
+  animation: hd-pwa-float 3.2s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes hd-pwa-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.012); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hd-pwa-popup { animation: none; }
+}

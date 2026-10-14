@@ -119,23 +119,23 @@ function PwaInstallPrompt() {
   if (!visible || !installPrompt) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="pwa-install-title">
-      <div className="relative w-full max-w-xs rounded-2xl border border-line bg-surface p-4 text-ink shadow-2xl">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/35 p-3" role="dialog" aria-modal="true" aria-labelledby="pwa-install-title">
+      <div className="hd-pwa-popup relative w-full max-w-[280px] rounded-2xl border border-line bg-surface p-3.5 text-ink shadow-2xl">
         <button type="button" onClick={dismiss} aria-label="Tutup popup" className="absolute right-2 top-2 grid size-8 place-items-center rounded-full text-muted hover:bg-surface-2">
           <X className="size-5" />
         </button>
-        <div className="mx-auto mb-3 grid size-12 place-items-center rounded-xl bg-primary/12 text-primary">
-          <House className="size-6" />
+        <div className="mx-auto mb-2 grid size-10 place-items-center rounded-xl bg-primary/12 text-primary">
+          <House className="size-5" />
         </div>
-        <h2 id="pwa-install-title" className="text-center text-lg font-bold">Pasang HouseDrama</h2>
-        <p className="mt-1.5 text-center text-sm leading-5 text-muted">
+        <h2 id="pwa-install-title" className="text-center text-base font-bold">Pasang HouseDrama</h2>
+        <p className="mt-1 text-center text-xs leading-[1.4rem] text-muted">
           Tambahkan HouseDrama seperti aplikasi agar lebih mudah dibuka dari layar utama HP.
         </p>
-        <button type="button" onClick={() => { void (async () => { try { await installPrompt.prompt(); await installPrompt.userChoice; dismiss(); } catch { dismiss(); } })(); }} className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+        <button type="button" onClick={() => { void (async () => { try { await installPrompt.prompt(); await installPrompt.userChoice; dismiss(); } catch { dismiss(); } })(); }} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90">
           <Download className="size-4" />
           Pasang HouseDrama
         </button>
-        <button type="button" onClick={dismiss} className="mt-2 w-full rounded-full px-4 py-2 text-sm font-medium text-muted hover:bg-surface-2">
+        <button type="button" onClick={dismiss} className="mt-1.5 w-full rounded-full px-3 py-1.5 text-xs font-medium text-muted hover:bg-surface-2">
           Nanti saja
         </button>
       </div>
