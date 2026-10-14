@@ -208,7 +208,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   target="_blank"
                   rel="noreferrer"
                   aria-label={item.name}
-                  className="grid size-10 place-items-center rounded-full border border-line bg-bg text-ink transition-colors hover:border-primary hover:text-primary"
+                  className={`grid size-10 place-items-center rounded-full border shadow-sm transition-transform hover:scale-105 ${item.className}`}
                 >
                   <Icon />
                 </a>
@@ -325,11 +325,11 @@ function Tab({
   );
 }
 
-const SOCIALS: { name: string; href: string; icon: () => ReactNode }[] = [
-  { name: "Facebook", href: "https://www.facebook.com/", icon: FacebookIcon },
-  { name: "Instagram", href: "https://www.instagram.com/", icon: InstagramIcon },
-  { name: "TikTok", href: "https://www.tiktok.com/", icon: TikTokIcon },
-  { name: "YouTube", href: "https://www.youtube.com/", icon: YouTubeIcon },
+const SOCIALS: { name: string; href: string; icon: () => ReactNode; className: string }[] = [
+  { name: "Facebook", href: "https://www.facebook.com/profile.php?id=61595327641450", icon: FacebookIcon, className: "bg-[#1877F2] text-white border-[#1877F2]" },
+  { name: "Instagram", href: "https://www.instagram.com/", icon: InstagramIcon, className: "bg-gradient-to-br from-[#FEDA75] via-[#E4405F] to-[#833AB4] text-white border-transparent" },
+  { name: "TikTok", href: "https://www.tiktok.com/@housedrama5", icon: TikTokIcon, className: "bg-[#111111] text-white border-[#111111]" },
+  { name: "YouTube", href: "https://www.youtube.com/", icon: YouTubeIcon, className: "bg-[#FF0000] text-white border-[#FF0000]" },
 ];
 
 function SocialGlyph({ children }: { children: ReactNode }) {
