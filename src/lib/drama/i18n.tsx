@@ -214,7 +214,7 @@ const COPY = {
     noMatches: "Tidak ada hasil",
     noMatchesBody: "Coba judul yang lebih pendek, atau penyedia lain. Satu katalog yang mati tidak menyembunyikan yang lain.",
     allProviders: "Semua penyedia",
-    providerLabel: "Penyedia",
+    providerLabel: "Sumber Drama",
     unknownProvider: "Penyedia tidak dikenal",
     unknownProviderBody: "Pilih AnyReel, DramaBox, atau FreeReels.",
     providerIntro: "Rak ini hanya memakai ID dan endpoint milik penyedia itu.",
