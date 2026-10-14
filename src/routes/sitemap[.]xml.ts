@@ -1,22 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getRequestUrl } from "@tanstack/react-start/server";
 import { loadHome } from "@/lib/drama/server/catalog";
+
+const SITE_ORIGIN = "https://house-drama.web.id";
 
 const PATHS = [
   "/",
   "/discover",
   "/trending",
   "/latest",
-  "/shorts",
   "/categories",
   "/provider/anyreel",
   "/provider/dramabox",
   "/provider/freereels",
   "/provider/melolo",
+  "/shorts",
+  "/history",
+  "/watchlist",
   "/about",
   "/privacy",
   "/terms",
-  "/drama/melolo/7690840565335723061",
 ];
 
 function xmlEscape(value: string) {
@@ -32,7 +34,8 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const origin = new URL(getRequestUrl()).origin;
+        // Always publish production canonical URLs, never Vercel preview hostnames.
+        const origin = SITE_ORIGIN;
         const urls = new Set(PATHS.map((path) => `${origin}${path}`));
 
         // Include drama detail pages found in the same live catalog used by the site.
@@ -42,6 +45,8 @@ export const Route = createFileRoute("/sitemap.xml")({
           const cards = [...home.hero, ...home.sections.flatMap((section) => section.items)];
           for (const card of cards) {
             if (!card.provider || !card.seriesId) continue;
+            // Detail URLs are built only from provider IDs and series IDs returned
+            // by the same catalog used by the site. Avoid query-string duplicates.
             const provider = encodeURIComponent(card.provider);
             const seriesId = encodeURIComponent(card.seriesId);
             urls.add(`${origin}/drama/${provider}/${seriesId}`);

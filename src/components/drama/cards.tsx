@@ -60,6 +60,7 @@ export function Poster({
       src={activeSrc}
       alt={alt}
       loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
       decoding="async"
       referrerPolicy="no-referrer"
       onError={handleImageError}

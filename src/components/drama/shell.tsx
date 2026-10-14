@@ -162,6 +162,11 @@ export function Shell({ children }: { children: ReactNode }) {
             })}
           </div>
           <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted" aria-label="Footer">
+            <Link to="/discover" className="hover:text-ink">{t.discover}</Link>
+            <Link to="/latest" className="hover:text-ink">{t.latest}</Link>
+            <Link to="/trending" className="hover:text-ink">{t.trending}</Link>
+            <Link to="/categories" className="hover:text-ink">{t.categories}</Link>
+            <Link to="/shorts" className="hover:text-ink">{t.shorts}</Link>
             <Link to="/about" className="hover:text-ink">{t.about}</Link>
             <Link to="/privacy" className="hover:text-ink">{t.privacy}</Link>
             <Link to="/terms" className="hover:text-ink">{t.terms}</Link>

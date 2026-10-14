@@ -55,6 +55,32 @@ function RootLayout() {
       </head>
       <body>
         <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "HouseDrama",
+              alternateName: "House Drama",
+              url: "https://house-drama.web.id/",
+              inLanguage: "id-ID",
+              description: "Katalog drama China pendek dengan subtitle Indonesia di HouseDrama.",
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "HouseDrama",
+              url: "https://house-drama.web.id/",
+              logo: "https://house-drama.web.id/logo.png?v=4",
+            }),
+          }}
+        />
+        <script
           dangerouslySetInnerHTML={{
             __html:
               "window.__boot=Date.now();setTimeout(function(){var n=document.querySelector('.boot-splash');if(n)n.classList.add('is-done');},1000);",

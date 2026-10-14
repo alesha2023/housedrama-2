@@ -26,7 +26,7 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
       meta: [
         { title },
         { name: "description", content: description },
-        { name: "robots", content: "index,follow,max-image-preview:large" },
+        { name: "robots", content: drama ? "index,follow,max-image-preview:large" : "noindex,follow" },
         { property: "og:type", content: "video.tv_show" },
         { property: "og:site_name", content: "HouseDrama" },
         { property: "og:title", content: title },
@@ -65,9 +65,13 @@ function DetailPage() {
   }
 
   const first = data.episodes[0];
+  const canonicalUrl = `https://house-drama.web.id/drama/${encodeURIComponent(drama.provider)}/${encodeURIComponent(drama.seriesId)}`;
+  const displayTitle = drama.displayTitle || drama.title;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "TVSeries",
+    url: canonicalUrl,
+    mainEntityOfPage: canonicalUrl,
     name: drama.displayTitle || drama.title,
     alternateName: drama.originalTitle && drama.originalTitle !== drama.title ? drama.originalTitle : undefined,
     description: drama.displayDescription || drama.description || undefined,
@@ -81,6 +85,27 @@ function DetailPage() {
   return (
     <article>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Beranda", item: "https://house-drama.web.id/" },
+              { "@type": "ListItem", position: 2, name: "Drama", item: "https://house-drama.web.id/discover" },
+              { "@type": "ListItem", position: 3, name: displayTitle, item: canonicalUrl },
+            ],
+          }),
+        }}
+      />
+      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted">
+        <Link to="/" className="hover:text-ink">Beranda</Link>
+        <span className="mx-2" aria-hidden="true">/</span>
+        <Link to="/discover" className="hover:text-ink">Drama</Link>
+        <span className="mx-2" aria-hidden="true">/</span>
+        <span aria-current="page" className="text-ink">{displayTitle}</span>
+      </nav>
       <div className="grid gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
         <div className="overflow-hidden rounded-card">
           {first ? (
