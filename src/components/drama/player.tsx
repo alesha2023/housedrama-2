@@ -23,6 +23,12 @@ import { cn } from "@/lib/utils";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
+const SPONSOR_SMARTLINKS = [
+  "https://auctionr.org/4/e02ff50611e53dfb3b95d9b7fe94759f",
+  "https://asiafilm.org/4/3b9a06b621155c33e54e072a498d0691",
+  "https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2",
+];
+
 function showSubtitle(video: HTMLVideoElement, lang: string | null) {
   const tracks = video.textTracks;
   const want = lang?.toLowerCase() ?? "";
@@ -80,6 +86,7 @@ export function Player({
   const [openSubs, setOpenSubs] = useState(false);
   const [openList, setOpenList] = useState(false);
   const [pendingAdEpisode, setPendingAdEpisode] = useState<string | null>(null);
+  const lastSponsorIndex = useRef<number>(-1);
   const [rate, setRate] = useState(1);
   const [subtitleLang, setSubtitleLang] = useState<string | null>(null);
   const [rangePage, setRangePage] = useState(0);
@@ -388,10 +395,10 @@ export function Player({
 
 
   function go(episodeId: string, auto = false) {
-    // Show a lightweight Smartlink prompt after each 3rd episode for manual navigation.
-    // Continuing is always allowed; no forced ad gate and no blank ad slot is inserted.
+    // Require a sponsor click before continuing after every 3rd episode,
+    // including automatic next-episode navigation.
     const isThirdEpisodeBoundary = currentIndex >= 0 && (currentIndex + 1) % 3 === 0;
-    if (isThirdEpisodeBoundary && !auto) {
+    if (isThirdEpisodeBoundary) {
       setPendingAdEpisode(episodeId);
       return;
     }
@@ -771,11 +778,18 @@ export function Player({
       {pendingAdEpisode ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/65 p-5" role="dialog" aria-modal="true" aria-label="Iklan">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 text-center text-[#242424] shadow-2xl">
-            <h2 className="text-lg font-bold">Dukung HouseDrama</h2>
-            <p className="mt-2 text-sm text-gray-600">Klik sponsor untuk membuka iklan dan melanjutkan episode berikutnya.</p>
-            <button type="button" className="mt-4 w-full rounded-xl bg-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => { window.open("https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2", "_blank", "noopener,noreferrer"); continuePendingEpisode(); }}>
-              Buka Sponsor &amp; Lanjutkan Episode
+            <h2 className="text-lg font-bold">{contentLang === "en" ? "Watch Sponsor First" : "Tonton Sponsor Dulu"}</h2>
+            <p className="mt-2 text-sm text-gray-600">{contentLang === "en" ? `To continue to Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, please open the sponsor first. This helps support HouseDrama.` : `Untuk melanjutkan ke Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, silakan buka sponsor terlebih dahulu. Ini membantu mendukung HouseDrama.`}</p>
+            <button type="button" className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#ff4d8d] to-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => {
+              const choices = SPONSOR_SMARTLINKS.map((_, sponsorIndex) => sponsorIndex).filter((sponsorIndex) => sponsorIndex !== lastSponsorIndex.current);
+              const nextSponsorIndex = choices[Math.floor(Math.random() * choices.length)] ?? 0;
+              lastSponsorIndex.current = nextSponsorIndex;
+              const sponsorTab = window.open(SPONSOR_SMARTLINKS[nextSponsorIndex], "_blank");
+              if (sponsorTab) continuePendingEpisode();
+            }}>
+              {contentLang === "en" ? "Open Sponsor & Continue Episode" : "Buka Sponsor & Lanjutkan Episode"}
             </button>
+            <p className="mt-3 text-xs text-gray-500">{contentLang === "en" ? "The next episode continues after the sponsor link opens." : "Episode berikutnya berlanjut setelah tautan sponsor berhasil dibuka."}</p>
           </div>
         </div>
       ) : null}
