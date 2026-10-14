@@ -170,9 +170,33 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to="/about" className="hover:text-ink">{t.about}</Link>
             <Link to="/privacy" className="hover:text-ink">{t.privacy}</Link>
             <Link to="/terms" className="hover:text-ink">{t.terms}</Link>
-            <Link to="/admin" className="hover:text-ink">Admin</Link>
           </nav>
+          <section className="w-full max-w-3xl border-t border-line/70 pt-4" aria-labelledby="footer-topics-title">
+            <h2 id="footer-topics-title" className="mb-3 text-sm font-semibold text-ink">Jelajahi berdasarkan topik</h2>
+            <div className="flex flex-wrap justify-center gap-2">
+              {[
+                { label: "Drama China subtitle Indonesia", rail: "romance" },
+                { label: "Drama romantis", rail: "romance" },
+                { label: "Drama CEO", rail: "ceo" },
+                { label: "Drama balas dendam", rail: "revenge" },
+                { label: "Drama fantasi", rail: "fantasy" },
+                { label: "Drama sejarah", rail: "historical" },
+                { label: "Drama tamat", rail: "completed" },
+                { label: "Drama terbaru", rail: "latest" },
+              ].map((topic) => (
+                <Link
+                  key={topic.label}
+                  to={topic.rail === "latest" ? "/latest" : "/discover"}
+                  search={topic.rail === "latest" ? undefined : { rail: topic.rail }}
+                  className="rounded-full border border-line bg-white/70 px-3 py-1.5 text-xs text-muted transition-colors hover:border-primary hover:text-primary"
+                >
+                  {topic.label}
+                </Link>
+              ))}
+            </div>
+          </section>
           <p className="max-w-md text-xs leading-relaxed text-muted">{t.footerNote}</p>
+          <p className="text-[11px] text-muted">HouseDrama · Katalog drama pendek dari berbagai penyedia</p>
         </div>
       </footer>
       )}
