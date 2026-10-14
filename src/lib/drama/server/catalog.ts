@@ -519,7 +519,7 @@ export async function loadSearch(input: {
   // Provider search endpoints can sometimes return trending/recommended items unrelated to the query.
   // Keep only titles with meaningful overlap so unrelated dramas are not presented as search matches.
   const normalizedQuery = normTitle(q);
-  const queryTokens = [...new Set(normalizedQuery.split(/\\s+/).filter((token) => token.length >= 2))];
+  const queryTokens = [...new Set(normalizedQuery.split(/\s+/).filter((token) => token.length >= 2))];
 
   // Accept partial title matches such as "cara agar" for
   // "Cara Agar Tidak Jatuh Cinta", including small word-prefix differences.
@@ -535,7 +535,7 @@ export async function loadSearch(input: {
         bestMatches = queryTokens.length;
         continue;
       }
-      const titleTokens = title.split(/\\s+/).filter((token) => token.length >= 2);
+      const titleTokens = title.split(/\s+/).filter((token) => token.length >= 2);
       const matches = queryTokens.filter((queryToken) =>
         titleTokens.some((titleToken) =>
           titleToken === queryToken ||
