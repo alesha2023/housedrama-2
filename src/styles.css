@@ -248,3 +248,46 @@ video::cue {
   font-weight: 500;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
+
+/* HouseDrama theme switch: preserve the existing light look and offer an opt-in dark palette. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #17151b;
+  --color-surface: #24212a;
+  --color-ink: #f5f1f6;
+  --color-muted: #b5acbb;
+  --color-line: #393340;
+  --color-primary-ink: #fffaf7;
+}
+
+html[data-theme="dark"] body {
+  background: #17151b;
+  color: #f5f1f6;
+}
+
+html[data-theme="dark"] .page-bg {
+  background-color: #17151b;
+  background-image:
+    radial-gradient(80% 420px at 0% 0%, rgb(115 45 83 / 22%) 0%, transparent 58%),
+    radial-gradient(70% 380px at 100% 0%, rgb(107 58 44 / 18%) 0%, transparent 55%),
+    radial-gradient(60% 480px at 50% 100%, rgb(72 45 90 / 14%) 0%, transparent 50%);
+}
+
+html[data-theme="dark"] [class~="bg-white"],
+html[data-theme="dark"] [class~="bg-white/75"],
+html[data-theme="dark"] [class~="bg-white/80"],
+html[data-theme="dark"] [class~="bg-white/90"] {
+  background-color: #211e27 !important;
+}
+html[data-theme="dark"] [class~="bg-bg"] { background-color: #17151b !important; }
+html[data-theme="dark"] [class~="bg-surface"] { background-color: #292530 !important; }
+html[data-theme="dark"] [class~="text-ink"] { color: #f5f1f6 !important; }
+html[data-theme="dark"] [class~="text-muted"] { color: #b5acbb !important; }
+html[data-theme="dark"] [class~="border-line"] { border-color: #393340 !important; }
+html[data-theme="dark"] .drama-card { color: #f5f1f6; }
+html[data-theme="dark"] .drama-card__poster { background: #24212a; }
+html[data-theme="dark"] .drama-card__title { color: #f5f1f6; }
+html[data-theme="dark"] .skeleton { background: #292530; }
+html[data-theme="dark"] .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent);
+}

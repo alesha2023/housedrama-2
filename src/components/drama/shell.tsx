@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Clock3, Compass, Hash, House, Menu, Search, Sparkles, UserRound, Users, X } from "lucide-react";
+import { Clock3, Compass, Hash, House, Menu, Search, Sparkles, UserRound, Users, X, Moon, Sun, Smartphone, Download } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { CONTENT_LANGS, UI_LANGS, usePrefs } from "@/lib/drama/i18n";
 import { Logo } from "./logo";
@@ -67,12 +67,104 @@ function VisitorCounter() {
   );
 }
 
+function PwaInstallPrompt() {
+  const [visible, setVisible] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<{ prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> } | null>(null);
+
+  useEffect(() => {
+    let timer: number | undefined;
+    const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    const wasHandled = () => {
+      try {
+        return window.localStorage.getItem("housedrama_pwa_prompt_handled") === "1" ||
+          window.localStorage.getItem("housedrama_pwa_installed") === "1";
+      } catch {
+        return true;
+      }
+    };
+    const markHandled = () => {
+      try { window.localStorage.setItem("housedrama_pwa_prompt_handled", "1"); } catch { /* Storage may be unavailable. */ }
+    };
+    if (isStandalone() || wasHandled()) return;
+
+    const onBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      if (wasHandled() || isStandalone()) return;
+      const promptEvent = event as Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+      setInstallPrompt(promptEvent);
+      timer = window.setTimeout(() => setVisible(true), 1800);
+    };
+    const onAppInstalled = () => {
+      try {
+        window.localStorage.setItem("housedrama_pwa_installed", "1");
+        window.localStorage.setItem("housedrama_pwa_prompt_handled", "1");
+      } catch { /* Storage may be unavailable. */ }
+      setVisible(false);
+    };
+    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("appinstalled", onAppInstalled);
+    return () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", onAppInstalled);
+    };
+  }, []);
+
+  const dismiss = () => {
+    setVisible(false);
+    try { window.localStorage.setItem("housedrama_pwa_prompt_handled", "1"); } catch { /* Storage may be unavailable. */ }
+  };
+
+  if (!visible || !installPrompt) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="pwa-install-title">
+      <div className="relative w-full max-w-sm rounded-3xl border border-line bg-surface p-5 text-ink shadow-2xl sm:p-6">
+        <button type="button" onClick={dismiss} aria-label="Tutup popup" className="absolute right-3 top-3 grid size-9 place-items-center rounded-full text-muted hover:bg-surface-2">
+          <X className="size-5" />
+        </button>
+        <div className="mx-auto mb-4 grid size-16 place-items-center rounded-2xl bg-primary/12 text-primary">
+          <House className="size-8" />
+        </div>
+        <h2 id="pwa-install-title" className="text-center text-xl font-bold">Pasang HouseDrama</h2>
+        <p className="mt-2 text-center text-sm leading-6 text-muted">
+          Tambahkan HouseDrama seperti aplikasi agar lebih mudah dibuka dari layar utama HP.
+        </p>
+        <button type="button" onClick={() => { void (async () => { try { await installPrompt.prompt(); await installPrompt.userChoice; dismiss(); } catch { dismiss(); } })(); }} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 font-semibold text-white shadow-sm transition hover:opacity-90">
+          <Download className="size-5" />
+          Pasang HouseDrama
+        </button>
+        <button type="button" onClick={dismiss} className="mt-3 w-full rounded-full px-4 py-3 text-sm font-medium text-muted hover:bg-surface-2">
+          Nanti saja
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function Shell({ children }: { children: ReactNode }) {
   const { t, uiLang, setUiLang, contentLang, setContentLang } = usePrefs();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const watching = pathname.startsWith("/watch/");
   const shorts = pathname === "/shorts";
   const [open, setOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("housedrama_theme");
+    const nextTheme = saved === "dark" ? "dark" : "light";
+    setTheme(nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+    document.documentElement.style.colorScheme = nextTheme;
+  }, []);
+
+  const changeTheme = (nextTheme: "light" | "dark") => {
+    setTheme(nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+    document.documentElement.style.colorScheme = nextTheme;
+    try { window.localStorage.setItem("housedrama_theme", nextTheme); } catch { /* Storage may be unavailable. */ }
+  };
   const labels: Record<string, string> = {
     home: t.home,
     discover: t.discover,
@@ -83,7 +175,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className={cn("min-h-dvh", watching ? "bg-player text-player-ink" : shorts ? "bg-black text-white" : "page-bg text-ink")}>
-      <BootSplash />
+      <BootSplash />\n      <PwaInstallPrompt />
       {watching || shorts ? null : (
       <header className="sticky top-0 z-40 border-b border-line/70 bg-white/75 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
@@ -106,6 +198,15 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to="/search" aria-label={t.search} className="grid size-11 place-items-center rounded-full hover:bg-surface">
               <Search className="size-5" />
             </Link>
+            <button
+              type="button"
+              aria-label={theme === "dark" ? "Ganti ke tema terang" : "Ganti ke tema gelap"}
+              title={theme === "dark" ? "Tema terang" : "Tema gelap"}
+              className="grid size-11 place-items-center rounded-full hover:bg-surface"
+              onClick={() => changeTheme(theme === "dark" ? "light" : "dark")}
+            >
+              {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+            </button>
             <Link to="/watchlist" aria-label={t.watchlist} className="hidden size-11 place-items-center rounded-full hover:bg-surface sm:grid">
               <Sparkles className="size-5" />
             </Link>
@@ -173,6 +274,20 @@ export function Shell({ children }: { children: ReactNode }) {
               <Link to="/history" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 hover:bg-surface">
                 {t.history}
               </Link>
+              <div className="mt-2 rounded-2xl border border-line bg-surface/70 p-3">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
+                  {theme === "dark" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+                  Ganti tema
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => changeTheme("light")} className={cn("flex h-10 items-center justify-center gap-2 rounded-xl border text-sm", theme === "light" ? "border-primary bg-primary/10 text-primary" : "border-line bg-bg text-muted")}>
+                    <Sun className="size-4" /> Terang
+                  </button>
+                  <button type="button" onClick={() => changeTheme("dark")} className={cn("flex h-10 items-center justify-center gap-2 rounded-xl border text-sm", theme === "dark" ? "border-primary bg-primary/10 text-primary" : "border-line bg-bg text-muted")}>
+                    <Moon className="size-4" /> Gelap
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <select className="h-11 rounded-xl border border-line bg-surface px-3" value={uiLang} onChange={(event) => setUiLang(event.target.value as typeof uiLang)}>
