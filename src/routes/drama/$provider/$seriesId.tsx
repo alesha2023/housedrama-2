@@ -6,7 +6,7 @@ import { EpisodeGrid } from "@/components/drama/player";
 import { getDetailData } from "@/lib/drama/api";
 import { usePrefs } from "@/lib/drama/i18n";
 import { pickDescription, pickTitle } from "@/lib/drama/display";
-import { readWatchlist, toggleWatchlist } from "@/lib/drama/storage";
+import { readHistory, readWatchlist, toggleWatchlist, type HistoryEntry } from "@/lib/drama/storage";
 import { isProviderId } from "@/lib/drama/types";
 import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
 
@@ -71,12 +71,19 @@ function DetailPage() {
   const { t, contentLang } = usePrefs();
   const [data, setData] = useState(initial);
   const [saved, setSaved] = useState(false);
+  const [resumeEntry, setResumeEntry] = useState<HistoryEntry | null>(null);
   const drama = data.drama;
 
   useEffect(() => setData(initial), [initial]);
   useEffect(() => {
     if (!drama) return;
     setSaved(readWatchlist().some((item) => item.provider === drama.provider && item.seriesId === drama.seriesId));
+    const loadHistory = () => setResumeEntry(
+      readHistory().find((item) => item.provider === drama.provider && item.seriesId === drama.seriesId) ?? null,
+    );
+    loadHistory();
+    window.addEventListener("dramaluma-library", loadHistory);
+    return () => window.removeEventListener("dramaluma-library", loadHistory);
   }, [drama]);
 
   if (!data.ok || !drama) {
@@ -171,11 +178,12 @@ function DetailPage() {
             {first ? (
               <Link
                 to="/watch/$provider/$seriesId/$episodeId"
-                params={{ provider: drama.provider, seriesId: drama.seriesId, episodeId: first.episodeId }}
+                params={{ provider: drama.provider, seriesId: drama.seriesId, episodeId: resumeEntry?.episodeId || first.episodeId }}
                 onClick={() => maybeOpenMonetagAd()}
+                search={{ auto: true }}
                 className="inline-flex h-12 items-center rounded-full bg-primary px-5 font-semibold text-primary-ink"
               >
-                {t.start}
+                {resumeEntry ? `${t.continue} · ${resumeEntry.episodeLabel}` : t.start}
               </Link>
             ) : null}
             <button

@@ -525,7 +525,14 @@ export async function loadSearch(input: {
   // "Cara Agar Tidak Jatuh Cinta", including small word-prefix differences.
   // Keep unrelated trending recommendations out of search results.
   const scoredItems = localizedItems.flatMap((item) => {
-    const titleVariants = [...new Set([normTitle(item.originalTitle || ""), normTitle(item.title || "")].filter(Boolean))];
+    const titleVariants = [...new Set([
+      normTitle(item.originalTitle || ""),
+      normTitle(item.title || ""),
+      normTitle(item.displayTitle || ""),
+      normTitle(item.description || ""),
+      normTitle(item.originalDescription || ""),
+      normTitle(item.displayDescription || ""),
+    ].filter(Boolean))];
     if (!titleVariants.length || !normalizedQuery) return [];
     let bestScore = 0;
     let bestMatches = 0;
@@ -565,7 +572,14 @@ export async function loadSearch(input: {
       const browse = await loadBrowse({ lang: input.lang, provider: input.provider, page: 1 });
       const fallbackCards = await localizeCards(dedupe(browse.items), input.lang, false);
       const fallbackMatches = fallbackCards.flatMap((item) => {
-        const variants = [...new Set([normTitle(item.originalTitle || ""), normTitle(item.title || "")].filter(Boolean))];
+        const variants = [...new Set([
+          normTitle(item.originalTitle || ""),
+          normTitle(item.title || ""),
+          normTitle(item.displayTitle || ""),
+          normTitle(item.description || ""),
+          normTitle(item.originalDescription || ""),
+          normTitle(item.displayDescription || ""),
+        ].filter(Boolean))];
         let score = 0;
         let count = 0;
         for (const title of variants) {
@@ -575,7 +589,7 @@ export async function loadSearch(input: {
             count = queryTokens.length;
             continue;
           }
-          const tokens = title.split(/\\s+/).filter((token) => token.length >= 2);
+          const tokens = title.split(/\s+/).filter((token) => token.length >= 2);
           const matches = queryTokens.filter((qt) => tokens.some((tt) =>
             tt === qt || (qt.length >= 3 && tt.startsWith(qt)) || (tt.length >= 3 && qt.startsWith(tt)),
           )).length;
@@ -648,11 +662,25 @@ export async function loadDetail(provider: ProviderId, seriesId: string, lang: s
       if (!raw.card) {
         return { ok: false, error: "This drama could not be found.", drama: null, episodes: [], similar: [], more: [], alsoOn: [] };
       }
-      const [dramaList, episodes] = await Promise.all([
+      const [dramaList, episodes, relatedResult] = await Promise.all([
         localizeCards([raw.card], lang, true),
         localizeEpisodes(raw.episodes, lang),
+        genericBrowse(provider, lang).catch(() => [] as DramaCard[]),
       ]);
-      return { ok: true, error: null, drama: dramaList[0] ?? null, episodes, similar: [], more: [], alsoOn: [] };
+      const current = dramaList[0] ?? null;
+      const currentTags = new Set((current?.tags ?? []).map((tag) => normTitle(tag)).filter(Boolean));
+      const related = dedupe(relatedResult)
+        .filter((item) => dramaKey(item) !== dramaKey(raw.card!))
+        .map((item) => ({
+          item,
+          score: (item.tags ?? []).reduce((score, tag) => score + (currentTags.has(normTitle(tag)) ? 2 : 0), 0)
+            + (normTitle(item.title).split(/\s+/).some((word) => normTitle(current?.title ?? "").includes(word) && word.length > 3) ? 1 : 0),
+        }))
+        .filter((entry) => entry.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 12)
+        .map((entry) => entry.item);
+      return { ok: true, error: null, drama: current, episodes, similar: await localizeCards(related, lang, false), more: [], alsoOn: [] };
     } catch (error) {
       return {
         ok: false,
