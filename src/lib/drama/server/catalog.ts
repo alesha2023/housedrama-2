@@ -552,9 +552,46 @@ export async function loadSearch(input: {
     const minimumMatches = queryTokens.length <= 2 ? 1 : Math.max(2, Math.ceil(queryTokens.length * 0.35));
     return bestMatches >= minimumMatches ? [{ item, score: bestScore }] : [];
   });
-  const matchedItems = scoredItems
+  let matchedItems = scoredItems
     .sort((a, b) => b.score - a.score)
     .map(({ item }) => item);
+
+  // Search endpoints can miss titles that are already present in a provider's
+  // browse catalogue. When endpoint matching returns nothing, search the
+  // selected provider catalogue as a fallback instead of immediately showing
+  // an empty state.
+  if (!matchedItems.length && page === 1) {
+    try {
+      const browse = await loadBrowse({ lang: input.lang, provider: input.provider, page: 1 });
+      const fallbackCards = await localizeCards(dedupe(browse.items), input.lang, false);
+      const fallbackMatches = fallbackCards.flatMap((item) => {
+        const variants = [...new Set([normTitle(item.originalTitle || ""), normTitle(item.title || "")].filter(Boolean))];
+        let score = 0;
+        let count = 0;
+        for (const title of variants) {
+          if (!title || !normalizedQuery) continue;
+          if (title.includes(normalizedQuery) || normalizedQuery.includes(title)) {
+            score = Math.max(score, 100 + normalizedQuery.length);
+            count = queryTokens.length;
+            continue;
+          }
+          const tokens = title.split(/\\s+/).filter((token) => token.length >= 2);
+          const matches = queryTokens.filter((qt) => tokens.some((tt) =>
+            tt === qt || (qt.length >= 3 && tt.startsWith(qt)) || (tt.length >= 3 && qt.startsWith(tt)),
+          )).length;
+          if (matches > count) {
+            count = matches;
+            score = matches * 10 + matches / Math.max(1, queryTokens.length);
+          }
+        }
+        const minimum = queryTokens.length <= 2 ? 1 : Math.max(2, Math.ceil(queryTokens.length * 0.35));
+        return count >= minimum ? [{ item, score }] : [];
+      });
+      matchedItems = fallbackMatches.sort((a, b) => b.score - a.score).map(({ item }) => item);
+    } catch {
+      // Preserve normal search behavior if catalogue fallback is unavailable.
+    }
+  }
   const hasMore = pages.some((result) => result.hasMore) && matchedItems.length > 0;
   return {
     items: matchedItems,
