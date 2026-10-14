@@ -519,15 +519,42 @@ export async function loadSearch(input: {
   // Provider search endpoints can sometimes return trending/recommended items unrelated to the query.
   // Keep only titles with meaningful overlap so unrelated dramas are not presented as search matches.
   const normalizedQuery = normTitle(q);
-  const queryTokens = normalizedQuery.split(/\\s+/).filter((token) => token.length >= 2);
-  const matchedItems = localizedItems.filter((item) => {
-    const title = normTitle(item.originalTitle || item.title);
-    if (!title) return false;
-    if (title.includes(normalizedQuery) || normalizedQuery.includes(title)) return true;
-    const titleTokens = new Set(title.split(/\\s+/).filter((token) => token.length >= 2));
-    const matches = queryTokens.filter((token) => titleTokens.has(token)).length;
-    return queryTokens.length > 0 && matches >= Math.max(1, Math.ceil(queryTokens.length * 0.4));
+  const queryTokens = [...new Set(normalizedQuery.split(/\\s+/).filter((token) => token.length >= 2))];
+
+  // Accept partial title matches such as "cara agar" for
+  // "Cara Agar Tidak Jatuh Cinta", including small word-prefix differences.
+  // Keep unrelated trending recommendations out of search results.
+  const scoredItems = localizedItems.flatMap((item) => {
+    const titleVariants = [...new Set([normTitle(item.originalTitle || ""), normTitle(item.title || "")].filter(Boolean))];
+    if (!titleVariants.length || !normalizedQuery) return [];
+    let bestScore = 0;
+    let bestMatches = 0;
+    for (const title of titleVariants) {
+      if (title.includes(normalizedQuery) || normalizedQuery.includes(title)) {
+        bestScore = Math.max(bestScore, 100 + normalizedQuery.length);
+        bestMatches = queryTokens.length;
+        continue;
+      }
+      const titleTokens = title.split(/\\s+/).filter((token) => token.length >= 2);
+      const matches = queryTokens.filter((queryToken) =>
+        titleTokens.some((titleToken) =>
+          titleToken === queryToken ||
+          (queryToken.length >= 3 && titleToken.startsWith(queryToken)) ||
+          (titleToken.length >= 3 && queryToken.startsWith(titleToken)),
+        ),
+      ).length;
+      const score = matches * 10 + (matches / Math.max(1, queryTokens.length));
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatches = matches;
+      }
+    }
+    const minimumMatches = queryTokens.length <= 2 ? 1 : Math.max(2, Math.ceil(queryTokens.length * 0.35));
+    return bestMatches >= minimumMatches ? [{ item, score: bestScore }] : [];
   });
+  const matchedItems = scoredItems
+    .sort((a, b) => b.score - a.score)
+    .map(({ item }) => item);
   const hasMore = pages.some((result) => result.hasMore) && matchedItems.length > 0;
   return {
     items: matchedItems,
