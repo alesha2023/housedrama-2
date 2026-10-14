@@ -1,4 +1,4 @@
-import { ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Layers3, Search } from "lucide-react";
 import { useState } from "react";
 import { providerLabel, visibleProviders } from "@/lib/drama/providers";
 import { usePrefs } from "@/lib/drama/i18n";
@@ -37,10 +37,15 @@ export function ProviderPicker({
             return !currentOpen;
           });
         }}
-        className="flex h-11 w-full items-center justify-between gap-3 rounded-full border border-line bg-surface px-4 text-left font-semibold"
+        className="group flex h-[54px] w-full items-center justify-between gap-3 rounded-2xl border border-line/80 bg-surface px-3.5 text-left shadow-sm transition-colors hover:border-coral/50 hover:bg-surface/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/40"
       >
-        <span className="truncate">{current}</span>
-        <ChevronDown className={cn("size-4 shrink-0 transition-transform", open && "rotate-180")} />
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-coral/10 text-coral">
+            <Layers3 className="size-[18px]" aria-hidden="true" />
+          </span>
+          <span className="truncate text-[15px] font-semibold tracking-[-0.01em]">{current}</span>
+        </span>
+        <ChevronDown className={cn("size-[18px] shrink-0 text-muted transition-transform group-hover:text-coral", open && "rotate-180")} />
       </button>
       {open ? (
         <>
@@ -115,9 +120,10 @@ function PickerOption({ active, onClick, children }: { active: boolean; onClick:
       role="option"
       aria-selected={active}
       onClick={onClick}
-      className={cn("block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold", active ? "bg-ink text-player-ink" : "hover:bg-surface")}
+      className={cn("flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-medium transition-colors", active ? "bg-coral/10 text-ink" : "hover:bg-surface")}
     >
-      {children}
+      <span>{children}</span>
+      {active ? <Check className="size-4 shrink-0 text-coral" aria-hidden="true" /> : null}
     </button>
   );
 }
