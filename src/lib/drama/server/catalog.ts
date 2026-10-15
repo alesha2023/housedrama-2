@@ -16,7 +16,7 @@ import { freereelsChannel, freereelsChannels, freereelsDetail, freereelsForYou, 
 import { providerFetch, withFetchBudget } from "./http";
 import { providerEnabled, sectionEnabled } from "./metrics";
 import { englishQueriesFor, localizeCards, localizeEpisodes, localizeTexts } from "./localize";
-import { genericBrowse, genericDetail, genericSearch, genericStream } from "./generic";
+import { genericBrowse, genericDetail, genericSearch, genericShortsFeed, genericStream } from "./generic";
 import { isCoreProvider, isProviderHidden, providerLabel, visibleProviders } from "../providers";
 
 const GENRES: { id: string; title: string; test: RegExp }[] = [
@@ -673,17 +673,20 @@ async function shortsFrom(
     const you = await freereelsForYou(lang, (page - 1) * 10);
     return { items: you.items, hasMore: you.hasMore };
   }
-  if (id === "dramabox") {
-    // The wrapper exposes Home/recommendations, not a dedicated Shorts feed.
-    // Use it as an initial fallback only; do not repeat the same catalogue.
+  if (id === "netshort" || id === "dramawave") {
+    // Both providers have a configured /get-foryou route in this project.
+    // Use that feed rather than their generic homepage/catalogue.
     if (page > 1) return { items: [], hasMore: false };
-    const home = await dramaboxHome(lang);
-    return { items: dedupe([...home.columns.flatMap((item) => item.items), ...home.recommend]), hasMore: false };
+    return { items: await genericShortsFeed(id, lang), hasMore: false };
   }
-  // Other providers currently have no confirmed dedicated Shorts/Feed wrapper.
-  // Use their catalogue once as a fallback, and don't pretend it is paginated.
-  if (page > 1) return { items: [], hasMore: false };
-  return { items: await genericBrowse(id, lang), hasMore: false };
+  if (id === "melolo") {
+    // Melolo exposes channel-content feeds rather than a dedicated reels route.
+    // Include its short-drama feed once; the player resolves its first episode.
+    if (page > 1) return { items: [], hasMore: false };
+    return { items: await genericBrowse(id, lang), hasMore: false };
+  }
+  // Do not pass ordinary catalogue posters off as Shorts/Reels content.
+  return { items: [], hasMore: false };
 }
 
 export async function loadDetail(provider: ProviderId, seriesId: string, lang: string): Promise<DetailPayload> {

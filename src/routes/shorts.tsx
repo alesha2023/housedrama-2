@@ -241,7 +241,7 @@ function ShortClip({
         <p className="text-sm font-semibold">@{providerLabel(item.provider)}</p>
         <h2 className="mt-1 text-base font-semibold leading-snug">{title}</h2>
         {item.description ? <p className="mt-1 line-clamp-2 text-sm text-white/85">{item.description}</p> : null}
-        {failed ? <p className="mt-2 text-sm text-white/80">Geser ke atas untuk video berikutnya.</p> : null}
+        {failed ? <p className="mt-2 text-sm text-white/80">Video pratinjau tidak tersedia dari provider ini. Buka episode lengkap untuk mencoba pemutar utama, atau geser ke atas untuk video berikutnya.</p> : null}
       </div>
       <div className="absolute right-3 bottom-[6.2rem] z-10 flex flex-col items-center gap-4 text-white lg:bottom-8">
         {item.posterUrl ? (
@@ -281,7 +281,7 @@ function ShortClip({
             className="grid place-items-center gap-1 text-xs font-semibold"
           >
             <Play className="size-8" />
-            <span>Episode</span>
+            <span>Episode Lengkap</span>
           </Link>
         ) : null}
         <button

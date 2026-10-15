@@ -423,6 +423,16 @@ export async function genericBrowse(provider: ProviderId, lang: string) {
   return withFetchBudget(7000, () => browseProvider(provider, lang));
 }
 
+/** Fetch a provider's explicitly configured For You feed for the Shorts viewer. */
+export async function genericShortsFeed(provider: ProviderId, lang: string) {
+  const path = provider === "netshort" || provider === "dramawave" ? "/get-foryou" : null;
+  if (!path) return [];
+  return withFetchBudget(6500, async () => {
+    const payload = await read(provider, path, lang);
+    return extractCards(payload, provider);
+  });
+}
+
 async function browseProvider(provider: ProviderId, lang: string) {
   if (provider === "melolo") return meloloBrowse(lang);
   const cached = homePath.get(`${provider}:${lang}`);
