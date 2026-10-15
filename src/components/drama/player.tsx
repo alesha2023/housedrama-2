@@ -29,6 +29,17 @@ const SPONSOR_SMARTLINKS = [
   "https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2",
 ];
 
+function formatPlaybackTime(seconds: number | null | undefined) {
+  if (typeof seconds !== "number" || !Number.isFinite(seconds) || seconds < 0) return "00:00";
+  const total = Math.floor(seconds);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+    : `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
 function showSubtitle(video: HTMLVideoElement, lang: string | null) {
   const tracks = video.textTracks;
   const want = lang?.toLowerCase() ?? "";
@@ -774,11 +785,15 @@ export function Player({
         </div>
       ) : null}
 
+      <div className="pointer-events-none absolute inset-x-3 bottom-7 z-30 flex items-center justify-between text-[11px] font-semibold tabular-nums text-white [text-shadow:0_1px_3px_rgba(0,0,0,1)]">
+        <span>{formatPlaybackTime(progress)}</span>
+        <span>{duration && Number.isFinite(duration) ? formatPlaybackTime(duration) : "--:--"}</span>
+      </div>
       <button
         type="button"
         aria-label="Seek video timeline"
         title="Geser untuk maju atau mundur"
-        className="absolute inset-x-0 bottom-0 z-20 h-5 touch-none cursor-pointer"
+        className="absolute inset-x-0 bottom-0 z-20 h-8 touch-none cursor-pointer px-0"
         onPointerDown={(event) => {
           const video = videoRef.current;
           if (!video || !duration) return;
@@ -810,8 +825,8 @@ export function Player({
           setProgress(video.currentTime);
         }}
       >
-        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-white/30">
-          <span className="block h-full bg-[#ff4d6d]" style={{ width: `${duration ? Math.min(100, (progress / duration) * 100) : 0}%` }} />
+        <span className="absolute inset-x-0 bottom-0 h-1.5 bg-white/55 shadow-[0_0_5px_rgba(0,0,0,0.8)]">
+          <span className="block h-full bg-[#ff4d6d] shadow-[0_0_5px_rgba(255,77,109,0.9)]" style={{ width: `${duration ? Math.min(100, (progress / duration) * 100) : 0}%` }} />
         </span>
       </button>
 
