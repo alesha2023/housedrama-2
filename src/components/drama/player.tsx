@@ -73,6 +73,7 @@ export function Player({
   const stageRef = useRef<HTMLDivElement>(null);
   const reported = useRef(false);
   const ignoreClick = useRef(false);
+  const seekingRef = useRef(false);
   const [payload, setPayload] = useState(initial);
   const [index, setIndex] = useState(0);
   const [error, setError] = useState<string | null>(initial.ok ? null : initial.message);
@@ -775,8 +776,31 @@ export function Player({
 
       <button
         type="button"
-        aria-label="Seek"
-        className="absolute inset-x-0 bottom-0 z-20 h-4"
+        aria-label="Seek video timeline"
+        title="Geser untuk maju atau mundur"
+        className="absolute inset-x-0 bottom-0 z-20 h-5 touch-none cursor-pointer"
+        onPointerDown={(event) => {
+          const video = videoRef.current;
+          if (!video || !duration) return;
+          seekingRef.current = true;
+          event.currentTarget.setPointerCapture(event.pointerId);
+          const rect = event.currentTarget.getBoundingClientRect();
+          const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+          video.currentTime = ratio * duration;
+          setProgress(video.currentTime);
+        }}
+        onPointerMove={(event) => {
+          if (!seekingRef.current) return;
+          const video = videoRef.current;
+          if (!video || !duration) return;
+          const rect = event.currentTarget.getBoundingClientRect();
+          const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+          video.currentTime = ratio * duration;
+          setProgress(video.currentTime);
+        }}
+        onPointerUp={() => { seekingRef.current = false; }}
+        onPointerCancel={() => { seekingRef.current = false; }}
+        onLostPointerCapture={() => { seekingRef.current = false; }}
         onClick={(event) => {
           const video = videoRef.current;
           if (!video || !duration) return;

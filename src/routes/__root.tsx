@@ -35,12 +35,12 @@ export const Route = createRootRoute({
       { name: "theme-color", content: "#b34bff" },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg?v=4" },
-      { rel: "icon", type: "image/png", sizes: "64x64", href: "/favicon.png?v=4" },
-      { rel: "shortcut icon", href: "/favicon.ico?v=4" },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/png", sizes: "64x64", href: "/favicon.png" },
+      { rel: "shortcut icon", href: "/favicon.ico" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png?v=4" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
     ],
   }),
   component: RootLayout,
@@ -76,7 +76,7 @@ function RootLayout() {
               "@type": "Organization",
               name: "HouseDrama",
               url: "https://house-drama.web.id/",
-              logo: "https://house-drama.web.id/logo.png?v=4",
+              logo: "https://house-drama.web.id/logo.png",
             }),
           }}
         />
