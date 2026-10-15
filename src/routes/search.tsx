@@ -127,30 +127,29 @@ function SearchPage() {
         />
       </form>
       <div className="mt-4">{data.providers.some((item) => !item.ok) ? <ErrorNote message={t.providersDown} /> : null}</div>
-      {data.suggestions.length && (query || draft.trim()) ? (
-        <div className="relative z-10 mt-3 flex flex-wrap gap-2" aria-label="Saran pencarian">
-          {data.suggestions
-            .filter((suggestion) => suggestion.toLocaleLowerCase().includes((draft.trim() || query).toLocaleLowerCase()) || (draft.trim() || query).toLocaleLowerCase().includes(suggestion.toLocaleLowerCase()))
-            .slice(0, 6)
-            .map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => void searchFor(suggestion)}
-                className="inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-surface px-3 py-2 text-left text-sm font-medium hover:border-primary"
-              >
-                <span className="truncate">{suggestion}</span>
-                <ChevronRight className="size-4 shrink-0 text-muted" />
-              </button>
-            ))}
-        </div>
-      ) : !query && data.suggestions.length ? (
-        <div className="relative z-10 mt-4 flex flex-col gap-2">
-          {data.suggestions.slice(0, 8).map((suggestion) => (
-            <button key={suggestion} type="button" onClick={() => void searchFor(suggestion)} className="flex w-full items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3 text-left text-sm font-semibold">
-              <span>{suggestion}</span><ChevronRight className="size-4 shrink-0 text-muted" />
-            </button>
-          ))}
+      {(draft.trim() && data.suggestions.length > 0) ? (
+        <div className="relative z-30" aria-label="Saran pencarian">
+          <div className="absolute left-0 right-0 top-2 max-h-[min(60vh,24rem)] overflow-y-auto rounded-2xl border border-line bg-surface shadow-xl">
+            {data.suggestions
+              .filter((suggestion) => {
+                const typed = draft.trim().toLocaleLowerCase();
+                const title = suggestion.toLocaleLowerCase();
+                return title.includes(typed) || typed.split(/\\s+/).every((word) => title.includes(word));
+              })
+              .slice(0, 8)
+              .map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => void searchFor(suggestion)}
+                  className="flex min-h-12 w-full items-center justify-between gap-3 border-b border-line/70 px-4 py-3 text-left text-sm last:border-b-0 hover:bg-primary/5 focus-visible:bg-primary/5"
+                >
+                  <span className="min-w-0 flex-1">{suggestion}</span>
+                  <ChevronRight className="size-4 shrink-0 text-muted" />
+                </button>
+              ))}
+          </div>
         </div>
       ) : null}
       {loading && !data.items.length ? <p className="mt-6 text-sm text-muted">{t.searching}</p> : null}
