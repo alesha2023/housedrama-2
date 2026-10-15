@@ -623,41 +623,67 @@ export async function loadSearch(input: {
 
 export async function loadShorts(page: number, lang: string): Promise<BrowsePayload> {
   const ids = visibleProviders().filter((id) => providerEnabled(id));
-  const groups = await Promise.all(
+  const results = await Promise.all(
     ids.map(async (id) => {
-      const cards = await Promise.race<DramaCard[]>([
-        shortsFrom(id, page, lang).catch(() => []),
-        new Promise<DramaCard[]>((resolve) => setTimeout(() => resolve([]), 4500)),
-      ]);
-      return dedupe(cards).slice(0, 4);
+      try {
+        // Use dedicated feed endpoints where the provider exposes them.
+        // Generic catalogue providers are only used on page 1; their normal
+        // catalogue is not assumed to be a paginated Shorts feed.
+        const result = await Promise.race<{
+          items: DramaCard[];
+          hasMore: boolean;
+        }>(
+          [
+            shortsFrom(id, page, lang),
+            new Promise<{ items: DramaCard[]; hasMore: boolean }>((resolve) =>
+              setTimeout(() => resolve({ items: [], hasMore: false }), 4500),
+            ),
+          ],
+        );
+        return { id, items: dedupe(result.items).slice(0, 12), hasMore: result.hasMore, ok: result.items.length > 0 };
+      } catch {
+        return { id, items: [] as DramaCard[], hasMore: false, ok: false };
+      }
     }),
   );
+
+  const groups = results.map((result) => result.items);
   const items = mixSources(groups, 72);
   return {
     title: "Shorts",
     items: await localizeCards(items, lang, false),
-    providers: ids.map((id) => ({ id, ok: groups[ids.indexOf(id)]?.length > 0, error: null })),
+    providers: results.map(({ id, ok }) => ({ id, ok, error: null })),
     page,
-    hasMore: page < 4,
+    hasMore: results.some((result) => result.hasMore),
   };
 }
 
-async function shortsFrom(id: ProviderId, page: number, lang: string): Promise<DramaCard[]> {
+async function shortsFrom(
+  id: ProviderId,
+  page: number,
+  lang: string,
+): Promise<{ items: DramaCard[]; hasMore: boolean }> {
   if (id === "anyreel") {
-    const shorts = await anyreelShorts(page);
-    return shorts.items;
+    // AnyReel's endpoint is zero-based in the rest of this project.
+    const shorts = await anyreelShorts(Math.max(0, page - 1));
+    return { items: shorts.items, hasMore: shorts.hasMore };
   }
   if (id === "freereels") {
-    const you = await freereelsForYou(lang, Math.max(0, page - 1));
-    return you.items;
+    // FreeReels uses an offset rather than a page number.
+    const you = await freereelsForYou(lang, (page - 1) * 10);
+    return { items: you.items, hasMore: you.hasMore };
   }
   if (id === "dramabox") {
-    if (page > 1) return [];
+    // The wrapper exposes Home/recommendations, not a dedicated Shorts feed.
+    // Use it as an initial fallback only; do not repeat the same catalogue.
+    if (page > 1) return { items: [], hasMore: false };
     const home = await dramaboxHome(lang);
-    return [...home.columns.flatMap((item) => item.items), ...home.recommend];
+    return { items: dedupe([...home.columns.flatMap((item) => item.items), ...home.recommend]), hasMore: false };
   }
-  if (page > 1) return [];
-  return genericBrowse(id, lang);
+  // Other providers currently have no confirmed dedicated Shorts/Feed wrapper.
+  // Use their catalogue once as a fallback, and don't pretend it is paginated.
+  if (page > 1) return { items: [], hasMore: false };
+  return { items: await genericBrowse(id, lang), hasMore: false };
 }
 
 export async function loadDetail(provider: ProviderId, seriesId: string, lang: string): Promise<DetailPayload> {

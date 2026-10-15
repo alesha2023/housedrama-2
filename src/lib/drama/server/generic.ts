@@ -86,9 +86,47 @@ function withLang(path: string, lang: string) {
 }
 
 function imageOf(record: Record<string, unknown>) {
-  for (const key of IMAGE_KEYS) {
-    const url = absoluteUrl(record[key]);
-    if (url && !/\.(m3u8|mp4)(\?|$)/i.test(url)) return url;
+  // Melolo responses may place poster URLs inside nested cover/image objects,
+  // or return multiple URL variants instead of a single string.
+  const nestedImageKeys = [
+    "book_pic", "bookPic", "shortPlayCover", "cover", "coverInfo",
+    "cover_info", "imageInfo", "image_info", "posterInfo", "poster_info",
+    "thumb", "thumbnail", "images", "image", "pic", "coverUrlInfo",
+  ];
+  const seen = new Set<unknown>();
+  const queue: unknown[] = [record];
+  while (queue.length) {
+    const current = queue.shift();
+    if (!current || typeof current !== "object" || seen.has(current)) continue;
+    seen.add(current);
+    if (Array.isArray(current)) {
+      queue.push(...current.slice(0, 12));
+      continue;
+    }
+    const item = current as Record<string, unknown>;
+    // Prefer known poster/cover keys before generic URL keys.
+    for (const key of IMAGE_KEYS) {
+      const raw = item[key];
+      const candidates = Array.isArray(raw) ? raw : [raw];
+      for (const candidate of candidates) {
+        const value = candidate && typeof candidate === "object"
+          ? str((candidate as Record<string, unknown>).url) ||
+            str((candidate as Record<string, unknown>).uri) ||
+            str((candidate as Record<string, unknown>).src) ||
+            str((candidate as Record<string, unknown>).url_list)
+          : candidate;
+        const url = absoluteUrl(value);
+        if (url && !/\.(m3u8|mp4)(\?|$)/i.test(url)) return upgradeHttps(url);
+      }
+    }
+    for (const key of nestedImageKeys) {
+      const nested = item[key];
+      if (nested && typeof nested === "object") queue.push(nested);
+      else if (typeof nested === "string" && /https?:|^\/\//i.test(nested)) {
+        const url = absoluteUrl(nested);
+        if (url && !/\.(m3u8|mp4)(\?|$)/i.test(url)) return upgradeHttps(url);
+      }
+    }
   }
   return null;
 }
