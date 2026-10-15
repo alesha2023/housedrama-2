@@ -30,7 +30,8 @@ function ShortsPage() {
   const [hasMore, setHasMore] = useState(initial.hasMore);
   const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(0);
-  const [muted, setMuted] = useState(false);
+  // Mobile browsers generally require muted playback for reliable autoplay.
+  const [muted, setMuted] = useState(true);
   const loadingMore = useRef(false);
 
   async function more() {
@@ -71,7 +72,7 @@ function ShortsPage() {
   }
 
   return (
-    <div ref={scroller} onScroll={onScroll} className="h-full snap-y snap-mandatory overflow-y-auto bg-black">
+    <div ref={scroller} onScroll={onScroll} className="h-full min-h-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {items.map((item, index) => (
         <ShortClip
           key={`${item.provider}-${item.seriesId}`}
@@ -205,10 +206,11 @@ function ShortClip({
   }, [active, candidate]);
 
   return (
-    <section className="relative h-full snap-start bg-black">
+    <section className="relative h-full min-h-full w-full snap-start snap-always overflow-hidden bg-black">
       <video
         ref={videoRef}
-        className="h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover"
+        autoPlay
         poster={item.posterUrl || undefined}
         playsInline
         loop={false}
@@ -237,25 +239,25 @@ function ShortClip({
           </span>
         </span>
       ) : null}
-      <div className="absolute inset-x-0 bottom-[4.7rem] z-10 bg-linear-to-t from-black/75 via-black/25 to-transparent px-4 pt-16 pb-3 pr-20 text-white lg:bottom-0">
-        <p className="text-sm font-semibold">@{providerLabel(item.provider)}</p>
-        <h2 className="mt-1 text-base font-semibold leading-snug">{title}</h2>
-        {item.description ? <p className="mt-1 line-clamp-2 text-sm text-white/85">{item.description}</p> : null}
+      <div className="absolute inset-x-0 bottom-[4.5rem] z-10 bg-linear-to-t from-black/75 via-black/25 to-transparent px-3 pt-12 pb-2 pr-14 text-white sm:px-4 sm:pr-20 lg:bottom-0">
+        <p className="text-xs font-semibold sm:text-sm">@{providerLabel(item.provider)}</p>
+        <h2 className="mt-1 line-clamp-2 text-sm font-semibold leading-snug sm:text-base">{title}</h2>
+        {item.description ? <p className="mt-1 line-clamp-2 text-xs text-white/85 sm:text-sm">{item.description}</p> : null}
         {failed ? <p className="mt-2 text-sm text-white/80">Video pratinjau tidak tersedia dari provider ini. Buka episode lengkap untuk mencoba pemutar utama, atau geser ke atas untuk video berikutnya.</p> : null}
       </div>
-      <div className="absolute right-3 bottom-[6.2rem] z-10 flex flex-col items-center gap-4 text-white lg:bottom-8">
+      <div className="absolute right-2 bottom-[5.7rem] z-10 flex flex-col items-center gap-3 text-white sm:right-3 sm:gap-4 lg:bottom-8">
         {item.posterUrl ? (
           <Link
             to="/drama/$provider/$seriesId"
             params={{ provider: item.provider, seriesId: item.seriesId }}
-            className="size-12 overflow-hidden rounded-full border-2 border-white"
+            className="size-9 overflow-hidden rounded-full border-2 border-white sm:size-12"
           >
             <img src={item.posterUrl} alt="" className="h-full w-full object-cover" />
           </Link>
         ) : null}
         <button
           type="button"
-          className="grid place-items-center gap-1 text-xs font-semibold"
+          className="grid place-items-center gap-0.5 text-[10px] font-semibold sm:gap-1 sm:text-xs"
           onClick={() => {
             const next = toggleWatchlist({
               provider: item.provider,
@@ -269,7 +271,7 @@ function ShortClip({
             setSaved(next.some((entry) => entry.provider === item.provider && entry.seriesId === item.seriesId));
           }}
         >
-          <Heart className={saved ? "size-8 fill-current text-[#ff2d55]" : "size-8"} />
+          <Heart className={saved ? "size-6 fill-current text-[#ff2d55] sm:size-8" : "size-6 sm:size-8"} />
           <span>{saved ? "Disimpan" : "Suka"}</span>
         </button>
         {episodeId ? (
@@ -278,15 +280,15 @@ function ShortClip({
             params={{ provider: item.provider, seriesId: item.seriesId, episodeId }}
             onClick={() => maybeOpenMonetagAd()}
             search={{ auto: true }}
-            className="grid place-items-center gap-1 text-xs font-semibold"
+            className="grid place-items-center gap-0.5 text-[10px] font-semibold sm:gap-1 sm:text-xs"
           >
-            <Play className="size-8" />
+            <Play className="size-6 sm:size-8" />
             <span>Episode Lengkap</span>
           </Link>
         ) : null}
         <button
           type="button"
-          className="grid place-items-center gap-1 text-xs font-semibold"
+          className="grid place-items-center gap-0.5 text-[10px] font-semibold sm:gap-1 sm:text-xs"
           onClick={() => {
             const prefix = previewPathPrefix(window.location.hostname, window.location.pathname) ?? "";
             const url = `${window.location.origin}${prefix}/drama/${item.provider}/${item.seriesId}`;
@@ -294,7 +296,7 @@ function ShortClip({
             else void navigator.clipboard?.writeText(url);
           }}
         >
-          <Share2 className="size-7" />
+          <Share2 className="size-6 sm:size-7" />
           <span>Bagikan</span>
         </button>
       </div>
@@ -304,7 +306,7 @@ function ShortClip({
       <button
         type="button"
         onClick={onToggleMute}
-        className="absolute top-4 right-4 z-10 grid size-10 place-items-center rounded-full bg-black/40 text-white"
+        className="absolute top-3 right-3 z-10 grid size-9 place-items-center rounded-full bg-black/40 text-white sm:top-4 sm:right-4 sm:size-10"
         aria-label={muted ? "Unmute" : "Mute"}
       >
         {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
