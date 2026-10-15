@@ -6,6 +6,27 @@ import type { DramaCard, ProviderId } from "@/lib/drama/types";
 const SITE_ORIGIN = "https://house-drama.web.id";
 const CACHE_MS = 30 * 60 * 1000;
 
+// Curated drama URLs confirmed by the site owner. Keep these in the sitemap
+// even when a provider's page-1 catalog does not return them.
+const FEATURED_DRAMA_PATHS = [
+  "/drama/freereels/LSjOzwuyTG",
+  "/drama/freereels/CtuX3LVyry",
+  "/drama/freereels/E8PxLvaL3J",
+  "/drama/freereels/ZLM2f8JJEQ",
+  "/drama/dramabox/42000026343",
+  "/drama/dramabox/42000029045",
+  // Additional trending dramas confirmed by the site owner.
+  "/drama/freereels/JJYPIFhFmD",
+  "/drama/freereels/vyCsDHzEN9",
+  "/drama/freereels/hMVo9oiMlB",
+  "/drama/freereels/aAHtGDqOPG",
+  "/drama/freereels/dqoMUlYLBQ",
+  "/drama/dramabox/42000028298",
+  "/drama/dramabox/42000028283",
+  "/drama/dramabox/42000021480",
+  "/drama/dramabox/42000023896",
+];
+
 // Only include public, indexable pages. User-specific history/watchlist pages
 // are intentionally omitted from the sitemap.
 const PATHS = [
@@ -42,13 +63,21 @@ function detailUrl(card: DramaCard) {
 
 async function collectProviderCards(providers: ProviderId[]) {
   const urls = new Set<string>();
+  // Include the first browse catalog for every visible provider. AnyReel and
+  // FreeReels support pagination in loadBrowse(), so crawl additional pages
+  // to discover more real detail URLs. Do not synthesize IDs from trend titles.
+  const requests = providers.flatMap((provider) => {
+    const pages = provider === "anyreel" || provider === "freereels" ? [1, 2, 3, 4, 5] : [1];
+    return pages.map((page) => ({ provider, page }));
+  });
+
   // Limit concurrency so one sitemap request doesn't overwhelm providers or
   // exceed the serverless function's execution budget.
   const batchSize = 6;
-  for (let i = 0; i < providers.length; i += batchSize) {
-    const batch = providers.slice(i, i + batchSize);
+  for (let i = 0; i < requests.length; i += batchSize) {
+    const batch = requests.slice(i, i + batchSize);
     const results = await Promise.allSettled(
-      batch.map((provider) => loadBrowse({ lang: "id", provider, page: 1 })),
+      batch.map(({ provider, page }) => loadBrowse({ lang: "id", provider, page })),
     );
     for (const result of results) {
       if (result.status !== "fulfilled") continue;
@@ -62,7 +91,7 @@ async function collectProviderCards(providers: ProviderId[]) {
 }
 
 async function buildSitemap() {
-  const urls = new Set(PATHS.map((path) => `${SITE_ORIGIN}${path}`));
+  const urls = new Set([...PATHS, ...FEATURED_DRAMA_PATHS].map((path) => `${SITE_ORIGIN}${path}`));
   try {
     // Build detail URLs from each visible provider's own browse catalog instead
     // of only the homepage rails, which are intentionally limited.
