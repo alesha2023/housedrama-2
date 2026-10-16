@@ -18,8 +18,8 @@ export const Route = createFileRoute("/watch/$provider/$seriesId/$episodeId")({
     });
   },
   staleTime: 60_000,
-  pendingMs: 600,
-  pendingMinMs: 0,
+  pendingMs: 0,
+  pendingMinMs: 300,
   pendingComponent: WatchPending,
   head: ({ loaderData, params }) => ({
     meta: [

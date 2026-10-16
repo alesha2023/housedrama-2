@@ -17,6 +17,7 @@ import { reportPlayback } from "@/lib/drama/api";
 import { pickTitle } from "@/lib/drama/display";
 import { usePrefs } from "@/lib/drama/i18n";
 import { previewPathPrefix } from "@/lib/preview-path-prefix";
+import { loadAdsterraPopunder, openMonetagAd } from "@/lib/drama/monetag";
 import { readProgress, readWatchlist, toggleWatchlist, upsertHistory, writeProgress } from "@/lib/drama/storage";
 import type { DramaCard, Episode, ProviderId, StreamCandidate, StreamPayload } from "@/lib/drama/types";
 import { cn } from "@/lib/utils";
@@ -411,10 +412,9 @@ export function Player({
 
 
   function go(episodeId: string, auto = false) {
-    // Require a sponsor click before continuing after every 3rd episode,
-    // including automatic next-episode navigation.
-    const isThirdEpisodeBoundary = currentIndex >= 0 && (currentIndex + 1) % 3 === 0;
-    if (isThirdEpisodeBoundary) {
+    // Ask for a sponsor after every 2nd episode, including automatic next-episode navigation.
+    const isSecondEpisodeBoundary = currentIndex >= 0 && (currentIndex + 1) % 2 === 0;
+    if (isSecondEpisodeBoundary) {
       setPendingAdEpisode(episodeId);
       return;
     }
@@ -836,15 +836,19 @@ export function Player({
             <h2 className="text-lg font-bold">{contentLang === "en" ? "Watch Sponsor First" : "Tonton Sponsor Dulu"}</h2>
             <p className="mt-2 text-sm text-gray-600">{contentLang === "en" ? `To continue to Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, please open the sponsor first. This helps support HouseDrama.` : `Untuk melanjutkan ke Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, silakan buka sponsor terlebih dahulu. Ini membantu mendukung HouseDrama.`}</p>
             <button type="button" className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#ff4d8d] to-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => {
-              const choices = SPONSOR_SMARTLINKS.map((_, sponsorIndex) => sponsorIndex).filter((sponsorIndex) => sponsorIndex !== lastSponsorIndex.current);
-              const nextSponsorIndex = choices[Math.floor(Math.random() * choices.length)] ?? 0;
-              lastSponsorIndex.current = nextSponsorIndex;
-              const sponsorTab = window.open(SPONSOR_SMARTLINKS[nextSponsorIndex], "_blank");
-              if (sponsorTab) continuePendingEpisode();
+              // Randomly rotate between Monetag and Adsterra. Provider/browser rules
+              // decide whether an actual ad is served; never trap the viewer if blocked.
+              const useMonetag = Math.random() < 0.5;
+              if (useMonetag) {
+                openMonetagAd();
+                continuePendingEpisode();
+                return;
+              }
+              void loadAdsterraPopunder().finally(() => continuePendingEpisode());
             }}>
               {contentLang === "en" ? "Open Sponsor & Continue Episode" : "Buka Sponsor & Lanjutkan Episode"}
             </button>
-            <p className="mt-3 text-xs text-gray-500">{contentLang === "en" ? "The next episode continues after the sponsor link opens." : "Episode berikutnya berlanjut setelah tautan sponsor berhasil dibuka."}</p>
+            <p className="mt-3 text-xs text-gray-500">{contentLang === "en" ? "A sponsor provider is selected randomly. Ads may be blocked or unavailable." : "Penyedia sponsor dipilih secara acak. Iklan bisa tidak tampil jika diblokir atau tidak tersedia."}</p>
           </div>
         </div>
       ) : null}
