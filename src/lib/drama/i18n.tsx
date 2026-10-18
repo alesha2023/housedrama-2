@@ -6,6 +6,7 @@ export const UI_LANGS = [
   { id: "id", label: "Indonesia" },
   { id: "hi", label: "हिन्दी (India)" },
   { id: "fil", label: "Filipino" },
+  { id: "ms", label: "Bahasa Malaysia" },
 ] as const;
 
 export const CONTENT_LANGS = [
@@ -60,6 +61,26 @@ const RAIL_TITLES = {
   ...RAIL_TITLES_BASE,
   hi: RAIL_TITLES_BASE.en,
   fil: RAIL_TITLES_BASE.en,
+  ms: {
+    featured: "Drama pilihan",
+    trending: "Sedang trending",
+    popular: "Paling popular",
+    latest: "Episod terbaharu",
+    new: "Keluaran baharu",
+    recommended: "Disyorkan untuk anda",
+    romance: "Romantik",
+    revenge: "Balas dendam",
+    billionaire: "Romantik jutawan",
+    ceo: "Romantik CEO",
+    historical: "Drama sejarah",
+    fantasy: "Fantasi",
+    family: "Drama keluarga",
+    comedy: "Komedi",
+    completed: "Drama tamat",
+    anyreel: "Dari AnyReel",
+    dramabox: "Dari DramaBox",
+    freereels: "Dari FreeReels",
+  },
 } as const;
 
 export function railTitle(lang: keyof typeof RAIL_TITLES, id: string, fallback: string) {
@@ -298,6 +319,69 @@ const COPY = {
     ...COPY_BASE.en,
     home: "Home", discover: "Tuklasin", latest: "Pinakabago", trending: "Trending", categories: "Mga Kategorya", search: "Maghanap", watchlist: "Watchlist", history: "Kasaysayan", shorts: "Shorts", play: "I-play ngayon", details: "Tingnan ang detalye", viewAll: "Tingnan lahat", start: "Simulang manood", save: "Idagdag sa watchlist", saved: "Nasa watchlist", episodes: "Mga episode", similar: "Mga katulad na drama", more: "Higit pa mula sa provider na ito", also: "Available din sa", continue: "Ituloy ang panonood", recent: "Kamakailang pinanood", empty: "Wala pa rito", retry: "Subukan muli", loadMore: "Mag-load pa", searchPlaceholder: "Maghanap sa AnyReel, DramaBox, at FreeReels", searchIntro: "Hanapin ang paborito mong drama sa pamamagitan ng pamagat.", contentLang: "Wika ng katalogo", uiLang: "Interface", about: "Tungkol", privacy: "Privacy", terms: "Mga tuntunin", next: "Susunod na episode", prev: "Nakaraang episode", autoplay: "Awtomatikong i-play ang susunod", loading: "Naglo-load", searching: "Naghahanap…", close: "Isara", footerNote: "Katalogo ng Chinese short dramas mula sa iba’t ibang provider. Maghanap, mag-save, at manood sa HouseDrama.", noMatches: "Walang tugma", allProviders: "Lahat ng provider", providerLabel: "Provider", unknownProvider: "Hindi kilalang provider", discoverBody: "Pinagsamang katalogo mula sa lahat ng konektadong provider.", latestTitle: "Mga bagong release", latestBody: "Mga bagong drama mula sa DramaBox at iba pang katalogo.", remove: "Alisin", discoverCta: "Tuklasin ang mga drama", noSynopsis: "Walang buod para sa pamagat na ito.", episodeUnit: "episode", completed: "Tapos na", ongoing: "Kasalukuyan", plays: "panonood", eps: "ep.", shortDrama: "Maikling drama", dramaUnavailable: "Hindi available ang drama", missingDrama: "Walang detalye ng drama.", heroFallback: "Maiikling drama mula sa live na katalogo.", catalogsEmpty: "Walang drama na ibinalik ang katalogo. Subukan muli mamaya.", aboutLead: "Libreng katalogo ng Chinese short dramas.", termsTitle: "Mga tuntunin sa paggamit",
   },
+  ms: {
+    ...COPY_BASE.en,
+    home: "Laman Utama",
+    discover: "Teroka",
+    latest: "Terbaharu",
+    trending: "Trending",
+    categories: "Kategori",
+    search: "Cari",
+    watchlist: "Senarai tonton",
+    history: "Sejarah",
+    shorts: "Shorts",
+    play: "Main sekarang",
+    details: "Lihat butiran",
+    viewAll: "Lihat semua",
+    start: "Mula menonton",
+    save: "Tambah ke senarai",
+    saved: "Dalam senarai",
+    episodes: "Episod",
+    similar: "Drama serupa",
+    more: "Lagi dari penyedia ini",
+    also: "Juga ada di",
+    continue: "Sambung menonton",
+    recent: "Baru ditonton",
+    empty: "Tiada apa-apa lagi",
+    retry: "Cuba lagi",
+    loadMore: "Muat lagi",
+    searchPlaceholder: "Cari tajuk di AnyReel, DramaBox, dan FreeReels",
+    searchIntro: "Cari mengikut tajuk untuk jumpa drama kegemaran anda.",
+    contentLang: "Bahasa katalog",
+    uiLang: "Antara muka",
+    about: "Perihal",
+    privacy: "Privasi",
+    terms: "Terma",
+    next: "Episod seterusnya",
+    prev: "Episod sebelumnya",
+    autoplay: "Main automatik",
+    loading: "Memuatkan",
+    searching: "Mencari…",
+    close: "Tutup",
+    footerNote: "Katalog drama pendek daripada pelbagai penyedia. Cari, simpan, dan tonton di HouseDrama.",
+    noMatches: "Tiada padanan",
+    allProviders: "Semua penyedia",
+    providerLabel: "Sumber drama",
+    unknownProvider: "Penyedia tidak diketahui",
+    discoverBody: "Campuran daripada semua katalog yang disambungkan.",
+    latestTitle: "Keluaran terbaharu",
+    latestBody: "Drama baharu daripada DramaBox dan katalog lain.",
+    remove: "Buang",
+    discoverCta: "Teroka drama",
+    noSynopsis: "Tiada sinopsis untuk tajuk ini.",
+    episodeUnit: "episod",
+    completed: "Tamat",
+    ongoing: "Sedang berlangsung",
+    plays: "tontonan",
+    eps: "ep.",
+    shortDrama: "Drama pendek",
+    dramaUnavailable: "Drama tidak tersedia",
+    missingDrama: "Butiran drama tiada.",
+    heroFallback: "Drama pendek daripada katalog langsung.",
+    catalogsEmpty: "Katalog tidak memulangkan drama. Cuba lagi nanti.",
+    aboutLead: "Katalog percuma untuk drama pendek.",
+    termsTitle: "Terma penggunaan",
+  },
 } satisfies Record<string, Copy>;
 
 export type UiLang = keyof typeof COPY;
@@ -314,7 +398,7 @@ type Prefs = {
 const PrefsContext = createContext<Prefs | null>(null);
 
 function isUiLang(value: string | null): value is UiLang {
-  return value === "en" || value === "id" || value === "hi" || value === "fil";
+  return value === "en" || value === "id" || value === "hi" || value === "fil" || value === "ms";
 }
 
 function writeLangCookie(lang: UiLang, manual: boolean) {
@@ -362,7 +446,7 @@ export function PrefsProvider({ initialLang = "id", children }: { initialLang?: 
       })
       .then((data) => {
         const country = data.country_code?.toUpperCase();
-        applyAutoLanguage(country === "ID" ? "id" : country === "IN" ? "hi" : country === "PH" ? "fil" : "en");
+        applyAutoLanguage(country === "ID" ? "id" : country === "IN" ? "hi" : country === "PH" ? "fil" : country === "MY" ? "ms" : "en");
       })
       .catch(() => {
         // The server already chose a language from the request IP when it could.

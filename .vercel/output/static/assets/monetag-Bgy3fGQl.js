@@ -1,0 +1,1 @@
+function e(){typeof window<`u`&&window.open(`https://uplcm.com/4/12017844`,`_blank`,`noopener,noreferrer`)}function t(){return e(),!0}export{e as n,t};
