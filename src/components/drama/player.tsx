@@ -99,6 +99,8 @@ export function Player({
   const [openSubs, setOpenSubs] = useState(false);
   const [openList, setOpenList] = useState(false);
   const [pendingAdEpisode, setPendingAdEpisode] = useState<string | null>(null);
+  const [sponsorOpened, setSponsorOpened] = useState(false);
+  const [sponsorProvider, setSponsorProvider] = useState<"monetag" | "adsterra" | null>(null);
   const lastSponsorIndex = useRef<number>(-1);
   const [rate, setRate] = useState(1);
   const [subtitleLang, setSubtitleLang] = useState<string | null>(null);
@@ -416,6 +418,8 @@ export function Player({
     const isSecondEpisodeBoundary = currentIndex >= 0 && (currentIndex + 1) % 2 === 0;
     if (isSecondEpisodeBoundary) {
       setPendingAdEpisode(episodeId);
+      setSponsorOpened(false);
+      setSponsorProvider(null);
       return;
     }
     void navigate({
@@ -428,6 +432,8 @@ export function Player({
   function continuePendingEpisode() {
     const episodeId = pendingAdEpisode;
     setPendingAdEpisode(null);
+    setSponsorOpened(false);
+    setSponsorProvider(null);
     if (!episodeId) return;
     void navigate({
       to: "/watch/$provider/$seriesId/$episodeId",
@@ -836,19 +842,29 @@ export function Player({
             <h2 className="text-lg font-bold">{contentLang === "en" ? "Watch Sponsor First" : "Tonton Sponsor Dulu"}</h2>
             <p className="mt-2 text-sm text-gray-600">{contentLang === "en" ? `To continue to Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, please open the sponsor first. This helps support HouseDrama.` : `Untuk melanjutkan ke Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, silakan buka sponsor terlebih dahulu. Ini membantu mendukung HouseDrama.`}</p>
             <button type="button" className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#ff4d8d] to-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => {
-              // Randomly rotate between Monetag and Adsterra. Provider/browser rules
-              // decide whether an actual ad is served; never trap the viewer if blocked.
-              const useMonetag = Math.random() < 0.5;
-              if (useMonetag) {
+              // Open a sponsor in a new tab from this explicit user click. The viewer
+              // returns to HouseDrama and presses Continue; no ad completion is claimed.
+              const provider = Math.random() < 0.5 ? "monetag" : "adsterra";
+              setSponsorProvider(provider);
+              if (provider === "monetag") {
                 openMonetagAd();
-                continuePendingEpisode();
-                return;
+              } else {
+                void loadAdsterraPopunder();
+                const link = SPONSOR_SMARTLINKS[Math.floor(Math.random() * SPONSOR_SMARTLINKS.length)];
+                window.open(link, "_blank", "noopener,noreferrer");
               }
-              void loadAdsterraPopunder().finally(() => continuePendingEpisode());
-            }}>
-              {contentLang === "en" ? "Open Sponsor & Continue Episode" : "Buka Sponsor & Lanjutkan Episode"}
+              setSponsorOpened(true);
+            }} disabled={sponsorOpened}>
+              {sponsorOpened
+                ? (contentLang === "en" ? "Sponsor Opened" : "Sponsor Sudah Dibuka")
+                : (contentLang === "en" ? "Open Sponsor in New Tab" : "Buka Sponsor di Tab Baru")}
             </button>
-            <p className="mt-3 text-xs text-gray-500">{contentLang === "en" ? "A sponsor provider is selected randomly. Ads may be blocked or unavailable." : "Penyedia sponsor dipilih secara acak. Iklan bisa tidak tampil jika diblokir atau tidak tersedia."}</p>
+            {sponsorOpened ? (
+              <button type="button" className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-semibold text-gray-700" onClick={continuePendingEpisode}>
+                {contentLang === "en" ? "Return & Continue Episode" : "Kembali & Lanjutkan Episode"}
+              </button>
+            ) : null}
+            <p className="mt-3 text-xs text-gray-500">{contentLang === "en" ? "Sponsor links are selected randomly. Ads may be blocked or unavailable; opening a link does not verify an ad view." : "Link sponsor dipilih secara acak. Iklan bisa diblokir atau tidak tersedia; membuka link tidak menjamin tayangan iklan tercatat."}</p>
           </div>
         </div>
       ) : null}
