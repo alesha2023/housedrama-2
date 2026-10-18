@@ -180,9 +180,9 @@ export function Shell({ children }: { children: ReactNode }) {
       <PwaInstallPrompt />
       {watching || shorts ? null : (
       <header className="sticky top-0 z-40 border-b border-line/70 bg-white/75 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-1 px-2 sm:gap-2 sm:px-4">
           <Link to="/" className="flex shrink-0 items-center" onClick={() => setOpen(false)}>
-            <Logo className="h-10 w-auto" />
+            <Logo className="h-8 w-auto max-w-[142px] sm:h-10 sm:max-w-none" />
           </Link>
           <nav className="ml-4 hidden items-center gap-1 lg:flex" aria-label="Primary">
             {LINKS.map((link) => (
@@ -196,27 +196,27 @@ export function Shell({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex min-w-0 items-center gap-0 sm:gap-1">
             <label className="sr-only" htmlFor="header-language-select">Choose language</label>
             <select
               id="header-language-select"
               aria-label="Choose language"
               value={uiLang}
-              className="h-10 max-w-[108px] rounded-full border border-line bg-white/80 px-3 text-xs font-bold text-ink shadow-sm hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              className="h-9 w-[82px] shrink-0 rounded-full border border-line bg-white/80 px-1.5 text-[11px] font-bold text-ink shadow-sm hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary sm:h-10 sm:w-auto sm:max-w-[108px] sm:px-3 sm:text-xs"
               onChange={(event) => setUiLang(event.target.value as typeof uiLang)}
             >
               {UI_LANGS.map((lang) => (
                 <option key={lang.id} value={lang.id}>{lang.id === "hi" ? "🇮🇳 हिन्दी" : lang.id === "fil" ? "🇵🇭 Filipino" : lang.id === "id" ? "🇮🇩 Indonesia" : "🇺🇸 English"}</option>
               ))}
             </select>
-            <Link to="/search" aria-label={t.search} className="grid size-11 place-items-center rounded-full hover:bg-surface">
+            <Link to="/search" aria-label={t.search} className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-surface sm:size-11">
               <Search className="size-5" />
             </Link>
             <button
               type="button"
               aria-label={theme === "dark" ? "Ganti ke tema terang" : "Ganti ke tema gelap"}
               title={theme === "dark" ? "Tema terang" : "Tema gelap"}
-              className="grid size-11 place-items-center rounded-full hover:bg-surface"
+              className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-surface sm:size-11"
               onClick={() => changeTheme(theme === "dark" ? "light" : "dark")}
             >
               {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
@@ -226,7 +226,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
             <button
               type="button"
-              className="grid size-11 place-items-center rounded-full hover:bg-surface lg:hidden"
+              className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-surface sm:size-11 lg:hidden"
               aria-label="Menu"
               onClick={() => setOpen((value) => !value)}
             >
