@@ -99,13 +99,13 @@ export function DramaCardView({ item, className }: { item: DramaCard; className?
         <div className="absolute left-2 top-2 flex max-w-[90%] flex-wrap gap-1">
           <ProviderBadge provider={item.provider} />
           {item.badge ? (
-            <span className="rounded-full bg-bg/90 px-2 py-0.5 text-xs font-semibold text-ink">{item.badge}</span>
+            <span className="rounded-full bg-bg/90 px-2 py-0.5 text-xs font-semibold text-ink">{item.badge.toLowerCase().includes("trending di housedrama") ? t.trendingOnHouseDrama : item.badge}</span>
           ) : null}
         </div>
         {item.playCount?.toLowerCase().includes("ditonton di housedrama") ? (
           <span className="absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full bg-black/75 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur-sm">
             <Eye className="size-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">{item.playCount.replace(/\s+ditonton di HouseDrama/i, " ditonton")}</span>
+            <span className="truncate">{Number(item.playCount.match(/[\d,.]+/)?.[0]?.replace(/,/g, "") ?? 0).toLocaleString()} {t.viewed}</span>
           </span>
         ) : null}
       </div>

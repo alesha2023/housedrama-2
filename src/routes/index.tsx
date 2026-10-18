@@ -250,7 +250,7 @@ function HomePage() {
         </section>
       ) : null}
 
-      {houseTrending.length ? <Rail title="Trending on HouseDrama · Paling banyak ditonton" items={houseTrending} more={<Link to="/trending" className="text-sm font-semibold text-primary">Lihat semua</Link>} /> : null}
+      {houseTrending.length ? <Rail title={t.mostWatchedTitle} items={houseTrending} more={<Link to="/trending" className="text-sm font-semibold text-primary">{t.viewAll}</Link>} /> : null}
       {data.sections
         .filter((section) => section.id !== "featured")
         .map((section) => (

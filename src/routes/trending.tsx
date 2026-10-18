@@ -40,8 +40,8 @@ function TrendingPage() {
     : data.sections.find((section) => section.id === "trending")?.items ?? [];
   return (
     <div>
-      <PageIntro eyebrow={watchedItems.length ? "Trending on HouseDrama" : t.rankEyebrow} title={watchedItems.length ? "Paling Banyak Ditonton di HouseDrama" : t.trendTitle} description={watchedItems.length ? "Drama yang paling sering mulai ditonton pengunjung HouseDrama." : t.trendBody} />
-      <SeoItemList items={items} name={watchedItems.length ? "Drama Paling Banyak Ditonton di HouseDrama" : "Drama China Pendek Populer dan Trending"} />
+      <PageIntro eyebrow={watchedItems.length ? t.trendingOnHouseDrama : t.rankEyebrow} title={watchedItems.length ? t.mostWatchedTitle : t.trendTitle} description={watchedItems.length ? t.mostWatchedDescription : t.trendBody} />
+      <SeoItemList items={items} name={watchedItems.length ? t.mostWatchedTitle : t.trendTitle} />
       {items.length ? <DramaGrid items={items} /> : <EmptyState title={t.noRank} body={t.noRankBody} />}
     </div>
   );
