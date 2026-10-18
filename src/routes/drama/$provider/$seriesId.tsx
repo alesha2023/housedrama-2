@@ -121,8 +121,8 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
       meta: [
         { title },
         { name: "description", content: description },
-        { name: "robots", content: drama && (drama.displayTitle || drama.title) ? "index,follow,max-image-preview:large" : "noindex,follow" },
-        { name: "googlebot", content: drama ? "index,follow,max-image-preview:large" : "noindex,follow" },
+        { name: "robots", content: "index,follow,max-image-preview:large" },
+        { name: "googlebot", content: "index,follow,max-image-preview:large" },
         { property: "og:type", content: "video.tv_show" },
         { property: "og:locale", content: "id_ID" },
         { property: "og:site_name", content: "HouseDrama" },
