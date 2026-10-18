@@ -46,6 +46,29 @@ function WatchPage() {
   const [detail, setDetail] = useState(initial.detail);
   const [stream, setStream] = useState(initial.stream);
 
+  // Count one play-start per drama per browser session to avoid duplicate counts on refresh.
+  useEffect(() => {
+    if (!detail.drama || !isProviderId(params.provider)) return;
+    const key = `housedrama-viewed:${params.provider}:${params.seriesId}`;
+    try {
+      if (window.sessionStorage.getItem(key)) return;
+      window.sessionStorage.setItem(key, "1");
+    } catch {
+      // Private browsing/storage restrictions should never block playback.
+    }
+    void fetch("/api/drama-trending", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        provider: params.provider,
+        seriesId: params.seriesId,
+        title: detail.drama.displayTitle || detail.drama.title,
+        posterUrl: detail.drama.posterUrl,
+      }),
+      keepalive: true,
+    }).catch(() => undefined);
+  }, [detail.drama, params.provider, params.seriesId]);
+
   useEffect(() => {
     setDetail(initial.detail);
     setStream(initial.stream);

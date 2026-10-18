@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clapperboard, LoaderCircle } from "lucide-react";
+import { Clapperboard, Eye, LoaderCircle } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import type { DramaCard, ProviderId } from "@/lib/drama/types";
 import { usePrefs } from "@/lib/drama/i18n";
@@ -102,6 +102,12 @@ export function DramaCardView({ item, className }: { item: DramaCard; className?
             <span className="rounded-full bg-bg/90 px-2 py-0.5 text-xs font-semibold text-ink">{item.badge}</span>
           ) : null}
         </div>
+        {item.playCount?.toLowerCase().includes("ditonton di housedrama") ? (
+          <span className="absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full bg-black/75 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur-sm">
+            <Eye className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">{item.playCount.replace(/\s+ditonton di HouseDrama/i, " ditonton")}</span>
+          </span>
+        ) : null}
       </div>
       <h3 className="drama-card__title mt-2 line-clamp-2 text-sm font-semibold leading-snug text-ink group-hover:text-primary">
         {title}

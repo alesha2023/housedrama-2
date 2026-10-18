@@ -45,6 +45,18 @@ function HomePage() {
   const [data, setData] = useState<HomePayload>(initial);
   const [history, setHistory] = useState<ReturnType<typeof readHistory>>([]);
   const [slide, setSlide] = useState(0);
+  const [houseTrending, setHouseTrending] = useState<import("@/lib/drama/types").DramaCard[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/drama-trending", { headers: { accept: "application/json" } })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Trending unavailable")))
+      .then((payload: { items?: import("@/lib/drama/types").DramaCard[] }) => {
+        if (active && Array.isArray(payload.items)) setHouseTrending(payload.items);
+      })
+      .catch(() => { if (active) setHouseTrending([]); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => setData(initial), [initial]);
 
@@ -238,6 +250,7 @@ function HomePage() {
         </section>
       ) : null}
 
+      {houseTrending.length ? <Rail title="Trending on HouseDrama · Paling banyak ditonton" items={houseTrending} more={<Link to="/trending" className="text-sm font-semibold text-primary">Lihat semua</Link>} /> : null}
       {data.sections
         .filter((section) => section.id !== "featured")
         .map((section) => (

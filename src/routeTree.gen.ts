@@ -25,6 +25,7 @@ import { Route as TrendingRouteImport } from './routes/trending'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as ApiMediaRouteImport } from './routes/api/media'
 import { Route as ApiVisitorCountRouteImport } from './routes/api/visitor-count'
+import { Route as ApiDramaTrendingRouteImport } from './routes/api/drama-trending'
 import { Route as ProviderProviderRouteImport } from './routes/provider/$provider'
 import { Route as DramaProviderSeriesIdRouteImport } from './routes/drama/$provider/$seriesId'
 import { Route as WatchProviderSeriesIdEpisodeIdRouteImport } from './routes/watch/$provider/$seriesId/$episodeId'
@@ -109,6 +110,11 @@ const ApiVisitorCountRoute = ApiVisitorCountRouteImport.update({
   path: '/api/visitor-count',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDramaTrendingRoute = ApiDramaTrendingRouteImport.update({
+  id: '/api/drama-trending',
+  path: '/api/drama-trending',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProviderProviderRoute = ProviderProviderRouteImport.update({
   id: '/provider/$provider',
   path: '/provider/$provider',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/watchlist': typeof WatchlistRoute
   '/api/media': typeof ApiMediaRoute
   '/api/visitor-count': typeof ApiVisitorCountRoute
+  '/api/drama-trending': typeof ApiDramaTrendingRoute
   '/provider/$provider': typeof ProviderProviderRoute
   '/drama/$provider/$seriesId': typeof DramaProviderSeriesIdRoute
   '/watch/$provider/$seriesId/$episodeId': typeof WatchProviderSeriesIdEpisodeIdRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/watchlist': typeof WatchlistRoute
   '/api/media': typeof ApiMediaRoute
   '/api/visitor-count': typeof ApiVisitorCountRoute
+  '/api/drama-trending': typeof ApiDramaTrendingRoute
   '/provider/$provider': typeof ProviderProviderRoute
   '/drama/$provider/$seriesId': typeof DramaProviderSeriesIdRoute
   '/watch/$provider/$seriesId/$episodeId': typeof WatchProviderSeriesIdEpisodeIdRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/watchlist': typeof WatchlistRoute
   '/api/media': typeof ApiMediaRoute
   '/api/visitor-count': typeof ApiVisitorCountRoute
+  '/api/drama-trending': typeof ApiDramaTrendingRoute
   '/provider/$provider': typeof ProviderProviderRoute
   '/drama/$provider/$seriesId': typeof DramaProviderSeriesIdRoute
   '/watch/$provider/$seriesId/$episodeId': typeof WatchProviderSeriesIdEpisodeIdRoute
@@ -273,6 +282,7 @@ export interface RootRouteChildren {
   WatchlistRoute: typeof WatchlistRoute
   ApiMediaRoute: typeof ApiMediaRoute
   ApiVisitorCountRoute: typeof ApiVisitorCountRoute
+  ApiDramaTrendingRoute: typeof ApiDramaTrendingRoute
   ProviderProviderRoute: typeof ProviderProviderRoute
   DramaProviderSeriesIdRoute: typeof DramaProviderSeriesIdRoute
   WatchProviderSeriesIdEpisodeIdRoute: typeof WatchProviderSeriesIdEpisodeIdRoute
@@ -392,6 +402,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiVisitorCountRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/drama-trending': {
+      id: '/api/drama-trending'
+      path: '/api/drama-trending'
+      fullPath: '/api/drama-trending'
+      preLoaderRoute: typeof ApiDramaTrendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/provider/$provider': {
       id: '/provider/$provider'
       path: '/provider/$provider'
@@ -433,6 +450,7 @@ const rootRouteChildren: RootRouteChildren = {
   WatchlistRoute: WatchlistRoute,
   ApiMediaRoute: ApiMediaRoute,
   ApiVisitorCountRoute: ApiVisitorCountRoute,
+  ApiDramaTrendingRoute: ApiDramaTrendingRoute,
   ProviderProviderRoute: ProviderProviderRoute,
   DramaProviderSeriesIdRoute: DramaProviderSeriesIdRoute,
   WatchProviderSeriesIdEpisodeIdRoute: WatchProviderSeriesIdEpisodeIdRoute,

@@ -8,6 +8,6 @@ export function getRouter() {
     routeTree,
     rewrite: previewPathRewrite(),
     defaultErrorComponent: AppErrorComponent,
-    scrollRestoration: true,
+    scrollRestoration: false,
   });
 }

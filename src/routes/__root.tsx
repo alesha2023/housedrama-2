@@ -1,4 +1,5 @@
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
+import { useLayoutEffect } from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
@@ -48,6 +49,12 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const { lang } = Route.useLoaderData();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  // New pages should open at the top instead of restoring the previous page's footer position.
+  useLayoutEffect(() => {
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  }, [pathname]);
   return (
     <html lang={lang} suppressHydrationWarning>
       <head>
