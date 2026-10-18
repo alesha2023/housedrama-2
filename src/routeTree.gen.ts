@@ -24,7 +24,6 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TrendingRouteImport } from './routes/trending'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as ApiMediaRouteImport } from './routes/api/media'
-import { Route as ApiVisitorCountRouteImport } from './routes/api/visitor-count'
 import { Route as ProviderProviderRouteImport } from './routes/provider/$provider'
 import { Route as DramaProviderSeriesIdRouteImport } from './routes/drama/$provider/$seriesId'
 import { Route as WatchProviderSeriesIdEpisodeIdRouteImport } from './routes/watch/$provider/$seriesId/$episodeId'
@@ -104,11 +103,6 @@ const ApiMediaRoute = ApiMediaRouteImport.update({
   path: '/api/media',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiVisitorCountRoute = ApiVisitorCountRouteImport.update({
-  id: '/api/visitor-count',
-  path: '/api/visitor-count',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProviderProviderRoute = ProviderProviderRouteImport.update({
   id: '/provider/$provider',
   path: '/provider/$provider',
@@ -142,7 +136,6 @@ export interface FileRoutesByFullPath {
   '/trending': typeof TrendingRoute
   '/watchlist': typeof WatchlistRoute
   '/api/media': typeof ApiMediaRoute
-  '/api/visitor-count': typeof ApiVisitorCountRoute
   '/provider/$provider': typeof ProviderProviderRoute
   '/drama/$provider/$seriesId': typeof DramaProviderSeriesIdRoute
   '/watch/$provider/$seriesId/$episodeId': typeof WatchProviderSeriesIdEpisodeIdRoute
@@ -163,7 +156,6 @@ export interface FileRoutesByTo {
   '/trending': typeof TrendingRoute
   '/watchlist': typeof WatchlistRoute
   '/api/media': typeof ApiMediaRoute
-  '/api/visitor-count': typeof ApiVisitorCountRoute
   '/provider/$provider': typeof ProviderProviderRoute
   '/drama/$provider/$seriesId': typeof DramaProviderSeriesIdRoute
   '/watch/$provider/$seriesId/$episodeId': typeof WatchProviderSeriesIdEpisodeIdRoute
@@ -185,7 +177,6 @@ export interface FileRoutesById {
   '/trending': typeof TrendingRoute
   '/watchlist': typeof WatchlistRoute
   '/api/media': typeof ApiMediaRoute
-  '/api/visitor-count': typeof ApiVisitorCountRoute
   '/provider/$provider': typeof ProviderProviderRoute
   '/drama/$provider/$seriesId': typeof DramaProviderSeriesIdRoute
   '/watch/$provider/$seriesId/$episodeId': typeof WatchProviderSeriesIdEpisodeIdRoute
@@ -208,7 +199,6 @@ export interface FileRouteTypes {
     | '/trending'
     | '/watchlist'
     | '/api/media'
-    | '/api/visitor-count'
     | '/provider/$provider'
     | '/drama/$provider/$seriesId'
     | '/watch/$provider/$seriesId/$episodeId'
@@ -229,7 +219,6 @@ export interface FileRouteTypes {
     | '/trending'
     | '/watchlist'
     | '/api/media'
-    | '/api/visitor-count'
     | '/provider/$provider'
     | '/drama/$provider/$seriesId'
     | '/watch/$provider/$seriesId/$episodeId'
@@ -250,7 +239,6 @@ export interface FileRouteTypes {
     | '/trending'
     | '/watchlist'
     | '/api/media'
-    | '/api/visitor-count'
     | '/provider/$provider'
     | '/drama/$provider/$seriesId'
     | '/watch/$provider/$seriesId/$episodeId'
@@ -272,7 +260,6 @@ export interface RootRouteChildren {
   TrendingRoute: typeof TrendingRoute
   WatchlistRoute: typeof WatchlistRoute
   ApiMediaRoute: typeof ApiMediaRoute
-  ApiVisitorCountRoute: typeof ApiVisitorCountRoute
   ProviderProviderRoute: typeof ProviderProviderRoute
   DramaProviderSeriesIdRoute: typeof DramaProviderSeriesIdRoute
   WatchProviderSeriesIdEpisodeIdRoute: typeof WatchProviderSeriesIdEpisodeIdRoute
@@ -385,13 +372,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/visitor-count': {
-      id: '/api/visitor-count'
-      path: '/api/visitor-count'
-      fullPath: '/api/visitor-count'
-      preLoaderRoute: typeof ApiVisitorCountRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/provider/$provider': {
       id: '/provider/$provider'
       path: '/provider/$provider'
@@ -432,7 +412,6 @@ const rootRouteChildren: RootRouteChildren = {
   TrendingRoute: TrendingRoute,
   WatchlistRoute: WatchlistRoute,
   ApiMediaRoute: ApiMediaRoute,
-  ApiVisitorCountRoute: ApiVisitorCountRoute,
   ProviderProviderRoute: ProviderProviderRoute,
   DramaProviderSeriesIdRoute: DramaProviderSeriesIdRoute,
   WatchProviderSeriesIdEpisodeIdRoute: WatchProviderSeriesIdEpisodeIdRoute,

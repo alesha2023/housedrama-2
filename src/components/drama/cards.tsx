@@ -90,7 +90,7 @@ export function DramaCardView({ item, className }: { item: DramaCard; className?
     <Link
       to="/drama/$provider/$seriesId"
       params={{ provider: item.provider, seriesId: item.seriesId }}
-      className={cn("drama-card group block shrink-0 snap-start", className)}
+      className={cn("drama-card group block w-36 shrink-0 snap-start sm:w-44", className)}
     >
       <div className="drama-card__poster rise relative overflow-hidden rounded-2xl bg-surface ring-1 ring-black/5">
         <div className="drama-card__image aspect-poster">
@@ -177,7 +177,7 @@ export function Rail({
         <h2 className="text-lg font-semibold tracking-tight text-ink">{title}</h2>
         {more ?? (action ? <span className="text-sm font-semibold text-primary">{action}</span> : null)}
       </div>
-      <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+      <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 snap-x sm:mx-0 sm:px-0">
         {ordered.map((item) => (
           <DramaCardView key={`${item.provider}-${item.seriesId}`} item={item} />
         ))}

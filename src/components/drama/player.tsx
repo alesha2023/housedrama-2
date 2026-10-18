@@ -46,11 +46,6 @@ function formatPlaybackTime(seconds: number | null | undefined) {
     : `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 }
 
-function cuePlainText(cue: TextTrackCue) {
-  const raw = "text" in cue ? String((cue as VTTCue).text) : "";
-  return raw.replace(/<[^>]*>/g, "").replace(/\u00a0/g, " ").trim();
-}
-
 function showSubtitle(video: HTMLVideoElement, lang: string | null) {
   const tracks = video.textTracks;
   const want = lang?.toLowerCase() ?? "";
@@ -58,26 +53,9 @@ function showSubtitle(video: HTMLVideoElement, lang: string | null) {
   for (let index = 0; index < tracks.length; index += 1) {
     const track = tracks[index];
     const match = Boolean(want) && !shown && (track.language.toLowerCase() === want || track.label === lang);
-    // "hidden" keeps cues available for the small overlay and stops the browser
-    // from painting its own oversized captions.
-    track.mode = match ? "hidden" : "disabled";
+    track.mode = match ? "showing" : "disabled";
     if (match) shown = true;
   }
-}
-
-function readCaption(video: HTMLVideoElement) {
-  const lines: string[] = [];
-  const tracks = video.textTracks;
-  for (let index = 0; index < tracks.length; index += 1) {
-    const track = tracks[index];
-    if (track.mode === "showing") track.mode = "hidden";
-    if (track.mode !== "hidden" || !track.activeCues) continue;
-    for (let cueIndex = 0; cueIndex < track.activeCues.length; cueIndex += 1) {
-      const line = cuePlainText(track.activeCues[cueIndex]);
-      if (line) lines.push(line);
-    }
-  }
-  return lines.join("\n");
 }
 
 function withBase(path: string) {
@@ -127,12 +105,10 @@ export function Player({
   const [openList, setOpenList] = useState(false);
   const [pendingAdEpisode, setPendingAdEpisode] = useState<string | null>(null);
   const [sponsorOpened, setSponsorOpened] = useState(false);
-  const [sponsorWait, setSponsorWait] = useState(0);
   const [sponsorProvider, setSponsorProvider] = useState<"monetag" | "adsterra" | null>(null);
   const lastSponsorIndex = useRef<number>(-1);
   const [rate, setRate] = useState(1);
   const [subtitleLang, setSubtitleLang] = useState<string | null>(null);
-  const [caption, setCaption] = useState("");
   const [rangePage, setRangePage] = useState(0);
   const [saved, setSaved] = useState(false);
   const [autoplay, setAutoplay] = useState(true);
@@ -141,12 +117,6 @@ export function Player({
   const currentIndex = episodes.findIndex((item) => item.episodeId === episode.episodeId);
   const previous = currentIndex > 0 ? episodes[currentIndex - 1] : null;
   const next = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
-
-  useEffect(() => {
-    if (sponsorWait <= 0) return;
-    const timer = window.setTimeout(() => setSponsorWait((value) => Math.max(0, value - 1)), 1000);
-    return () => window.clearTimeout(timer);
-  }, [sponsorWait]);
 
   useEffect(() => {
     setAutoplay(localStorage.getItem("dramaluma.autoplay") !== "0");
@@ -374,35 +344,6 @@ export function Player({
   }, [subtitleLang, candidate]);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    const update = () => setCaption(readCaption(video));
-    const tracks = video.textTracks;
-    const bind = () => {
-      for (let index = 0; index < tracks.length; index += 1) {
-        tracks[index].removeEventListener("cuechange", update);
-        tracks[index].addEventListener("cuechange", update);
-      }
-    };
-    const onTrack = () => {
-      showSubtitle(video, subtitleLang);
-      bind();
-      update();
-    };
-    tracks.addEventListener("addtrack", onTrack);
-    tracks.addEventListener("change", onTrack);
-    video.addEventListener("timeupdate", update);
-    onTrack();
-    return () => {
-      tracks.removeEventListener("addtrack", onTrack);
-      tracks.removeEventListener("change", onTrack);
-      video.removeEventListener("timeupdate", update);
-      for (let index = 0; index < tracks.length; index += 1) tracks[index].removeEventListener("cuechange", update);
-      setCaption("");
-    };
-  }, [subtitleLang, candidate]);
-
-  useEffect(() => {
     if (!autoStart) return;
     const video = videoRef.current;
     if (!video) return;
@@ -483,7 +424,6 @@ export function Player({
     if (isSecondEpisodeBoundary) {
       setPendingAdEpisode(episodeId);
       setSponsorOpened(false);
-      setSponsorWait(0);
       setSponsorProvider(null);
       return;
     }
@@ -498,7 +438,6 @@ export function Player({
     const episodeId = pendingAdEpisode;
     setPendingAdEpisode(null);
     setSponsorOpened(false);
-    setSponsorWait(0);
     setSponsorProvider(null);
     if (!episodeId) return;
     void navigate({
@@ -688,9 +627,6 @@ export function Player({
           void toggle();
         }}
       />
-      {caption && !error ? (
-        <p className="player-caption pointer-events-none absolute bottom-14 left-4 right-16 z-30 text-center font-medium text-white">{caption}</p>
-      ) : null}
       {loading && !error ? (
         <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center bg-linear-to-b from-black/25 via-black/35 to-black/55">
           <div className="grid place-items-center gap-4">
@@ -699,7 +635,7 @@ export function Player({
               <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#ff4d6d] border-r-[#ffb3c1]" />
               <img src="/logo.png?v=4" alt="" className="h-9 w-auto" />
             </div>
-            <p className="text-sm font-medium text-white/85">{uiLang === "id" ? "Memuat video…" : uiLang === "ms" ? "Memuatkan video…" : "Loading video…"}</p>
+            <p className="text-sm font-medium text-white/85">{uiLang === "id" ? "Memuat video…" : "Loading video…"}</p>
           </div>
         </div>
       ) : null}
@@ -745,7 +681,7 @@ export function Player({
           <p className="min-w-0 flex-1 truncate text-[17px] font-semibold">{pickTitle(drama, contentLang)}</p>
           <button
             type="button"
-            aria-label={uiLang === "id" ? "Kecepatan" : uiLang === "ms" ? "Kelajuan" : "Speed"}
+            aria-label={uiLang === "id" ? "Kecepatan" : "Speed"}
             onClick={() => {
               setOpenSpeed((open) => !open);
               setOpenSubs(false);
@@ -756,7 +692,7 @@ export function Player({
           </button>
           <button
             type="button"
-            aria-label={uiLang === "id" ? "Subtitle" : uiLang === "ms" ? "Sari kata" : "Subtitles"}
+            aria-label={uiLang === "id" ? "Subtitle" : "Subtitles"}
             onClick={() => {
               setOpenSubs((open) => !open);
               setOpenSpeed(false);
@@ -808,7 +744,7 @@ export function Player({
               onClick={() => pickSubtitle(null)}
               className={cn("block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold", !subtitleLang && "text-[#ff4d6d]")}
             >
-              {uiLang === "id" ? "Mati" : uiLang === "ms" ? "Tutup" : "Off"}
+              {uiLang === "id" ? "Mati" : "Off"}
             </button>
             {(candidate?.subtitles ?? []).map((track, trackIndex) => (
               <button
@@ -824,7 +760,7 @@ export function Player({
               </button>
             ))}
             {candidate?.subtitles.length ? null : (
-              <p className="px-3 py-2 text-sm text-white/70">{uiLang === "id" ? "Subtitle tidak tersedia" : uiLang === "ms" ? "Tiada sari kata" : "No subtitles"}</p>
+              <p className="px-3 py-2 text-sm text-white/70">{uiLang === "id" ? "Subtitle tidak tersedia" : "No subtitles"}</p>
             )}
           </div>
         ) : null}
@@ -851,11 +787,11 @@ export function Player({
           </button>
           <button type="button" onClick={() => void shareDrama()} className="grid place-items-center gap-1">
             <Share2 className="size-7" />
-            <span className="text-[11px] font-medium">{uiLang === "id" ? "Bagikan" : uiLang === "ms" ? "Kongsi" : "Share"}</span>
+            <span className="text-[11px] font-medium">{uiLang === "id" ? "Bagikan" : "Share"}</span>
           </button>
           <button type="button" onClick={() => setOpenList(true)} className="grid place-items-center gap-1">
             <Menu className="size-7" />
-            <span className="text-[11px] font-medium">{uiLang === "id" ? "Daftar" : uiLang === "ms" ? "Senarai" : "List"}</span>
+            <span className="text-[11px] font-medium">{uiLang === "id" ? "Daftar" : "List"}</span>
           </button>
         </div>
       ) : null}
@@ -925,19 +861,17 @@ export function Player({
                 window.open(link, "_blank", "noopener,noreferrer");
               }
               setSponsorOpened(true);
-              setSponsorWait(7);
             }} disabled={sponsorOpened}>
               {sponsorOpened
                 ? (contentLang === "en" ? "Sponsor Opened" : "Sponsor Sudah Dibuka")
                 : (contentLang === "en" ? "Open Sponsor in New Tab" : "Buka Sponsor di Tab Baru")}
             </button>
             {sponsorOpened ? (
-              <button type="button" className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-semibold text-gray-700 disabled:opacity-60" onClick={continuePendingEpisode} disabled={sponsorWait > 0}>
-                {sponsorWait > 0
-                  ? (contentLang === "en" ? `Continue in ${sponsorWait}s` : `Lanjutkan dalam ${sponsorWait} dtk`)
-                  : (contentLang === "en" ? "Return & Continue Episode" : "Kembali & Lanjutkan Episode")}
+              <button type="button" className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-semibold text-gray-700" onClick={continuePendingEpisode}>
+                {contentLang === "en" ? "Return & Continue Episode" : "Kembali & Lanjutkan Episode"}
               </button>
             ) : null}
+            <p className="mt-3 text-xs text-gray-500">{contentLang === "en" ? "Sponsor links are selected randomly. Ads may be blocked or unavailable; opening a link does not verify an ad view." : "Link sponsor dipilih secara acak. Iklan bisa diblokir atau tidak tersedia; membuka link tidak menjamin tayangan iklan tercatat."}</p>
           </div>
         </div>
       ) : null}
