@@ -7,12 +7,91 @@ import { getDetailData } from "@/lib/drama/api";
 import { usePrefs } from "@/lib/drama/i18n";
 import { pickDescription, pickTitle } from "@/lib/drama/display";
 import { readHistory, readWatchlist, toggleWatchlist, type HistoryEntry } from "@/lib/drama/storage";
-import { isProviderId } from "@/lib/drama/types";
+import { isProviderId, type DetailPayload, type ProviderId } from "@/lib/drama/types";
+
+const DETAIL_CACHE_PREFIX = "housedrama:detail:v1:";
+const DETAIL_CACHE_TTL = 6 * 60 * 60 * 1000;
+const detailMemoryCache = new Map<string, { savedAt: number; data: DetailPayload }>();
+
+function cacheKey(provider: string, seriesId: string) {
+  return `${DETAIL_CACHE_PREFIX}${provider}:${seriesId}:en`;
+}
+
+function readDetailCache(key: string): DetailPayload | null {
+  const memory = detailMemoryCache.get(key);
+  if (memory && Date.now() - memory.savedAt < DETAIL_CACHE_TTL && memory.data.ok) return memory.data;
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { savedAt?: number; data?: DetailPayload };
+    if (!parsed.savedAt || !parsed.data?.ok || Date.now() - parsed.savedAt > DETAIL_CACHE_TTL) {
+      window.sessionStorage.removeItem(key);
+      return null;
+    }
+    detailMemoryCache.set(key, { savedAt: parsed.savedAt, data: parsed.data });
+    return parsed.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeDetailCache(key: string, data: DetailPayload) {
+  if (!data.ok || !data.drama) return;
+  const entry = { savedAt: Date.now(), data };
+  detailMemoryCache.set(key, entry);
+  if (typeof window !== "undefined") {
+    try { window.sessionStorage.setItem(key, JSON.stringify(entry)); } catch { /* Storage can be full or disabled. */ }
+    // Warm only the poster and first two episode covers. Fetching every episode
+    // cover eagerly can consume mobile data and delay the first visible content.
+    const imageUrls = [data.drama.posterUrl, ...data.episodes.slice(0, 2).map((episode) => episode.coverUrl)]
+      .filter((url): url is string => Boolean(url));
+    for (const url of new Set(imageUrls)) {
+      const image = new Image();
+      image.decoding = "async";
+      image.loading = "lazy";
+      image.src = url;
+    }
+  }
+}
+
+async function loadDetailResilient(provider: string, seriesId: string): Promise<DetailPayload> {
+  const key = cacheKey(provider, seriesId);
+  const cached = readDetailCache(key);
+  if (cached) return cached;
+  const empty: DetailPayload = { ok: false, error: "Drama belum berhasil dimuat. Silakan coba lagi.", drama: null, episodes: [], similar: [], more: [], alsoOn: [] };
+  let lastError = empty.error;
+
+  // Retry thrown failures, timeouts, and ordinary API failure payloads. Only a
+  // successful payload with a drama object is cached.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const request = getDetailData({ data: { provider: provider as ProviderId, seriesId, lang: "en" } });
+      const timeout = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error("Pemuatan detail terlalu lama.")), 5500);
+      });
+      const result = await Promise.race([request, timeout]);
+      if (result.ok && result.drama) {
+        writeDetailCache(key, result);
+        return result;
+      }
+      lastError = result.error || empty.error;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : empty.error;
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
+
+    if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  return { ...empty, error: lastError };
+}
 
 export const Route = createFileRoute("/drama/$provider/$seriesId")({
   loader: ({ params }) => {
     if (!isProviderId(params.provider)) throw new Error("Unknown provider");
-    return getDetailData({ data: { provider: params.provider, seriesId: params.seriesId, lang: "en" } });
+    return loadDetailResilient(params.provider, params.seriesId);
   },
   pendingComponent: PageSkeleton,
   head: ({ loaderData, params }) => {
@@ -28,7 +107,7 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
     const canonical = `https://house-drama.web.id/drama/${encodeURIComponent(params.provider)}/${encodeURIComponent(params.seriesId)}`;
     // Keep image metadata absolute. If a provider URL is a wsrv.nl wrapper,
     // unwrap it so Google/social crawlers are not sent to a proxy blocked by robots.txt.
-    let image = drama?.posterUrl || "https://house-drama.web.id/og.jpg";
+    let image = drama?.posterUrl || "https://house-drama.web.id/og-v2.jpg";
     try {
       const parsedImage = new URL(image);
       if (parsedImage.hostname === "wsrv.nl" || parsedImage.hostname === "images.weserv.nl") {
@@ -36,7 +115,7 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
         if (original && /^https?:\/\//i.test(original)) image = original;
       }
     } catch {
-      image = "https://house-drama.web.id/og.jpg";
+      image = "https://house-drama.web.id/og-v2.jpg";
     }
     return {
       meta: [
@@ -86,7 +165,14 @@ function DetailPage() {
   }, [drama]);
 
   if (!data.ok || !drama) {
-    return <EmptyState title={t.dramaUnavailable} body={data.error || t.dramaMissing} />;
+    return (
+      <div className="mx-auto max-w-xl py-12 text-center" role="alert">
+        <EmptyState title={t.dramaUnavailable} body={data.error || t.dramaMissing} />
+        <button type="button" onClick={() => window.location.reload()} className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 font-semibold text-primary-ink">
+          {contentLang === "id" ? "Coba Lagi" : "Try Again"}
+        </button>
+      </div>
+    );
   }
 
   const first = data.episodes[0];

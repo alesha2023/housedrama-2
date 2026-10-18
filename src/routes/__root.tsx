@@ -27,11 +27,11 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       { property: "og:title", content: "HouseDrama — Chinese Short Dramas Online" },
       { property: "og:description", content: "Explore Chinese short dramas, romance, CEO stories, and new episodes on HouseDrama." },
-      { property: "og:image", content: "https://house-drama.web.id/og.jpg" },
+      { property: "og:image", content: "https://house-drama.web.id/og-v2.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "HouseDrama — Chinese Short Dramas" },
       { name: "twitter:description", content: "Discover Chinese short dramas and your favorite episodes on HouseDrama." },
-      { name: "twitter:image", content: "https://house-drama.web.id/og.jpg" },
+      { name: "twitter:image", content: "https://house-drama.web.id/og-v2.jpg" },
       { name: "theme-color", content: "#b34bff" },
     ],
     links: [

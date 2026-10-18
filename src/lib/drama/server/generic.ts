@@ -290,12 +290,37 @@ function meloloLang(lang: string) {
 }
 
 async function meloloRead(path: string, cacheTtl = 90_000) {
+  // Retry transient transport/5xx failures once. The shared provider client
+  // applies AbortSignal.timeout so an unresponsive upstream cannot hang forever.
   return providerFetch<unknown>("melolo", path, {
     cacheTtl,
-    timeout: 6500,
-    retries: 0,
+    timeout: 5000,
+    retries: 1,
     cacheKey: `melolo:${path}`,
   });
+}
+
+function meloloDetailRecord(root: unknown, seriesId: string): Record<string, unknown> | null {
+  const queue: unknown[] = [root];
+  const seen = new Set<unknown>();
+  while (queue.length) {
+    const value = queue.shift();
+    if (!value || typeof value !== "object" || seen.has(value)) continue;
+    seen.add(value);
+    if (Array.isArray(value)) {
+      queue.push(...value.slice(0, 30));
+      continue;
+    }
+    const record = value as Record<string, unknown>;
+    const id = str(record.series_id) || str(record.seriesId) || str(record.book_id) || str(record.bookId);
+    if (id === seriesId && (str(record.title) || str(record.name) || str(record.book_title))) return record;
+    for (const key of ["data", "detail", "book", "series", "result", "item", "info"]) {
+      const nested = record[key];
+      if (nested && typeof nested === "object") queue.push(nested);
+    }
+  }
+  const data = asRecord(asRecord(root)?.data);
+  return data && (str(data.title) || str(data.name) || str(data.book_title)) ? data : null;
 }
 
 function meloloChannelNames(root: unknown) {
@@ -533,19 +558,32 @@ export function extractEpisodes(root: unknown): Episode[] {
 export async function genericDetail(provider: ProviderId, seriesId: string, lang: string) {
   if (provider === "melolo") {
     const code = meloloLang(lang);
-    const detail = await meloloRead(`/get-detail/${enc(seriesId)}?lang=${enc(code)}`, 90_000);
-    let episodes = meloloEpisodes(detail);
-    if (!episodes.length) {
+    let detail: unknown = null;
+    let detailError: unknown = null;
+    // Some provider deployments accept the lang query, while others expose the
+    // same detail route without it. Try the alternate form before failing.
+    for (const path of [`/get-detail/${enc(seriesId)}?lang=${enc(code)}`, `/get-detail/${enc(seriesId)}`]) {
       try {
-        episodes = meloloEpisodes(await meloloRead(`/get-episodes/${enc(seriesId)}`, 90_000));
-      } catch {
-        episodes = [];
+        detail = await meloloRead(path, 90_000);
+        if (meloloDetailRecord(detail, seriesId)) break;
+      } catch (error) {
+        detailError = error;
       }
     }
-    const data = asRecord(asRecord(detail)?.data);
-    const card = data ? meloloCards({ data: [{ ...data, series_id: str(data.series_id) || seriesId }] })[0] ?? null : null;
+    let episodes = detail ? meloloEpisodes(detail) : [];
+    if (!episodes.length) {
+      try {
+        episodes = meloloEpisodes(await meloloRead(`/get-episodes/${enc(seriesId)}?lang=${enc(code)}`, 90_000));
+      } catch {
+        try { episodes = meloloEpisodes(await meloloRead(`/get-episodes/${enc(seriesId)}`, 90_000)); }
+        catch { episodes = []; }
+      }
+    }
+    const data = detail ? meloloDetailRecord(detail, seriesId) : null;
+    const card = data ? meloloCards({ data: [{ ...data, series_id: str(data.series_id) || str(data.seriesId) || seriesId }] })[0] ?? null : null;
     if (card && episodes[0]) card.firstEpisodeId = episodes[0].episodeId;
     if (card && episodes.length && !card.episodeCount) card.episodeCount = episodes.length;
+    if (!card && detailError && !episodes.length) throw detailError;
     return { card, episodes };
   }
   const detail = await read(provider, `/get-detail/${enc(seriesId)}`, lang);

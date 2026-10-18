@@ -29,7 +29,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "HouseDrama — Chinese Short Dramas Online" },
       { property: "og:description", content: "Discover Chinese short dramas, romance, and CEO stories on HouseDrama." },
       { property: "og:url", content: "https://house-drama.web.id/" },
-      { property: "og:image", content: "https://house-drama.web.id/og.jpg" },
+      { property: "og:image", content: "https://house-drama.web.id/og-v2.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "https://house-drama.web.id/" }],
