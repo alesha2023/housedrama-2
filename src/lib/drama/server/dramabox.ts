@@ -118,7 +118,7 @@ export async function dramaboxSearch(keyword: string, lang: string) {
 function alternateBookId(bookId: string): string | null {
   // Some imported DramaBox links contain one extra zero after the 420000 prefix.
   // Keep the public HouseDrama URL unchanged; use this only as an upstream fallback.
-  if (/^4200000\\d+$/.test(bookId)) return bookId.replace(/^4200000/, "420000");
+  if (/^4200000\d+$/.test(bookId)) return bookId.replace(/^4200000/, "420000");
   return null;
 }
 
