@@ -18,7 +18,7 @@ export const Route = createFileRoute("/search")({
     getSearchData({
       data: {
         q: deps.q ?? "",
-        lang: "en",
+        lang: "id",
         provider: (["all", ...PROVIDERS] as string[]).includes(deps.provider ?? "all")
           ? ((deps.provider ?? "all") as "all" | ProviderId)
           : "all",
@@ -72,7 +72,7 @@ function SearchPage() {
       search: { ...(q ? { q } : {}), ...(provider === "all" ? {} : { provider }) },
     });
     try {
-      const next = await getSearchData({ data: { q, lang: "en", provider, page: 1 } });
+      const next = await getSearchData({ data: { q, lang: "id", provider, page: 1 } });
       setData(next);
       setPage(1);
     } finally {
@@ -84,7 +84,7 @@ function SearchPage() {
     const nextPage = page + 1;
     setLoading(true);
     try {
-      const next = await getSearchData({ data: { q: query, lang: "en", provider, page: nextPage } });
+      const next = await getSearchData({ data: { q: query, lang: "id", provider, page: nextPage } });
       setData((current) => ({
         ...next,
         items: [...current.items, ...next.items],

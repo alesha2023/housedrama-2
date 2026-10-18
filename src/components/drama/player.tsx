@@ -17,7 +17,7 @@ import { reportPlayback } from "@/lib/drama/api";
 import { pickTitle } from "@/lib/drama/display";
 import { usePrefs } from "@/lib/drama/i18n";
 import { previewPathPrefix } from "@/lib/preview-path-prefix";
-import { loadAdsterraPopunder, openMonetagAd } from "@/lib/drama/monetag";
+import { openMonetagAd } from "@/lib/drama/monetag";
 import { readProgress, readWatchlist, toggleWatchlist, upsertHistory, writeProgress } from "@/lib/drama/storage";
 import type { DramaCard, Episode, ProviderId, StreamCandidate, StreamPayload } from "@/lib/drama/types";
 import { cn } from "@/lib/utils";
@@ -854,7 +854,9 @@ export function Player({
               if (provider === "monetag") {
                 openMonetagAd();
               } else {
-                void loadAdsterraPopunder();
+                // Open only the selected sponsor URL. Do not inject the Adsterra
+                // popunder script here because it can create a sticky clickable overlay
+                // that blocks scrolling on mobile.
                 const link = SPONSOR_SMARTLINKS[Math.floor(Math.random() * SPONSOR_SMARTLINKS.length)];
                 window.open(link, "_blank", "noopener,noreferrer");
               }

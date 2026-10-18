@@ -13,7 +13,7 @@ const LINKS = [
   { to: "/categories", key: "categories" },
 ] as const;
 
-function VisitorCounter({ lang = "en" }: { lang?: "en" | "id" }) {
+function VisitorCounter() {
   const [counts, setCounts] = useState<{ total: number; today: number } | null>(null);
 
   useEffect(() => {
@@ -45,12 +45,12 @@ function VisitorCounter({ lang = "en" }: { lang?: "en" | "id" }) {
 
   if (!counts) return null;
   const stats = [
-    { label: "Total pengunjung", labelEn: "Total visitors", value: counts.total, Icon: Users },
-    { label: "Pengunjung hari ini", labelEn: "Today’s visitors", value: counts.today, Icon: UserRound },
+    { label: "Total pengunjung", value: counts.total, Icon: Users },
+    { label: "Pengunjung hari ini", value: counts.today, Icon: UserRound },
   ];
   return (
     <section className="mx-auto grid w-full max-w-md grid-cols-2 gap-3 py-2" aria-label="Statistik pengunjung">
-      {stats.map(({ label, labelEn, value, Icon }) => (
+      {stats.map(({ label, value, Icon }) => (
         <div key={label} className="flex min-w-0 items-center gap-3 rounded-2xl border border-primary/15 bg-white/75 p-3 shadow-sm">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
             <Icon className="size-5" aria-hidden="true" />
@@ -59,7 +59,7 @@ function VisitorCounter({ lang = "en" }: { lang?: "en" | "id" }) {
             <strong className="block text-lg font-bold leading-tight tabular-nums text-primary">
               {value.toLocaleString("id-ID")}
             </strong>
-            <span className="mt-1 block text-[11px] leading-tight text-muted">{lang === "id" ? label : labelEn}</span>
+            <span className="mt-1 block text-[11px] leading-tight text-muted">{label}</span>
           </span>
         </div>
       ))}
@@ -342,17 +342,17 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to="/terms" className="hover:text-ink">{t.terms}</Link>
           </nav>
           <section className="w-full max-w-3xl border-t border-line/70 pt-4" aria-labelledby="footer-topics-title">
-            <h2 id="footer-topics-title" className="mb-3 text-sm font-semibold text-ink">{uiLang === "id" ? "Jelajahi berdasarkan topik" : "Explore by topic"}</h2>
+            <h2 id="footer-topics-title" className="mb-3 text-sm font-semibold text-ink">Jelajahi berdasarkan topik</h2>
             <div className="flex flex-wrap justify-center gap-2">
               {[
-                { label: uiLang === "id" ? "Drama China subtitle Indonesia" : "Chinese Short Dramas", rail: "romance" },
-                { label: uiLang === "id" ? "Drama romantis" : "Romance Dramas", rail: "romance" },
-                { label: uiLang === "id" ? "Drama CEO" : "CEO Romance", rail: "ceo" },
-                { label: uiLang === "id" ? "Drama balas dendam" : "Revenge Dramas", rail: "revenge" },
-                { label: uiLang === "id" ? "Drama fantasi" : "Fantasy Dramas", rail: "fantasy" },
-                { label: uiLang === "id" ? "Drama sejarah" : "Historical Dramas", rail: "historical" },
-                { label: uiLang === "id" ? "Drama tamat" : "Completed Dramas", rail: "completed" },
-                { label: uiLang === "id" ? "Drama terbaru" : "Latest Dramas", rail: "latest" },
+                { label: "Drama China subtitle Indonesia", rail: "romance" },
+                { label: "Drama romantis", rail: "romance" },
+                { label: "Drama CEO", rail: "ceo" },
+                { label: "Drama balas dendam", rail: "revenge" },
+                { label: "Drama fantasi", rail: "fantasy" },
+                { label: "Drama sejarah", rail: "historical" },
+                { label: "Drama tamat", rail: "completed" },
+                { label: "Drama terbaru", rail: "latest" },
               ].map((topic) => (
                 <Link
                   key={topic.label}
@@ -368,9 +368,9 @@ export function Shell({ children }: { children: ReactNode }) {
               ))}
             </div>
           </section>
-          <VisitorCounter lang={uiLang} />
+          <VisitorCounter />
           <p className="max-w-md text-xs leading-relaxed text-muted">{t.footerNote}</p>
-          <p className="text-[11px] text-muted">{uiLang === "id" ? "HouseDrama · Katalog drama pendek dari berbagai penyedia" : "HouseDrama · A short-drama catalog from multiple providers"}</p>
+          <p className="text-[11px] text-muted">HouseDrama · Katalog drama pendek dari berbagai penyedia</p>
         </div>
       </footer>
       )}

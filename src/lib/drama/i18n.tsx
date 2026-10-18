@@ -324,8 +324,26 @@ export function PrefsProvider({ initialLang = "id", children }: { initialLang?: 
     }
 
     writeLangCookie(initialLang, false);
-    // New visitors use the English default. A saved manual choice is restored above.
-    // Avoid IP-based language redirects so visitors and search crawlers see a stable default.
+    const applyAutoLanguage = (lang: UiLang) => {
+      if (cancelled || localStorage.getItem("dramaluma.ui.manual") === "1" || lang === initialLang) return;
+      setUiLangState(lang);
+      setContentLangState(lang);
+      localStorage.setItem("dramaluma.ui", lang);
+      localStorage.setItem("dramaluma.content", lang);
+      writeLangCookie(lang, false);
+      void router.invalidate();
+    };
+
+    fetch("https://ipapi.co/json/", { headers: { Accept: "application/json" } })
+      .then((response) => {
+        if (!response.ok) throw new Error("IP language lookup failed");
+        return response.json() as Promise<{ country_code?: string }>;
+      })
+      .then((data) => applyAutoLanguage(data.country_code?.toUpperCase() === "ID" ? "id" : "en"))
+      .catch(() => {
+        // The server already chose a language from the request IP when it could.
+      });
+
     return () => { cancelled = true; };
   }, [initialLang, router]);
 

@@ -11,7 +11,7 @@ import type { DramaCard, StreamCandidate } from "@/lib/drama/types";
 import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
 
 export const Route = createFileRoute("/shorts")({
-  loader: () => getShortsData({ data: { lang: "en", page: 1 } }),
+  loader: () => getShortsData({ data: { lang: "id", page: 1 } }),
   head: () => ({
     meta: [
       { title: "Shorts — HouseDrama" },
@@ -38,7 +38,7 @@ function ShortsPage() {
     if (!hasMore || loadingMore.current) return;
     loadingMore.current = true;
     setLoading(true);
-    const next = await getShortsData({ data: { lang: "en", page: page + 1 } });
+    const next = await getShortsData({ data: { lang: "id", page: page + 1 } });
     setItems((current) => {
       const seen = new Set(current.map((item) => `${item.provider}-${item.seriesId}`));
       return [...current, ...next.items.filter((item) => !seen.has(`${item.provider}-${item.seriesId}`))];
@@ -132,7 +132,7 @@ function ShortClip({
     void (async () => {
       let nextEpisode = episodeId;
       if (!nextEpisode) {
-        const detail = await getDetailData({ data: { provider: item.provider, seriesId: item.seriesId, lang: "en" } });
+        const detail = await getDetailData({ data: { provider: item.provider, seriesId: item.seriesId, lang: "id" } });
         nextEpisode = detail.episodes[0]?.episodeId ?? detail.drama?.firstEpisodeId ?? null;
         if (nextEpisode) setEpisodeId(nextEpisode);
       }
@@ -141,7 +141,7 @@ function ShortClip({
         return;
       }
       const stream = await getStreamData({
-        data: { provider: item.provider, seriesId: item.seriesId, episodeId: nextEpisode, lang: "en" },
+        data: { provider: item.provider, seriesId: item.seriesId, episodeId: nextEpisode, lang: "id" },
       });
       if (cancel) return;
       const next = stream.candidates[0] ?? null;

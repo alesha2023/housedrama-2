@@ -7,7 +7,7 @@ import { railTitle, usePrefs } from "@/lib/drama/i18n";
 const GENRES = ["romance", "revenge", "billionaire", "ceo", "historical", "fantasy", "family", "comedy", "completed"];
 
 export const Route = createFileRoute("/categories")({
-  loader: () => getBrowseData({ data: { lang: "en", provider: "all", page: 1, rail: null } }),
+  loader: () => getBrowseData({ data: { lang: "id", provider: "all", page: 1, rail: null } }),
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
