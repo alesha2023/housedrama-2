@@ -77,7 +77,7 @@ async function collectProviderCards(providers: ProviderId[]) {
   for (let i = 0; i < requests.length; i += batchSize) {
     const batch = requests.slice(i, i + batchSize);
     const results = await Promise.allSettled(
-      batch.map(({ provider, page }) => loadBrowse({ lang: "id", provider, page })),
+      batch.map(({ provider, page }) => loadBrowse({ lang: "en", provider, page })),
     );
     for (const result of results) {
       if (result.status !== "fulfilled") continue;
