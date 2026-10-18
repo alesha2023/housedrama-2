@@ -58,7 +58,7 @@ export async function resolveCatalogLang(requested?: string | null): Promise<Cat
   const manual = cookieValue(cookie, "hd_manual") === "1";
   // UI language and catalog language are different: Hindi/Filipino interfaces
   // must use the English catalog unless a provider has a native translation.
-  if (manual && (saved === "id" || saved === "en" || saved === "hi" || saved === "fil")) {
+  if (manual && (saved === "id" || saved === "en" || saved === "hi" || saved === "fil" || saved === "ms" || saved === "th")) {
     return saved === "id" ? "id" : "en";
   }
   if (manual && (requested === "id" || requested === "en")) return requested;

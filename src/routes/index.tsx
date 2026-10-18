@@ -100,7 +100,7 @@ function HomePage() {
                 {hero.map((item) => (
                   <div key={`${item.provider}-${item.seriesId}`} className="relative h-full shrink-0" style={{ width: `${100 / Math.max(hero.length, 1)}%` }}>
                     <Poster src={item.bannerUrl || item.posterUrl} alt="" priority className="absolute inset-0 h-full w-full" />
-                    <div className="absolute inset-0 bg-linear-to-t from-ink via-ink/45 to-ink/10" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/55 to-black/15" />
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-5 pb-8 text-white sm:p-8">
                       <div className="mb-3 flex flex-wrap gap-2">
                         <ProviderBadge provider={item.provider} />
@@ -108,7 +108,7 @@ function HomePage() {
                           <span key={tag} className="rounded-full bg-white/15 px-2 py-0.5 text-xs">{tag}</span>
                         ))}
                       </div>
-                      <p className="mb-2 text-xs font-semibold tracking-[0.16em] text-white/80 uppercase">{uiLang === "id" ? "Unggulan" : "Featured"}</p>
+                      <p className="mb-2 text-xs font-semibold tracking-[0.16em] text-white/80 uppercase">{uiLang === "id" ? "Unggulan" : uiLang === "ms" ? "Pilihan" : uiLang === "th" ? "แนะนำ" : "Featured"}</p>
                       <h1 className="max-w-xl text-3xl sm:text-5xl">{pickTitle(item, contentLang)}</h1>
                       <p className="mt-3 max-w-xl line-clamp-3 text-sm text-white/85">{pickDescription(item, contentLang) || t.heroFallback}</p>
                       <div className="pointer-events-auto mt-5 flex flex-wrap gap-2">
@@ -202,7 +202,7 @@ function HomePage() {
               {t.viewAll}
             </Link>
           </div>
-          <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+          <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
             {history.slice(0, 12).map((item) => {
               const known = [...data.hero, ...data.sections.flatMap((section) => section.items)].find(
                 (card) => card.provider === item.provider && card.seriesId === item.seriesId,
@@ -215,7 +215,7 @@ function HomePage() {
                 params={{ provider: item.provider, seriesId: item.seriesId, episodeId: item.episodeId }}
                 onClick={() => maybeOpenMonetagAd()}
                 search={{ auto: true }}
-                className="w-36 shrink-0 sm:w-44"
+                className="drama-card shrink-0 snap-start"
               >
                 <div className="relative aspect-poster overflow-hidden rounded-card">
                   <Poster src={item.posterUrl} alt={item.title} />

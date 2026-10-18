@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Outfit:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Nunito:wght@800&family=Outfit:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -117,12 +117,14 @@
 
 .drama-card {
   display: block;
-  flex: 0 0 9rem;
-  width: 9rem;
   min-width: 0;
   overflow: hidden;
   color: var(--color-ink);
   text-decoration: none;
+}
+.no-scrollbar > .drama-card {
+  flex: 0 0 calc((100% - 1.5rem) / 2.5);
+  width: calc((100% - 1.5rem) / 2.5);
 }
 .drama-card__poster {
   position: relative;
@@ -168,7 +170,16 @@
   text-overflow: ellipsis;
 }
 @media (min-width: 640px) {
-  .drama-card { flex-basis: 11rem; width: 11rem; }
+  .no-scrollbar > .drama-card {
+    flex-basis: calc((100% - 2.25rem) / 4);
+    width: calc((100% - 2.25rem) / 4);
+  }
+}
+@media (min-width: 1024px) {
+  .no-scrollbar > .drama-card {
+    flex-basis: calc((100% - 3rem) / 5);
+    width: calc((100% - 3rem) / 5);
+  }
 }
 
 .boot-splash {
@@ -238,28 +249,28 @@
   100% { transform: translateX(280%); }
 }
 
-/* Subtitle styling for selectable WebVTT tracks.
-   Mobile uses viewport-relative sizing because Android Chrome can scale cue text
-   unexpectedly when a percentage or fixed pixel size is used against the video box. */
-video::cue {
-  background: transparent !important;
-  background-color: transparent !important;
-  color: #fff !important;
-  font-family: Arial, sans-serif;
-  font-size: 1.8vh !important;
-  font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+/* Native WebVTT cues ignore author font-size on Android and render huge.
+   Hide them and draw a fixed-size overlay instead. */
+video::-webkit-media-text-track-container {
+  display: none !important;
 }
 
-@media (max-width: 640px) {
-  video::cue {
-    /* Around 12–14px on a typical phone viewport, without oversized captions. */
-    font-size: 1.6vh !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    color: #fff !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-  }
+video::cue {
+  visibility: hidden !important;
+  font-size: 0 !important;
+  color: transparent !important;
+  background: transparent !important;
+}
+
+.player-caption {
+  font-family: "Nunito", sans-serif;
+  font-size: 25px !important;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: pre-line;
+  text-shadow: 0 1px 2px #000, 0 0 2px #000;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
 }
 
 /* HouseDrama theme switch: preserve the existing light look and offer an opt-in dark palette. */

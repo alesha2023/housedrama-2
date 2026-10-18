@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Clock3, Compass, Hash, House, Menu, Search, Sparkles, UserRound, Users, X, Moon, Sun, Smartphone, Download } from "lucide-react";
+import { Clock3, Compass, Hash, House, Menu, Search, Sparkles, UserRound, Users, X, Moon, Sun, Smartphone, Download, ChevronDown } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { CONTENT_LANGS, UI_LANGS, usePrefs } from "@/lib/drama/i18n";
 import { Logo } from "./logo";
@@ -46,8 +46,8 @@ function VisitorCounter() {
 
   if (!counts) return null;
   const stats = [
-    { label: uiLang === "en" ? "Total visitors" : uiLang === "hi" ? "कुल आगंतुक" : uiLang === "fil" ? "Kabuuang bisita" : "Total pengunjung", value: counts.total, Icon: Users },
-    { label: uiLang === "en" ? "Visitors today" : uiLang === "hi" ? "आज के आगंतुक" : uiLang === "fil" ? "Mga bisita ngayon" : "Pengunjung hari ini", value: counts.today, Icon: UserRound },
+    { label: uiLang === "en" ? "Total visitors" : uiLang === "hi" ? "कुल आगंतुक" : uiLang === "fil" ? "Kabuuang bisita" : uiLang === "ms" ? "Jumlah pelawat" : uiLang === "th" ? "ผู้เข้าชมทั้งหมด" : "Total pengunjung", value: counts.total, Icon: Users },
+    { label: uiLang === "en" ? "Visitors today" : uiLang === "hi" ? "आज के आगंतुक" : uiLang === "fil" ? "Mga bisita ngayon" : uiLang === "ms" ? "Pelawat hari ini" : uiLang === "th" ? "ผู้เข้าชมวันนี้" : "Pengunjung hari ini", value: counts.today, Icon: UserRound },
   ];
   return (
     <section className="mx-auto grid w-full max-w-md grid-cols-2 gap-3 py-2" aria-label="Statistik pengunjung">
@@ -182,7 +182,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-line/70 bg-white/75 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-1 px-2 sm:gap-2 sm:px-4">
           <Link to="/" className="flex shrink-0 items-center" onClick={() => setOpen(false)}>
-            <Logo className="h-8 w-auto max-w-[142px] sm:h-10 sm:max-w-none" />
+            <Logo className="h-8 w-auto max-w-[108px] sm:h-10 sm:max-w-none" />
           </Link>
           <nav className="ml-4 hidden items-center gap-1 lg:flex" aria-label="Primary">
             {LINKS.map((link) => (
@@ -198,17 +198,20 @@ export function Shell({ children }: { children: ReactNode }) {
           </nav>
           <div className="ml-auto flex min-w-0 items-center gap-0 sm:gap-1">
             <label className="sr-only" htmlFor="header-language-select">Choose language</label>
-            <select
-              id="header-language-select"
-              aria-label="Choose language"
-              value={uiLang}
-              className="h-9 w-[82px] shrink-0 rounded-full border border-line bg-white/80 px-1.5 text-[11px] font-bold text-ink shadow-sm hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary sm:h-10 sm:w-auto sm:max-w-[108px] sm:px-3 sm:text-xs"
-              onChange={(event) => setUiLang(event.target.value as typeof uiLang)}
-            >
-              {UI_LANGS.map((lang) => (
-                <option key={lang.id} value={lang.id}>{lang.id === "hi" ? "🇮🇳 हिन्दी" : lang.id === "fil" ? "🇵🇭 Filipino" : lang.id === "id" ? "🇮🇩 Indonesia" : "🇺🇸 English"}</option>
-              ))}
-            </select>
+            <div className="relative shrink-0">
+              <select
+                id="header-language-select"
+                aria-label="Choose language"
+                value={uiLang}
+                className="h-9 w-[7.6rem] appearance-none rounded-full border border-line bg-white/80 pr-6 pl-2.5 text-[11px] font-bold text-ink shadow-sm hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary sm:h-10 sm:w-[8.6rem] sm:pr-7 sm:pl-3 sm:text-xs"
+                onChange={(event) => setUiLang(event.target.value as typeof uiLang)}
+              >
+                {UI_LANGS.map((lang) => (
+                  <option key={lang.id} value={lang.id}>{lang.id === "hi" ? "🇮🇳 हिन्दी" : lang.id === "fil" ? "🇵🇭 Filipino" : lang.id === "ms" ? "🇲🇾 Melayu" : lang.id === "th" ? "🇹🇭 ไทย" : lang.id === "id" ? "🇮🇩 Indonesia" : "🇺🇸 English"}</option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute top-1/2 right-2 size-3.5 -translate-y-1/2 text-muted" />
+            </div>
             <Link to="/search" aria-label={t.search} className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-surface sm:size-11">
               <Search className="size-5" />
             </Link>
@@ -320,17 +323,17 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to="/terms" className="hover:text-ink">{t.terms}</Link>
           </nav>
           <section className="w-full max-w-3xl border-t border-line/70 pt-4" aria-labelledby="footer-topics-title">
-            <h2 id="footer-topics-title" className="mb-3 text-sm font-semibold text-ink">{uiLang === "en" ? "Explore by topic" : uiLang === "hi" ? "विषय के अनुसार खोजें" : uiLang === "fil" ? "Mag-explore ayon sa paksa" : "Jelajahi berdasarkan topik"}</h2>
+            <h2 id="footer-topics-title" className="mb-3 text-sm font-semibold text-ink">{uiLang === "en" ? "Explore by topic" : uiLang === "hi" ? "विषय के अनुसार खोजें" : uiLang === "fil" ? "Mag-explore ayon sa paksa" : uiLang === "ms" ? "Teroka mengikut topik" : uiLang === "th" ? "สำรวจตามหมวด" : "Jelajahi berdasarkan topik"}</h2>
             <div className="flex flex-wrap justify-center gap-2">
               {[
-                { label: uiLang === "en" ? "Chinese Short Dramas" : uiLang === "hi" ? "चीनी शॉर्ट ड्रामा" : uiLang === "fil" ? "Chinese Short Dramas" : "Drama China subtitle Indonesia", rail: "romance" },
-                { label: uiLang === "en" ? "Romance Dramas" : uiLang === "hi" ? "रोमांस ड्रामा" : uiLang === "fil" ? "Romance Dramas" : "Drama romantis", rail: "romance" },
-                { label: uiLang === "en" ? "CEO Romance" : uiLang === "hi" ? "CEO रोमांस" : uiLang === "fil" ? "CEO Romance" : "Drama CEO", rail: "ceo" },
-                { label: uiLang === "en" ? "Revenge Dramas" : uiLang === "hi" ? "बदले की कहानी" : uiLang === "fil" ? "Revenge Dramas" : "Drama balas dendam", rail: "revenge" },
-                { label: uiLang === "en" ? "Fantasy Dramas" : uiLang === "hi" ? "फैंटेसी ड्रामा" : uiLang === "fil" ? "Fantasy Dramas" : "Drama fantasi", rail: "fantasy" },
-                { label: uiLang === "en" ? "Historical Dramas" : uiLang === "hi" ? "ऐतिहासिक ड्रामा" : uiLang === "fil" ? "Historical Dramas" : "Drama sejarah", rail: "historical" },
-                { label: uiLang === "en" ? "Completed Dramas" : uiLang === "hi" ? "पूरे हो चुके ड्रामा" : uiLang === "fil" ? "Kumpletong Drama" : "Drama tamat", rail: "completed" },
-                { label: uiLang === "en" ? "Latest Dramas" : uiLang === "hi" ? "नवीनतम ड्रामा" : uiLang === "fil" ? "Pinakabagong Drama" : "Drama terbaru", rail: "latest" },
+                { label: uiLang === "en" ? "Chinese Short Dramas" : uiLang === "hi" ? "चीनी शॉर्ट ड्रामा" : uiLang === "fil" ? "Chinese Short Dramas" : uiLang === "ms" ? "Drama pendek" : uiLang === "th" ? "ซีรีส์สั้น" : "Drama China subtitle Indonesia", rail: "romance" },
+                { label: uiLang === "en" ? "Romance Dramas" : uiLang === "hi" ? "रोमांस ड्रामा" : uiLang === "fil" ? "Romance Dramas" : uiLang === "ms" ? "Drama romantik" : uiLang === "th" ? "ซีรีส์โรแมนซ์" : "Drama romantis", rail: "romance" },
+                { label: uiLang === "en" ? "CEO Romance" : uiLang === "hi" ? "CEO रोमांस" : uiLang === "fil" ? "CEO Romance" : uiLang === "ms" ? "Romantik CEO" : uiLang === "th" ? "โรแมนซ์ซีอีโอ" : "Drama CEO", rail: "ceo" },
+                { label: uiLang === "en" ? "Revenge Dramas" : uiLang === "hi" ? "बदले की कहानी" : uiLang === "fil" ? "Revenge Dramas" : uiLang === "ms" ? "Drama balas dendam" : uiLang === "th" ? "ซีรีส์แก้แค้น" : "Drama balas dendam", rail: "revenge" },
+                { label: uiLang === "en" ? "Fantasy Dramas" : uiLang === "hi" ? "फैंटेसी ड्रामा" : uiLang === "fil" ? "Fantasy Dramas" : uiLang === "ms" ? "Drama fantasi" : uiLang === "th" ? "ซีรีส์แฟนตาซี" : "Drama fantasi", rail: "fantasy" },
+                { label: uiLang === "en" ? "Historical Dramas" : uiLang === "hi" ? "ऐतिहासिक ड्रामा" : uiLang === "fil" ? "Historical Dramas" : uiLang === "ms" ? "Drama sejarah" : uiLang === "th" ? "ซีรีส์ย้อนยุค" : "Drama sejarah", rail: "historical" },
+                { label: uiLang === "en" ? "Completed Dramas" : uiLang === "hi" ? "पूरे हो चुके ड्रामा" : uiLang === "fil" ? "Kumpletong Drama" : uiLang === "ms" ? "Drama tamat" : uiLang === "th" ? "ซีรีส์จบแล้ว" : "Drama tamat", rail: "completed" },
+                { label: uiLang === "en" ? "Latest Dramas" : uiLang === "hi" ? "नवीनतम ड्रामा" : uiLang === "fil" ? "Pinakabagong Drama" : uiLang === "ms" ? "Drama terbaharu" : uiLang === "th" ? "ซีรีส์ล่าสุด" : "Drama terbaru", rail: "latest" },
               ].map((topic) => (
                 <Link
                   key={topic.label}
@@ -348,7 +351,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </section>
           <VisitorCounter />
           <p className="max-w-md text-xs leading-relaxed text-muted">{t.footerNote}</p>
-          <p className="text-[11px] text-muted">{uiLang === "en" ? "HouseDrama · Short-drama catalog from multiple providers" : uiLang === "hi" ? "HouseDrama · कई प्रदाताओं के शॉर्ट ड्रामा का कैटलॉग" : uiLang === "fil" ? "HouseDrama · Katalog ng maiikling drama mula sa iba't ibang provider" : "HouseDrama · Katalog drama pendek dari berbagai penyedia"}</p>
+          <p className="text-[11px] text-muted">{uiLang === "en" ? "HouseDrama · Short-drama catalog from multiple providers" : uiLang === "hi" ? "HouseDrama · कई प्रदाताओं के शॉर्ट ड्रामा का कैटलॉग" : uiLang === "fil" ? "HouseDrama · Katalog ng maiikling drama mula sa iba't ibang provider" : uiLang === "ms" ? "HouseDrama · Katalog drama pendek daripada pelbagai penyedia" : uiLang === "th" ? "HouseDrama · รวมซีรีส์สั้นจากหลายแหล่ง" : "HouseDrama · Katalog drama pendek dari berbagai penyedia"}</p>
         </div>
       </footer>
       )}
