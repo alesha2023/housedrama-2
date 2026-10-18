@@ -196,6 +196,19 @@ export function Shell({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-1">
+            <button
+              type="button"
+              aria-label={uiLang === "en" ? "Switch language to Indonesian" : "Ganti bahasa ke Inggris"}
+              title={uiLang === "en" ? "Switch language to Indonesian" : "Switch language to English"}
+              className="grid h-10 min-w-10 place-items-center rounded-full border border-line px-2 text-xs font-bold hover:bg-surface"
+              onClick={() => {
+                const nextLang = uiLang === "en" ? "id" : "en";
+                setUiLang(nextLang);
+                setContentLang(nextLang);
+              }}
+            >
+              {uiLang === "en" ? "EN" : "ID"}
+            </button>
             <Link to="/search" aria-label={t.search} className="grid size-11 place-items-center rounded-full hover:bg-surface">
               <Search className="size-5" />
             </Link>
