@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clapperboard, Eye, LoaderCircle } from "lucide-react";
+import { Clapperboard, LoaderCircle } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import type { DramaCard, ProviderId } from "@/lib/drama/types";
 import { usePrefs } from "@/lib/drama/i18n";
@@ -84,8 +84,11 @@ export function Poster({
 }
 
 export function DramaCardView({ item, className }: { item: DramaCard; className?: string }) {
-  const { t, contentLang } = usePrefs();
+  const { t, contentLang, uiLang } = usePrefs();
   const title = pickTitle(item, contentLang);
+  const badgeText = item.badge === "Trending di HouseDrama" || item.badge === "Trending on HouseDrama"
+    ? ({ en: "Trending on HouseDrama", id: "Trending di HouseDrama", hi: "HouseDrama पर ट्रेंडिंग", fil: "Trending sa HouseDrama", ms: "Trending di HouseDrama", th: "กำลังมาแรงบน HouseDrama" } as const)[uiLang]
+    : item.badge;
   return (
     <Link
       to="/drama/$provider/$seriesId"
@@ -98,16 +101,10 @@ export function DramaCardView({ item, className }: { item: DramaCard; className?
         </div>
         <div className="absolute left-2 top-2 flex max-w-[90%] flex-wrap gap-1">
           <ProviderBadge provider={item.provider} />
-          {item.badge ? (
-            <span className="rounded-full bg-bg/90 px-2 py-0.5 text-xs font-semibold text-ink">{item.badge.toLowerCase().includes("trending di housedrama") ? t.trendingOnHouseDrama : item.badge}</span>
+          {badgeText ? (
+            <span className="rounded-full bg-bg/90 px-2 py-0.5 text-xs font-semibold text-ink">{badgeText}</span>
           ) : null}
         </div>
-        {item.playCount?.toLowerCase().includes("ditonton di housedrama") ? (
-          <span className="absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full bg-black/75 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur-sm">
-            <Eye className="size-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">{Number(item.playCount.match(/[\d,.]+/)?.[0]?.replace(/,/g, "") ?? 0).toLocaleString()} {t.viewed}</span>
-          </span>
-        ) : null}
       </div>
       <h3 className="drama-card__title mt-2 line-clamp-2 text-sm font-semibold leading-snug text-ink group-hover:text-primary">
         {title}

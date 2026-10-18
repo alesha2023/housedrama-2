@@ -699,7 +699,7 @@ export function Player({
               <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#ff4d6d] border-r-[#ffb3c1]" />
               <img src="/logo.png?v=4" alt="" className="h-9 w-auto" />
             </div>
-            <p className="text-sm font-medium text-white/85">{uiLang === "id" ? "Memuat video…" : uiLang === "ms" ? "Memuatkan video…" : uiLang === "th" ? "กำลังโหลดวิดีโอ…" : "Loading video…"}</p>
+            <p className="text-sm font-medium text-white/85">{({ en: "Loading video…", id: "Memuat video…", hi: "वीडियो लोड हो रहा है…", fil: "Nilo-load ang video…", ms: "Memuatkan video…", th: "กำลังโหลดวิดีโอ…" } as const)[uiLang]}</p>
           </div>
         </div>
       ) : null}
@@ -908,8 +908,15 @@ export function Player({
       {pendingAdEpisode ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/65 p-5" role="dialog" aria-modal="true" aria-label="Iklan">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 text-center text-[#242424] shadow-2xl">
-            <h2 className="text-lg font-bold">{contentLang === "en" ? "Watch Sponsor First" : "Tonton Sponsor Dulu"}</h2>
-            <p className="mt-2 text-sm text-gray-600">{contentLang === "en" ? `To continue to Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, please open the sponsor first. This helps support HouseDrama.` : `Untuk melanjutkan ke Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, silakan buka sponsor terlebih dahulu. Ini membantu mendukung HouseDrama.`}</p>
+            <h2 className="text-lg font-bold">{({ en: "Watch Sponsor First", id: "Tonton Sponsor Dulu", hi: "पहले प्रायोजक देखें", fil: "Panoorin muna ang sponsor", ms: "Tonton Penaja Dahulu", th: "ดูผู้สนับสนุนก่อน" } as const)[uiLang]}</h2>
+            <p className="mt-2 text-sm text-gray-600">{({
+              en: `To continue to Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, please open the sponsor first. This helps support HouseDrama.`,
+              id: `Untuk melanjutkan ke Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, silakan buka sponsor terlebih dahulu. Ini membantu mendukung HouseDrama.`,
+              hi: `एपिसोड ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1} पर जाने के लिए पहले प्रायोजक लिंक खोलें। इससे HouseDrama को समर्थन मिलता है।`,
+              fil: `Para magpatuloy sa Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, buksan muna ang sponsor. Nakakatulong ito sa HouseDrama.`,
+              ms: `Untuk meneruskan ke Episod ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, buka penaja dahulu. Ini membantu menyokong HouseDrama.`,
+              th: `หากต้องการไปยังตอนที่ ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1} โปรดเปิดลิงก์ผู้สนับสนุนก่อน เพื่อช่วยสนับสนุน HouseDrama`,
+            } as const)[uiLang]}</p>
             <button type="button" className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#ff4d8d] to-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => {
               // Open a sponsor in a new tab from this explicit user click. The viewer
               // returns to HouseDrama and presses Continue; no ad completion is claimed.
@@ -928,14 +935,14 @@ export function Player({
               setSponsorWait(7);
             }} disabled={sponsorOpened}>
               {sponsorOpened
-                ? (contentLang === "en" ? "Sponsor Opened" : "Sponsor Sudah Dibuka")
-                : (contentLang === "en" ? "Open Sponsor in New Tab" : "Buka Sponsor di Tab Baru")}
+                ? ({ en: "Sponsor Opened", id: "Sponsor Sudah Dibuka", hi: "प्रायोजक खुल गया", fil: "Nabuksan na ang sponsor", ms: "Penaja Dibuka", th: "เปิดผู้สนับสนุนแล้ว" } as const)[uiLang]
+                : ({ en: "Open Sponsor in New Tab", id: "Buka Sponsor di Tab Baru", hi: "नए टैब में प्रायोजक खोलें", fil: "Buksan ang sponsor sa bagong tab", ms: "Buka Penaja dalam Tab Baharu", th: "เปิดผู้สนับสนุนในแท็บใหม่" } as const)[uiLang]}
             </button>
             {sponsorOpened ? (
               <button type="button" className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 font-semibold text-gray-700 disabled:opacity-60" onClick={continuePendingEpisode} disabled={sponsorWait > 0}>
                 {sponsorWait > 0
-                  ? (contentLang === "en" ? `Continue in ${sponsorWait}s` : `Lanjutkan dalam ${sponsorWait} dtk`)
-                  : (contentLang === "en" ? "Return & Continue Episode" : "Kembali & Lanjutkan Episode")}
+                  ? ({ en: `Continue in ${sponsorWait}s`, id: `Lanjutkan dalam ${sponsorWait} dtk`, hi: `${sponsorWait} सेकंड में जारी रखें`, fil: `Magpatuloy sa loob ng ${sponsorWait}s`, ms: `Teruskan dalam ${sponsorWait}s`, th: `ดำเนินการต่อใน ${sponsorWait} วินาที` } as const)[uiLang]
+                  : ({ en: "Return & Continue Episode", id: "Kembali & Lanjutkan Episode", hi: "वापस जाएँ और एपिसोड जारी रखें", fil: "Bumalik at magpatuloy sa episode", ms: "Kembali & Teruskan Episod", th: "กลับไปดูตอนต่อ" } as const)[uiLang]}
               </button>
             ) : null}
           </div>

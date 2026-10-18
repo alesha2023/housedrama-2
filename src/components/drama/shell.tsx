@@ -352,7 +352,6 @@ export function Shell({ children }: { children: ReactNode }) {
           <VisitorCounter />
           <p className="max-w-md text-xs leading-relaxed text-muted">{t.footerNote}</p>
           <p className="text-[11px] text-muted">{uiLang === "en" ? "HouseDrama · Short-drama catalog from multiple providers" : uiLang === "hi" ? "HouseDrama · कई प्रदाताओं के शॉर्ट ड्रामा का कैटलॉग" : uiLang === "fil" ? "HouseDrama · Katalog ng maiikling drama mula sa iba't ibang provider" : uiLang === "ms" ? "HouseDrama · Katalog drama pendek daripada pelbagai penyedia" : uiLang === "th" ? "HouseDrama · รวมซีรีส์สั้นจากหลายแหล่ง" : "HouseDrama · Katalog drama pendek dari berbagai penyedia"}</p>
-          <p className="mt-2 text-[10px] tracking-wide text-muted/80">Powered by HouseDrama © 2026</p>
         </div>
       </footer>
       )}

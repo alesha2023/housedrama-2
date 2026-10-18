@@ -94,6 +94,8 @@ function WatchPage() {
 }
 
 function WatchPending() {
+  const { uiLang } = usePrefs();
+  const loadingText = ({ en: "Loading video…", id: "Memuat video…", hi: "वीडियो लोड हो रहा है…", fil: "Nilo-load ang video…", ms: "Memuatkan video…", th: "กำลังโหลดวิดีโอ…" } as const)[uiLang];
   return (
     <div className="grid h-dvh place-items-center bg-player text-player-ink">
       <div className="grid place-items-center gap-4">
@@ -102,7 +104,7 @@ function WatchPending() {
           <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#ff4d6d] border-r-[#ffb3c1]" />
           <img src="/logo.png?v=4" alt="" className="h-9 w-auto" />
         </div>
-        <p className="text-sm font-medium text-white/80">Memuat video…</p>
+        <p className="text-sm font-medium text-white/80">{loadingText}</p>
       </div>
     </div>
   );

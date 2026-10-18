@@ -145,12 +145,21 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
 });
 
 function DetailPending() {
+  const { uiLang } = usePrefs();
+  const pendingCopy = {
+    en: { title: "Loading drama details…", body: "Fetching the synopsis and episode list. If the provider is slow, retry options will appear." },
+    id: { title: "Memuat detail drama…", body: "Sedang mengambil sinopsis dan daftar episode. Jika penyedia lambat, halaman akan menampilkan opsi coba lagi." },
+    hi: { title: "ड्रामा विवरण लोड हो रहा है…", body: "सारांश और एपिसोड सूची प्राप्त की जा रही है। प्रदाता धीमा होने पर फिर कोशिश करने का विकल्प दिखेगा।" },
+    fil: { title: "Nilo-load ang detalye ng drama…", body: "Kinukuha ang buod at listahan ng episode. May lalabas na opsyong subukan muli kung mabagal ang provider." },
+    ms: { title: "Memuatkan butiran drama…", body: "Sedang mendapatkan sinopsis dan senarai episod. Pilihan cuba lagi akan muncul jika penyedia lambat." },
+    th: { title: "กำลังโหลดรายละเอียดละคร…", body: "กำลังดึงเรื่องย่อและรายการตอน หากผู้ให้บริการตอบสนองช้า จะมีตัวเลือกให้ลองอีกครั้ง" },
+  }[uiLang];
   return (
     <main className="mx-auto min-h-[55vh] max-w-6xl px-4 py-10 sm:px-6" aria-live="polite" aria-busy="true">
       <div className="mx-auto flex max-w-md flex-col items-center justify-center rounded-3xl border border-line bg-surface/80 px-6 py-12 text-center shadow-sm">
         <LoaderCircle className="size-9 animate-spin text-primary" aria-hidden="true" />
-        <h1 className="mt-4 text-lg font-semibold">Memuat detail drama…</h1>
-        <p className="mt-2 text-sm text-muted">Sedang mengambil sinopsis dan daftar episode. Jika penyedia lambat, halaman akan menampilkan opsi coba lagi.</p>
+        <h1 className="mt-4 text-lg font-semibold">{pendingCopy.title}</h1>
+        <p className="mt-2 text-sm text-muted">{pendingCopy.body}</p>
       </div>
     </main>
   );
@@ -158,7 +167,7 @@ function DetailPending() {
 
 function DetailPage() {
   const initial = Route.useLoaderData();
-  const { t, contentLang } = usePrefs();
+  const { t, contentLang, uiLang } = usePrefs();
   const [data, setData] = useState(initial);
   const [saved, setSaved] = useState(false);
   const [resumeEntry, setResumeEntry] = useState<HistoryEntry | null>(null);
@@ -181,7 +190,7 @@ function DetailPage() {
       <div className="mx-auto max-w-xl py-12 text-center" role="alert">
         <EmptyState title={t.dramaUnavailable} body={data.error || t.dramaMissing} />
         <button type="button" onClick={() => window.location.reload()} className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-primary px-5 font-semibold text-primary-ink">
-          {contentLang === "id" ? "Coba Lagi" : "Try Again"}
+          {uiLang === "id" ? "Coba Lagi" : uiLang === "hi" ? "फिर कोशिश करें" : uiLang === "fil" ? "Subukan muli" : uiLang === "ms" ? "Cuba Lagi" : uiLang === "th" ? "ลองอีกครั้ง" : "Try Again"}
         </button>
       </div>
     );
