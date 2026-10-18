@@ -7,15 +7,15 @@ import { railTitle, usePrefs } from "@/lib/drama/i18n";
 const GENRES = ["romance", "revenge", "billionaire", "ceo", "historical", "fantasy", "family", "comedy", "completed"];
 
 export const Route = createFileRoute("/categories")({
-  loader: () => getBrowseData({ data: { lang: "id", provider: "all", page: 1, rail: null } }),
+  loader: () => getBrowseData({ data: { lang: "en", provider: "all", page: 1, rail: null } }),
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
-      { title: "Kategori Drama China: Romantis, CEO, Balas Dendam — HouseDrama" },
-      { name: "description", content: "Cari drama China pendek berdasarkan genre dan tema: romantis, CEO, balas dendam, fantasi, keluarga, komedi, dan drama tamat. Tonton dengan subtitle Indonesia di HouseDrama." },
+      { title: "Chinese Short Drama Categories: Romance, CEO, Revenge — HouseDrama" },
+      { name: "description", content: "Browse Chinese short dramas by genre, including romance, CEO stories, revenge, fantasy, family, comedy, and completed dramas on HouseDrama." },
       { name: "robots", content: "index,follow,max-image-preview:large" },
-      { property: "og:title", content: "Kategori Drama China — HouseDrama" },
-      { property: "og:description", content: "Pilih genre drama favorit dan temukan cerita yang ingin kamu tonton." },
+      { property: "og:title", content: "Chinese Short Drama Categories — HouseDrama" },
+      { property: "og:description", content: "Explore your favorite short-drama genres and discover your next story." },
       { property: "og:url", content: "https://house-drama.web.id/categories" },
     ],
     links: [{ rel: "canonical", href: "https://house-drama.web.id/categories" }],

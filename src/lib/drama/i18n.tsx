@@ -95,7 +95,7 @@ const COPY_BASE = {
     loadMore: "Load more",
     providersDown: "Some catalogs are unavailable right now. The rest of HouseDrama is still open.",
     searchPlaceholder: "Search titles across AnyReel, DramaBox, and FreeReels",
-    searchIntro: "Temukan drama favoritmu dengan mencari judulnya.",
+    searchIntro: "Search by title to find your favorite dramas.",
     contentLang: "Catalog language",
     uiLang: "Interface",
     about: "About",
@@ -161,7 +161,7 @@ const COPY_BASE = {
     about2:
       "The shows themselves belong to their creators and the platforms that distribute them. HouseDrama does not claim ownership, re-upload files, or bypass access controls. If a provider does not return a playable stream, the episode stays unavailable.",
     about3:
-      "Switch the interface and catalog between English and Indonesian. AnyReel’s language follows that provider’s session. DramaBox and FreeReels accept the catalog language. Some titles stay in their original language anyway.",
+      "Choose English, Indonesian, Hindi, or Filipino for the interface. The catalog uses English or Indonesian where supported by each provider; some titles remain in their source language.",
     about4: "Watch history and your watchlist live in this browser only. Clearing site data removes them.",
     privacy1: "HouseDrama does not ask you to create an account to browse or watch publicly available episodes.",
     privacy2:
@@ -204,7 +204,7 @@ const COPY_BASE = {
     loadMore: "Muat lagi",
     providersDown: "Sebagian sumber drama sedang tidak tersedia. Hasil dari sumber lain tetap ditampilkan.",
     searchPlaceholder: "Cari judul di AnyReel, DramaBox, dan FreeReels",
-    searchIntro: "Temukan drama favoritmu dengan mencari judulnya.",
+    searchIntro: "Search by title to find your favorite dramas.",
     contentLang: "Bahasa katalog",
     uiLang: "Antarmuka",
     about: "Tentang",

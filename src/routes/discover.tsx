@@ -11,15 +11,15 @@ export const Route = createFileRoute("/discover")({
     return typeof search.rail === "string" ? { rail: search.rail } : {};
   },
   loaderDeps: ({ search }) => ({ rail: search.rail ?? null }),
-  loader: ({ deps }) => getBrowseData({ data: { lang: "id", provider: "all", page: 1, rail: deps.rail } }),
+  loader: ({ deps }) => getBrowseData({ data: { lang: "en", provider: "all", page: 1, rail: deps.rail } }),
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
-      { title: "Jelajahi Drama China Pendek Subtitle Indonesia — HouseDrama" },
-      { name: "description", content: "Jelajahi koleksi drama China pendek subtitle Indonesia dari berbagai provider. Temukan drama romantis, CEO, balas dendam, fantasi, dan lainnya." },
+      { title: "Discover Chinese Short Dramas — HouseDrama" },
+      { name: "description", content: "Explore Chinese short dramas from multiple providers, including romance, CEO stories, revenge, fantasy, and more." },
       { name: "robots", content: "index,follow,max-image-preview:large" },
-      { property: "og:title", content: "Jelajahi Drama China Pendek — HouseDrama" },
-      { property: "og:description", content: "Temukan drama berdasarkan genre dan tema favoritmu di HouseDrama." },
+      { property: "og:title", content: "Discover Chinese Short Dramas — HouseDrama" },
+      { property: "og:description", content: "Find dramas by your favorite genres and themes on HouseDrama." },
       { property: "og:url", content: "https://house-drama.web.id/discover" },
     ],
     links: [{ rel: "canonical", href: "https://house-drama.web.id/discover" }],
@@ -44,7 +44,7 @@ function DiscoverPage() {
     const nextPage = page + 1;
     setLoading(true);
     const next = await getBrowseData({
-      data: { lang: "id", provider: "all", page: nextPage, rail: rail ?? null },
+      data: { lang: "en", provider: "all", page: nextPage, rail: rail ?? null },
     });
     setData((current) => ({
       ...next,
