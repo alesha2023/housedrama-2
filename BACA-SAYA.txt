@@ -1,17 +1,20 @@
-INI FILE BARU — 12 Oktober 2026
-Bukan zip lama.
+VERSI 18 OKTOBER 2026 — POSTER 2.5
+Ini paket sumber terbaru. Bukan zip 12 Oktober dan bukan HouseDrama_Subtitle_Mobile_13px_v2.
 
-Isi paket ini:
-- 62 penyedia (AnyReel, BibiShort, ReelShort, Vigloo, dan lainnya)
-- Pemilih penyedia di beranda
-- Logo baru (public/logo.png)
-- Footer: Facebook, Instagram, TikTok, YouTube
+Cek wajib setelah unzip, sebelum upload ke Vercel:
+Buka src/styles.css
+Harus ada baris: calc((100% - 1.5rem) / 2.5)
+Kalau baris itu tidak ada, ini bukan file yang benar.
 
-Cek cepat setelah unzip:
-- src/lib/drama/types.ts  (daftar diawali anyreel, bibishort, bonustv)
-- src/routes/index.tsx    (ada home-provider)
-- src/components/drama/shell.tsx (ada facebook, instagram, tiktok, youtube)
+Perubahan yang ikut di paket ini:
+- Poster beranda HP tampil 2,5 (dua utuh + setengah di kanan)
+- Bahasa Malaysia di pilihan bahasa
+- Jeda sponsor 7 detik
+- Font situs Outfit + Fraunces, subtitle pemutar Nunito 25px
+- Kartu unggulan tema gelap tidak putih
 
-Ini kode sumber, bukan situs yang sudah jadi.
-Setelah unzip: npm install
-Lalu Publish dari Grok, atau import folder ini ke proyek Vercel.
+Cara deploy Vercel supaya tampilan lama hilang:
+1. Hapus isi proyek lama, jangan ditimpa begitu saja.
+2. Upload zip ini, lalu extract di folder root (package.json harus di root).
+3. Deploy ulang. Di Vercel matikan cache build kalau ada.
+4. Setelah live, buka beranda di HP: harus kelihatan 2 poster utuh dan sedikit poster ketiga.
