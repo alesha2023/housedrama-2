@@ -14,6 +14,7 @@ const LINKS = [
 ] as const;
 
 function VisitorCounter() {
+  const { uiLang } = usePrefs();
   const [counts, setCounts] = useState<{ total: number; today: number } | null>(null);
 
   useEffect(() => {
@@ -45,8 +46,8 @@ function VisitorCounter() {
 
   if (!counts) return null;
   const stats = [
-    { label: "Total pengunjung", value: counts.total, Icon: Users },
-    { label: "Pengunjung hari ini", value: counts.today, Icon: UserRound },
+    { label: uiLang === "en" ? "Total visitors" : uiLang === "hi" ? "कुल आगंतुक" : uiLang === "fil" ? "Kabuuang bisita" : "Total pengunjung", value: counts.total, Icon: Users },
+    { label: uiLang === "en" ? "Visitors today" : uiLang === "hi" ? "आज के आगंतुक" : uiLang === "fil" ? "Mga bisita ngayon" : "Pengunjung hari ini", value: counts.today, Icon: UserRound },
   ];
   return (
     <section className="mx-auto grid w-full max-w-md grid-cols-2 gap-3 py-2" aria-label="Statistik pengunjung">
@@ -202,12 +203,13 @@ export function Shell({ children }: { children: ReactNode }) {
               title={uiLang === "en" ? "Switch language to Indonesian" : "Switch language to English"}
               className="grid h-10 min-w-10 place-items-center rounded-full border border-line px-2 text-xs font-bold hover:bg-surface"
               onClick={() => {
-                const nextLang = uiLang === "en" ? "id" : "en";
+                const order = ["en", "id", "hi", "fil"] as const;
+                const nextLang = order[(order.indexOf(uiLang as (typeof order)[number]) + 1) % order.length];
                 setUiLang(nextLang);
-                setContentLang(nextLang);
+                setContentLang(nextLang === "id" ? "id" : "en");
               }}
             >
-              {uiLang === "en" ? "EN" : "ID"}
+              {uiLang === "hi" ? "HI" : uiLang === "fil" ? "PH" : uiLang === "id" ? "ID" : "EN"}
             </button>
             <Link to="/search" aria-label={t.search} className="grid size-11 place-items-center rounded-full hover:bg-surface">
               <Search className="size-5" />
@@ -224,41 +226,6 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to="/watchlist" aria-label={t.watchlist} className="hidden size-11 place-items-center rounded-full hover:bg-surface sm:grid">
               <Sparkles className="size-5" />
             </Link>
-            <details className="relative hidden sm:block">
-              <summary className="grid size-11 cursor-pointer list-none place-items-center rounded-full text-sm font-semibold hover:bg-surface">
-                {uiLang.toUpperCase()}
-              </summary>
-              <div className="absolute right-0 z-50 mt-2 w-56 rounded-card border border-line bg-bg p-3 shadow-lg">
-                <label className="block text-xs font-semibold text-muted">
-                  {t.uiLang}
-                  <select
-                    className="mt-1 h-11 w-full rounded-xl border border-line bg-surface px-3"
-                    value={uiLang}
-                    onChange={(event) => setUiLang(event.target.value as typeof uiLang)}
-                  >
-                    {UI_LANGS.map((lang) => (
-                      <option key={lang.id} value={lang.id}>
-                        {lang.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="mt-3 block text-xs font-semibold text-muted">
-                  {t.contentLang}
-                  <select
-                    className="mt-1 h-11 w-full rounded-xl border border-line bg-surface px-3"
-                    value={contentLang}
-                    onChange={(event) => setContentLang(event.target.value)}
-                  >
-                    {CONTENT_LANGS.map((lang) => (
-                      <option key={lang.id} value={lang.id}>
-                        {lang.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            </details>
             <button
               type="button"
               className="grid size-11 place-items-center rounded-full hover:bg-surface lg:hidden"
@@ -355,17 +322,17 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to="/terms" className="hover:text-ink">{t.terms}</Link>
           </nav>
           <section className="w-full max-w-3xl border-t border-line/70 pt-4" aria-labelledby="footer-topics-title">
-            <h2 id="footer-topics-title" className="mb-3 text-sm font-semibold text-ink">Jelajahi berdasarkan topik</h2>
+            <h2 id="footer-topics-title" className="mb-3 text-sm font-semibold text-ink">{uiLang === "en" ? "Explore by topic" : uiLang === "hi" ? "विषय के अनुसार खोजें" : uiLang === "fil" ? "Mag-explore ayon sa paksa" : "Jelajahi berdasarkan topik"}</h2>
             <div className="flex flex-wrap justify-center gap-2">
               {[
-                { label: "Drama China subtitle Indonesia", rail: "romance" },
-                { label: "Drama romantis", rail: "romance" },
-                { label: "Drama CEO", rail: "ceo" },
-                { label: "Drama balas dendam", rail: "revenge" },
-                { label: "Drama fantasi", rail: "fantasy" },
-                { label: "Drama sejarah", rail: "historical" },
-                { label: "Drama tamat", rail: "completed" },
-                { label: "Drama terbaru", rail: "latest" },
+                { label: uiLang === "en" ? "Chinese Short Dramas" : uiLang === "hi" ? "चीनी शॉर्ट ड्रामा" : uiLang === "fil" ? "Chinese Short Dramas" : "Drama China subtitle Indonesia", rail: "romance" },
+                { label: uiLang === "en" ? "Romance Dramas" : uiLang === "hi" ? "रोमांस ड्रामा" : uiLang === "fil" ? "Romance Dramas" : "Drama romantis", rail: "romance" },
+                { label: uiLang === "en" ? "CEO Romance" : uiLang === "hi" ? "CEO रोमांस" : uiLang === "fil" ? "CEO Romance" : "Drama CEO", rail: "ceo" },
+                { label: uiLang === "en" ? "Revenge Dramas" : uiLang === "hi" ? "बदले की कहानी" : uiLang === "fil" ? "Revenge Dramas" : "Drama balas dendam", rail: "revenge" },
+                { label: uiLang === "en" ? "Fantasy Dramas" : uiLang === "hi" ? "फैंटेसी ड्रामा" : uiLang === "fil" ? "Fantasy Dramas" : "Drama fantasi", rail: "fantasy" },
+                { label: uiLang === "en" ? "Historical Dramas" : uiLang === "hi" ? "ऐतिहासिक ड्रामा" : uiLang === "fil" ? "Historical Dramas" : "Drama sejarah", rail: "historical" },
+                { label: uiLang === "en" ? "Completed Dramas" : uiLang === "hi" ? "पूरे हो चुके ड्रामा" : uiLang === "fil" ? "Kumpletong Drama" : "Drama tamat", rail: "completed" },
+                { label: uiLang === "en" ? "Latest Dramas" : uiLang === "hi" ? "नवीनतम ड्रामा" : uiLang === "fil" ? "Pinakabagong Drama" : "Drama terbaru", rail: "latest" },
               ].map((topic) => (
                 <Link
                   key={topic.label}
@@ -383,7 +350,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </section>
           <VisitorCounter />
           <p className="max-w-md text-xs leading-relaxed text-muted">{t.footerNote}</p>
-          <p className="text-[11px] text-muted">HouseDrama · Katalog drama pendek dari berbagai penyedia</p>
+          <p className="text-[11px] text-muted">{uiLang === "en" ? "HouseDrama · Short-drama catalog from multiple providers" : uiLang === "hi" ? "HouseDrama · कई प्रदाताओं के शॉर्ट ड्रामा का कैटलॉग" : uiLang === "fil" ? "HouseDrama · Katalog ng maiikling drama mula sa iba't ibang provider" : "HouseDrama · Katalog drama pendek dari berbagai penyedia"}</p>
         </div>
       </footer>
       )}

@@ -4,6 +4,8 @@ import { useRouter } from "@tanstack/react-router";
 export const UI_LANGS = [
   { id: "en", label: "English" },
   { id: "id", label: "Indonesia" },
+  { id: "hi", label: "हिन्दी (India)" },
+  { id: "fil", label: "Filipino" },
 ] as const;
 
 export const CONTENT_LANGS = [
@@ -11,7 +13,7 @@ export const CONTENT_LANGS = [
   { id: "id", label: "Indonesia" },
 ] as const;
 
-const RAIL_TITLES = {
+const RAIL_TITLES_BASE = {
   en: {
     featured: "Featured Dramas",
     trending: "Trending Now",
@@ -54,12 +56,18 @@ const RAIL_TITLES = {
   },
 } as const;
 
+const RAIL_TITLES = {
+  ...RAIL_TITLES_BASE,
+  hi: RAIL_TITLES_BASE.en,
+  fil: RAIL_TITLES_BASE.en,
+} as const;
+
 export function railTitle(lang: keyof typeof RAIL_TITLES, id: string, fallback: string) {
   const table = RAIL_TITLES[lang] as Record<string, string>;
   return table[id] ?? fallback;
 }
 
-const COPY = {
+const COPY_BASE = {
   en: {
     home: "Home",
     discover: "Discover",
@@ -280,6 +288,18 @@ const COPY = {
   },
 } as const;
 
+const COPY = {
+  ...COPY_BASE,
+  hi: {
+    ...COPY_BASE.en,
+    home: "होम", discover: "खोजें", latest: "नवीनतम", trending: "ट्रेंडिंग", categories: "श्रेणियाँ", search: "खोजें", watchlist: "वॉचलिस्ट", history: "इतिहास", shorts: "शॉर्ट्स", play: "अभी देखें", details: "विवरण देखें", viewAll: "सभी देखें", start: "देखना शुरू करें", save: "वॉचलिस्ट में जोड़ें", saved: "वॉचलिस्ट में है", episodes: "एपिसोड", similar: "इसी तरह के ड्रामा", more: "इस प्रदाता से और", also: "यहाँ भी उपलब्ध", continue: "देखना जारी रखें", recent: "हाल ही में देखा", empty: "अभी यहाँ कुछ नहीं", retry: "फिर कोशिश करें", loadMore: "और लोड करें", searchPlaceholder: "AnyReel, DramaBox और FreeReels पर शीर्षक खोजें", searchIntro: "शीर्षक खोजकर अपना पसंदीदा ड्रामा ढूँढें।", contentLang: "कैटलॉग भाषा", uiLang: "इंटरफ़ेस", about: "हमारे बारे में", privacy: "गोपनीयता", terms: "नियम", next: "अगला एपिसोड", prev: "पिछला एपिसोड", autoplay: "अगला अपने आप चलाएँ", loading: "लोड हो रहा है", searching: "खोज रहे हैं…", close: "बंद करें", footerNote: "कई प्रदाताओं के चीनी शॉर्ट ड्रामा का कैटलॉग। HouseDrama पर खोजें, सेव करें और एपिसोड देखें।", noMatches: "कोई परिणाम नहीं", allProviders: "सभी प्रदाता", providerLabel: "प्रदाता", unknownProvider: "अज्ञात प्रदाता", discoverBody: "सभी जुड़े कैटलॉग से चुने गए ड्रामा।", latestTitle: "नवीनतम रिलीज़", latestBody: "DramaBox और अन्य कैटलॉग से नए ड्रामा।", remove: "हटाएँ", discoverCta: "ड्रामा खोजें", noSynopsis: "इस शीर्षक का सारांश उपलब्ध नहीं है।", episodeUnit: "एपिसोड", completed: "पूरा", ongoing: "जारी", plays: "व्यू", eps: "एपि.", shortDrama: "शॉर्ट ड्रामा", dramaUnavailable: "ड्रामा उपलब्ध नहीं", missingDrama: "ड्रामा विवरण उपलब्ध नहीं है।", heroFallback: "लाइव कैटलॉग से शॉर्ट ड्रामा।", catalogsEmpty: "कैटलॉग से ड्रामा नहीं मिले। बाद में फिर कोशिश करें।", aboutLead: "चीनी शॉर्ट ड्रामा के लिए मुफ़्त कैटलॉग।", termsTitle: "उपयोग की शर्तें",
+  },
+  fil: {
+    ...COPY_BASE.en,
+    home: "Home", discover: "Tuklasin", latest: "Pinakabago", trending: "Trending", categories: "Mga Kategorya", search: "Maghanap", watchlist: "Watchlist", history: "Kasaysayan", shorts: "Shorts", play: "I-play ngayon", details: "Tingnan ang detalye", viewAll: "Tingnan lahat", start: "Simulang manood", save: "Idagdag sa watchlist", saved: "Nasa watchlist", episodes: "Mga episode", similar: "Mga katulad na drama", more: "Higit pa mula sa provider na ito", also: "Available din sa", continue: "Ituloy ang panonood", recent: "Kamakailang pinanood", empty: "Wala pa rito", retry: "Subukan muli", loadMore: "Mag-load pa", searchPlaceholder: "Maghanap sa AnyReel, DramaBox, at FreeReels", searchIntro: "Hanapin ang paborito mong drama sa pamamagitan ng pamagat.", contentLang: "Wika ng katalogo", uiLang: "Interface", about: "Tungkol", privacy: "Privacy", terms: "Mga tuntunin", next: "Susunod na episode", prev: "Nakaraang episode", autoplay: "Awtomatikong i-play ang susunod", loading: "Naglo-load", searching: "Naghahanap…", close: "Isara", footerNote: "Katalogo ng Chinese short dramas mula sa iba’t ibang provider. Maghanap, mag-save, at manood sa HouseDrama.", noMatches: "Walang tugma", allProviders: "Lahat ng provider", providerLabel: "Provider", unknownProvider: "Hindi kilalang provider", discoverBody: "Pinagsamang katalogo mula sa lahat ng konektadong provider.", latestTitle: "Mga bagong release", latestBody: "Mga bagong drama mula sa DramaBox at iba pang katalogo.", remove: "Alisin", discoverCta: "Tuklasin ang mga drama", noSynopsis: "Walang buod para sa pamagat na ito.", episodeUnit: "episode", completed: "Tapos na", ongoing: "Kasalukuyan", plays: "panonood", eps: "ep.", shortDrama: "Maikling drama", dramaUnavailable: "Hindi available ang drama", missingDrama: "Walang detalye ng drama.", heroFallback: "Maiikling drama mula sa live na katalogo.", catalogsEmpty: "Walang drama na ibinalik ang katalogo. Subukan muli mamaya.", aboutLead: "Libreng katalogo ng Chinese short dramas.", termsTitle: "Mga tuntunin sa paggamit",
+  },
+} satisfies Record<string, Copy>;
+
 export type UiLang = keyof typeof COPY;
 export type Copy = { [K in keyof (typeof COPY)["en"]]: string };
 
@@ -294,7 +314,7 @@ type Prefs = {
 const PrefsContext = createContext<Prefs | null>(null);
 
 function isUiLang(value: string | null): value is UiLang {
-  return value === "en" || value === "id";
+  return value === "en" || value === "id" || value === "hi" || value === "fil";
 }
 
 function writeLangCookie(lang: UiLang, manual: boolean) {
@@ -318,7 +338,7 @@ export function PrefsProvider({ initialLang = "id", children }: { initialLang?: 
       const content = localStorage.getItem("dramaluma.content");
       const lang: UiLang = isUiLang(ui) ? ui : content === "en" ? "en" : "id";
       setUiLangState(lang);
-      setContentLangState(content === "en" || content === "id" ? content : lang);
+      setContentLangState(content === "en" || content === "id" ? content : (lang === "id" ? "id" : "en"));
       writeLangCookie(lang, true);
       return () => { cancelled = true; };
     }
@@ -327,9 +347,10 @@ export function PrefsProvider({ initialLang = "id", children }: { initialLang?: 
     const applyAutoLanguage = (lang: UiLang) => {
       if (cancelled || localStorage.getItem("dramaluma.ui.manual") === "1" || lang === initialLang) return;
       setUiLangState(lang);
-      setContentLangState(lang);
+      const catalogLang = lang === "id" ? "id" : "en";
+      setContentLangState(catalogLang);
       localStorage.setItem("dramaluma.ui", lang);
-      localStorage.setItem("dramaluma.content", lang);
+      localStorage.setItem("dramaluma.content", catalogLang);
       writeLangCookie(lang, false);
       void router.invalidate();
     };
@@ -339,7 +360,10 @@ export function PrefsProvider({ initialLang = "id", children }: { initialLang?: 
         if (!response.ok) throw new Error("IP language lookup failed");
         return response.json() as Promise<{ country_code?: string }>;
       })
-      .then((data) => applyAutoLanguage(data.country_code?.toUpperCase() === "ID" ? "id" : "en"))
+      .then((data) => {
+        const country = data.country_code?.toUpperCase();
+        applyAutoLanguage(country === "ID" ? "id" : country === "IN" ? "hi" : country === "PH" ? "fil" : "en");
+      })
       .catch(() => {
         // The server already chose a language from the request IP when it could.
       });
