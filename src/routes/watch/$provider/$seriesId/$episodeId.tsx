@@ -14,7 +14,7 @@ export const Route = createFileRoute("/watch/$provider/$seriesId/$episodeId")({
   loader: async ({ params }) => {
     if (!isProviderId(params.provider)) throw new Error("Unknown provider");
     return getWatchData({
-      data: { provider: params.provider, seriesId: params.seriesId, episodeId: params.episodeId, lang: "id" },
+      data: { provider: params.provider, seriesId: params.seriesId, episodeId: params.episodeId, lang: "en" },
     });
   },
   staleTime: 60_000,

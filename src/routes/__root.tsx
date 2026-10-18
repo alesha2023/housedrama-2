@@ -17,19 +17,19 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "HouseDrama — Nonton Drama China Pendek Subtitle Indonesia" },
+      { title: "HouseDrama — Watch Chinese Short Dramas Online | HouseDrama" },
       {
         name: "description",
         content:
-          "Nonton drama China pendek subtitle Indonesia di HouseDrama. Temukan drama romantis, kisah CEO, drama terbaru, dan episode lengkap dari berbagai provider.",
+          "Discover Chinese short dramas on HouseDrama. Explore romance, CEO stories, revenge, fantasy, and the latest episodes from connected catalogs.",
       },
       { property: "og:site_name", content: "HouseDrama" },
       { property: "og:type", content: "website" },
-      { property: "og:title", content: "HouseDrama — Nonton Drama China Pendek Subtitle Indonesia" },
+      { property: "og:title", content: "HouseDrama — Watch Chinese Short Dramas Online | HouseDrama" },
       { property: "og:description", content: "Temukan drama China pendek, kisah romantis, dan drama CEO di HouseDrama." },
       { property: "og:image", content: "https://house-drama.web.id/og.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "HouseDrama — Drama China Subtitle Indonesia" },
+      { name: "twitter:title", content: "HouseDrama — Chinese Short Dramas" },
       { name: "twitter:description", content: "Temukan drama China pendek dan episode favoritmu di HouseDrama." },
       { name: "twitter:image", content: "https://house-drama.web.id/og.jpg" },
       { name: "theme-color", content: "#b34bff" },
@@ -63,8 +63,8 @@ function RootLayout() {
               name: "HouseDrama",
               alternateName: "House Drama",
               url: "https://house-drama.web.id/",
-              inLanguage: "id-ID",
-              description: "Katalog drama China pendek dengan subtitle Indonesia di HouseDrama.",
+              inLanguage: "en",
+              description: "A catalog of Chinese short dramas from connected providers on HouseDrama.",
             }),
           }}
         />

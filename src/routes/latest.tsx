@@ -5,14 +5,14 @@ import { getHomeData } from "@/lib/drama/api";
 import { usePrefs } from "@/lib/drama/i18n";
 
 export const Route = createFileRoute("/latest")({
-  loader: () => getHomeData({ data: { lang: "id" } }),
+  loader: () => getHomeData({ data: { lang: "en" } }),
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
-      { title: "Drama China Terbaru & Episode Baru — HouseDrama" },
-      { name: "description", content: "Lihat drama China pendek terbaru dan pembaruan episode di HouseDrama. Temukan drama subtitle Indonesia dari katalog provider yang tersedia." },
+      { title: "Latest Chinese Short Dramas & Episodes — HouseDrama" },
+      { name: "description", content: "Explore the latest Chinese short dramas and episode updates from available providers on HouseDrama." },
       { name: "robots", content: "index,follow,max-image-preview:large" },
-      { property: "og:title", content: "Drama China Terbaru & Episode Baru — HouseDrama" },
+      { property: "og:title", content: "Latest Chinese Short Dramas & Episodes — HouseDrama" },
       { property: "og:description", content: "Temukan drama terbaru dan episode baru di HouseDrama." },
       { property: "og:url", content: "https://house-drama.web.id/latest" },
     ],

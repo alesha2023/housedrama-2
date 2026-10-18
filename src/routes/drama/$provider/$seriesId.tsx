@@ -12,19 +12,19 @@ import { isProviderId } from "@/lib/drama/types";
 export const Route = createFileRoute("/drama/$provider/$seriesId")({
   loader: ({ params }) => {
     if (!isProviderId(params.provider)) throw new Error("Unknown provider");
-    return getDetailData({ data: { provider: params.provider, seriesId: params.seriesId, lang: "id" } });
+    return getDetailData({ data: { provider: params.provider, seriesId: params.seriesId, lang: "en" } });
   },
   pendingComponent: PageSkeleton,
   head: ({ loaderData, params }) => {
     const drama = loaderData?.drama;
     const dramaTitle = (drama?.displayTitle || drama?.title || "Drama China").replace(/\s+/g, " ").trim();
     const title = drama
-      ? `${dramaTitle} — Sinopsis & Episode Subtitle Indonesia | HouseDrama`
-      : "Drama tidak tersedia — HouseDrama";
+      ? `${dramaTitle} — Watch Short Drama | HouseDrama`
+      : "Drama Not Available — HouseDrama";
     const sourceDescription = (drama?.displayDescription || drama?.description || "").replace(/\s+/g, " ").trim();
     const description = (drama
-      ? `${sourceDescription ? `${sourceDescription} ` : `Tonton ${dramaTitle} di HouseDrama. `}Lihat sinopsis, informasi serial, dan daftar episode drama subtitle Indonesia.`
-      : "Informasi drama ini sementara tidak tersedia di HouseDrama.").slice(0, 300);
+      ? `${sourceDescription ? `${sourceDescription} ` : `Explore ${dramaTitle} on HouseDrama. `}Read the synopsis, explore series information, and browse available episodes.`
+      : "Details for this drama are temporarily unavailable on HouseDrama.").slice(0, 300);
     const canonical = `https://house-drama.web.id/drama/${encodeURIComponent(params.provider)}/${encodeURIComponent(params.seriesId)}`;
     // Keep image metadata absolute. If a provider URL is a wsrv.nl wrapper,
     // unwrap it so Google/social crawlers are not sent to a proxy blocked by robots.txt.
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
         { name: "robots", content: drama && (drama.displayTitle || drama.title) ? "index,follow,max-image-preview:large" : "noindex,follow" },
         { name: "googlebot", content: drama ? "index,follow,max-image-preview:large" : "noindex,follow" },
         { property: "og:type", content: "video.tv_show" },
-        { property: "og:locale", content: "id_ID" },
+        { property: "og:locale", content: "en_US" },
         { property: "og:site_name", content: "HouseDrama" },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
@@ -56,8 +56,8 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },
         ...(drama?.originalTitle && drama.originalTitle !== drama.title
-          ? [{ name: "keywords", content: `${drama.originalTitle}, ${drama.displayTitle || drama.title}, drama China subtitle Indonesia` }]
-          : [{ name: "keywords", content: `${drama?.displayTitle || drama?.title || "drama China"}, drama China subtitle Indonesia` }]),
+          ? [{ name: "keywords", content: `${drama.originalTitle}, ${drama.displayTitle || drama.title}, Chinese short drama` }]
+          : [{ name: "keywords", content: `${drama?.displayTitle || drama?.title || "drama China"}, Chinese short drama` }]),
       ],
       links: [{ rel: "canonical", href: canonical }],
     };

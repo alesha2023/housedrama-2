@@ -15,19 +15,19 @@ export const Route = createFileRoute("/")({
     ...(typeof search.provider === "string" && isProviderId(search.provider) ? { provider: search.provider } : {}),
   }),
   loaderDeps: ({ search }): { provider: "all" | ProviderId } => ({ provider: search.provider ?? "all" }),
-  loader: ({ deps }) => getHomeData({ data: { lang: "id", provider: deps.provider } }),
+  loader: ({ deps }) => getHomeData({ data: { lang: "en", provider: deps.provider } }),
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
       { name: "robots", content: "index,follow,max-image-preview:large" },
-      { title: "HouseDrama — Nonton Drama China Pendek Subtitle Indonesia" },
+      { title: "HouseDrama — Watch Chinese Short Dramas Online | HouseDrama" },
       {
         name: "description",
         content:
-          "Nonton drama China pendek subtitle Indonesia di HouseDrama. Jelajahi drama romantis, kisah CEO, drama terbaru, dan episode favoritmu.",
+          "Discover Chinese short dramas on HouseDrama, including romance, CEO stories, new releases, and episodes from connected catalogs.",
       },
-      { property: "og:title", content: "HouseDrama — Nonton Drama China Pendek Subtitle Indonesia" },
-      { property: "og:description", content: "Jelajahi drama China pendek subtitle Indonesia, kisah romantis, dan drama CEO di HouseDrama." },
+      { property: "og:title", content: "HouseDrama — Watch Chinese Short Dramas Online | HouseDrama" },
+      { property: "og:description", content: "Explore Chinese short dramas, romance, CEO stories, and more on HouseDrama." },
       { property: "og:url", content: "https://house-drama.web.id/" },
       { property: "og:image", content: "https://house-drama.web.id/og.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
