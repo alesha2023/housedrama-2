@@ -28,6 +28,11 @@ const SPONSOR_SMARTLINKS = [
   "https://auctionr.org/4/e02ff50611e53dfb3b95d9b7fe94759f",
   "https://asiafilm.org/4/3b9a06b621155c33e54e072a498d0691",
   "https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2",
+  "https://uplcm.com/4/12057622",
+  "https://uplcm.com/4/12057617",
+  "https://uplcm.com/4/12057615",
+  "https://uplcm.com/4/12017844",
+  "https://auctionr.org/4/97ee6d6eed24baa0974e41f4f1567470",
 ];
 
 function formatPlaybackTime(seconds: number | null | undefined) {
