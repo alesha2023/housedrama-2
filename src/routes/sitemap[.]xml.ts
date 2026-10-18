@@ -25,6 +25,17 @@ const FEATURED_DRAMA_PATHS = [
   "/drama/dramabox/42000028283",
   "/drama/dramabox/42000021480",
   "/drama/dramabox/42000023896",
+  // Priority drama URLs observed in Google Search Console.
+  "/drama/dramabox/420000030309",
+  "/drama/dramabox/420000030038",
+  "/drama/dramabox/420000030502",
+  "/drama/dramabox/420000029973",
+  "/drama/dramabox/420000027254",
+  "/drama/dramabox/420000030511",
+  "/drama/dramabox/420000028173",
+  "/drama/dramabox/420000029949",
+  "/drama/dramabox/420000025978",
+  "/drama/dramabox/420000030437",
 ];
 
 // Only include public, indexable pages. User-specific history/watchlist pages

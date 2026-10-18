@@ -115,39 +115,13 @@ export async function dramaboxSearch(keyword: string, lang: string) {
   return mapCards(payload.suggestList);
 }
 
-function alternateBookId(bookId: string): string | null {
-  // Some imported DramaBox links contain one extra zero after the 420000 prefix.
-  // Keep the public HouseDrama URL unchanged; use this only as an upstream fallback.
-  if (/^4200000\d+$/.test(bookId)) return bookId.replace(/^4200000/, "420000");
-  return null;
-}
-
-async function fetchDramaBoxDetail(bookId: string, lang: string) {
-  return providerFetch<Record<string, unknown>>(
+export async function dramaboxDetail(bookId: string, lang: string) {
+  const payload = await providerFetch<Record<string, unknown>>(
     "dramabox",
     `/get-detail/${enc(bookId)}?${langQuery(lang)}`,
     { cacheTtl: 120_000, cacheKey: `db-detail:${lang}:${bookId}` },
   );
-}
-
-export async function dramaboxDetail(bookId: string, lang: string) {
-  let payload: Record<string, unknown> | null = null;
-  try {
-    payload = await fetchDramaBoxDetail(bookId, lang);
-  } catch {
-    // The alternate ID is tried below only for the known numeric ID pattern.
-  }
-  if (!payload || !mapCard(payload)) {
-    const alternate = alternateBookId(bookId);
-    if (!alternate) {
-      if (!payload) throw new Error("DramaBox could not load this drama");
-    } else {
-      payload = await fetchDramaBoxDetail(alternate, lang);
-    }
-  }
-  if (!payload) throw new Error("DramaBox could not load this drama");
   const card = mapCard(payload);
-  if (card) card.seriesId = bookId; // preserve the existing public URL and canonical
   const episodes: Episode[] = asArray(payload.episodes).flatMap((item, index) => {
     const record = asRecord(item);
     if (!record) return [];
@@ -183,37 +157,27 @@ export async function dramaboxStream(
   lang: string,
 ): Promise<StreamCandidate[]> {
   const query = langQuery(lang);
-  async function fetchStreams(id: string): Promise<Record<string, unknown>> {
+  let payload: Record<string, unknown> | null = null;
+  try {
+    payload = await providerFetch<Record<string, unknown>>(
+      "dramabox",
+      `/get-all-streams-proxy/${enc(bookId)}?${query}`,
+      { cacheTtl: 40_000, cacheKey: `db-proxy:${lang}:${bookId}` },
+    );
+  } catch {
     try {
-      return await providerFetch<Record<string, unknown>>(
+      payload = await providerFetch<Record<string, unknown>>(
         "dramabox",
-        `/get-all-streams-proxy/${enc(id)}?${query}`,
-        { cacheTtl: 40_000, cacheKey: `db-proxy:${lang}:${id}` },
+        `/get-all-streams/${enc(bookId)}?${query}`,
+        { cacheTtl: 20_000, cacheKey: `db-all:${lang}:${bookId}` },
       );
     } catch {
-      try {
-        return await providerFetch<Record<string, unknown>>(
-          "dramabox",
-          `/get-all-streams/${enc(id)}?${query}`,
-          { cacheTtl: 20_000, cacheKey: `db-all:${lang}:${id}` },
-        );
-      } catch {
-        return providerFetch<Record<string, unknown>>(
-          "dramabox",
-          `/get-stream/${enc(id)}?${query}`,
-          { cacheTtl: 15_000, cacheKey: `db-stream:${lang}:${id}` },
-        );
-      }
+      payload = await providerFetch<Record<string, unknown>>(
+        "dramabox",
+        `/get-stream/${enc(bookId)}?${query}`,
+        { cacheTtl: 15_000, cacheKey: `db-stream:${lang}:${bookId}` },
+      );
     }
-  }
-
-  let payload: Record<string, unknown>;
-  try {
-    payload = await fetchStreams(bookId);
-  } catch (error) {
-    const alternate = alternateBookId(bookId);
-    if (!alternate) throw error;
-    payload = await fetchStreams(alternate);
   }
   const episodes = asArray(payload?.episodes);
   const match =
