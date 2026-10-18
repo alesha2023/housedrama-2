@@ -238,22 +238,23 @@
   100% { transform: translateX(280%); }
 }
 
-/* Subtitle styling: compact, uncased text for selectable WebVTT/HTML video tracks.
-   Text burned directly into the video cannot be resized or restyled by CSS. */
+/* Subtitle styling for selectable WebVTT tracks.
+   Mobile uses viewport-relative sizing because Android Chrome can scale cue text
+   unexpectedly when a percentage or fixed pixel size is used against the video box. */
 video::cue {
   background: transparent !important;
   background-color: transparent !important;
-  color: #fff;
-  font-family: Inter, Arial, sans-serif;
-  font-size: 1.8%;
+  color: #fff !important;
+  font-family: Arial, sans-serif;
+  font-size: 1.8vh !important;
   font-weight: 500;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 @media (max-width: 640px) {
   video::cue {
-    /* Avoid viewport-height based scaling that makes captions huge on portrait phones. */
-    font-size: 13px !important;
+    /* Around 12–14px on a typical phone viewport, without oversized captions. */
+    font-size: 1.6vh !important;
     background: transparent !important;
     background-color: transparent !important;
     color: #fff !important;
