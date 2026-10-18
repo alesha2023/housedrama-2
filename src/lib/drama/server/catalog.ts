@@ -689,7 +689,7 @@ async function shortsFrom(
   return { items: [], hasMore: false };
 }
 
-export async function loadDetail(provider: ProviderId, seriesId: string, lang: string): Promise<DetailPayload> {
+async function loadDetailInternal(provider: ProviderId, seriesId: string, lang: string): Promise<DetailPayload> {
   if (!isCoreProvider(provider)) {
     try {
       const raw = await genericDetail(provider, seriesId, lang);
@@ -776,6 +776,13 @@ export async function loadDetail(provider: ProviderId, seriesId: string, lang: s
       alsoOn: [],
     };
   }
+}
+
+/** Bound the full detail pipeline (provider detail, episode list, localization, and related titles).
+ * Without this budget a slow provider could leave the router's pending UI visible for a long time.
+ */
+export async function loadDetail(provider: ProviderId, seriesId: string, lang: string): Promise<DetailPayload> {
+  return withFetchBudget(6500, () => loadDetailInternal(provider, seriesId, lang));
 }
 
 async function findAlsoOn(card: DramaCard, lang: string) {

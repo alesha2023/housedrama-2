@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Play } from "lucide-react";
+import { LoaderCircle, Play } from "lucide-react";
 import { useEffect, useState } from "react";
-import { EmptyState, PageSkeleton, Poster, ProviderBadge, Rail } from "@/components/drama/cards";
+import { EmptyState, Poster, ProviderBadge, Rail } from "@/components/drama/cards";
 import { EpisodeGrid } from "@/components/drama/player";
 import { getDetailData } from "@/lib/drama/api";
 import { usePrefs } from "@/lib/drama/i18n";
@@ -69,7 +69,7 @@ async function loadDetailResilient(provider: string, seriesId: string): Promise<
     try {
       const request = getDetailData({ data: { provider: provider as ProviderId, seriesId, lang: "en" } });
       const timeout = new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error("Pemuatan detail terlalu lama.")), 5500);
+        timeoutId = setTimeout(() => reject(new Error("Pemuatan detail terlalu lama.")), 7500);
       });
       const result = await Promise.race([request, timeout]);
       if (result.ok && result.drama) {
@@ -93,7 +93,7 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
     if (!isProviderId(params.provider)) throw new Error("Unknown provider");
     return loadDetailResilient(params.provider, params.seriesId);
   },
-  pendingComponent: PageSkeleton,
+  pendingComponent: DetailPending,
   head: ({ loaderData, params }) => {
     const drama = loaderData?.drama;
     const dramaTitle = (drama?.displayTitle || drama?.title || "Drama China").replace(/\s+/g, " ").trim();
@@ -143,6 +143,18 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
   },
   component: DetailPage,
 });
+
+function DetailPending() {
+  return (
+    <main className="mx-auto min-h-[55vh] max-w-6xl px-4 py-10 sm:px-6" aria-live="polite" aria-busy="true">
+      <div className="mx-auto flex max-w-md flex-col items-center justify-center rounded-3xl border border-line bg-surface/80 px-6 py-12 text-center shadow-sm">
+        <LoaderCircle className="size-9 animate-spin text-primary" aria-hidden="true" />
+        <h1 className="mt-4 text-lg font-semibold">Memuat detail drama…</h1>
+        <p className="mt-2 text-sm text-muted">Sedang mengambil sinopsis dan daftar episode. Jika penyedia lambat, halaman akan menampilkan opsi coba lagi.</p>
+      </div>
+    </main>
+  );
+}
 
 function DetailPage() {
   const initial = Route.useLoaderData();

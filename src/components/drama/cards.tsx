@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clapperboard } from "lucide-react";
+import { Clapperboard, LoaderCircle } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import type { DramaCard, ProviderId } from "@/lib/drama/types";
 import { usePrefs } from "@/lib/drama/i18n";
@@ -231,28 +231,20 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () 
 }
 
 export function SkeletonRail() {
-  return (
-    <div className="mt-8">
-      <div className="skeleton mb-3 h-8 w-48 rounded-full" />
-      <div className="flex gap-3 overflow-hidden">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index} className="w-36 shrink-0 sm:w-44">
-            <div className="skeleton aspect-poster rounded-card" />
-            <div className="skeleton mt-2 h-4 rounded-full" />
-            <div className="skeleton mt-2 h-3 w-2/3 rounded-full" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return <PageSkeleton />;
 }
 
+/** Shared route-pending UI: show an explicit loading state instead of blank-looking skeleton cards. */
 export function PageSkeleton() {
+  const { uiLang } = usePrefs();
+  const label = uiLang === "id" ? "Memuat konten HouseDrama…" : uiLang === "ms" ? "Memuatkan kandungan HouseDrama…" : uiLang === "th" ? "กำลังโหลดเนื้อหา HouseDrama…" : "Loading HouseDrama content…";
   return (
-    <div>
-      <div className="skeleton h-72 rounded-card sm:h-96" />
-      <SkeletonRail />
-      <SkeletonRail />
-    </div>
+    <main className="grid min-h-[48vh] place-items-center px-4 py-12" role="status" aria-live="polite" aria-busy="true">
+      <div className="flex max-w-sm flex-col items-center rounded-3xl border border-line bg-surface/80 px-7 py-9 text-center shadow-sm">
+        <LoaderCircle className="size-10 animate-spin text-primary" aria-hidden="true" />
+        <p className="mt-4 text-base font-semibold text-ink">{label}</p>
+        <p className="mt-2 text-sm text-muted">{uiLang === "id" ? "Sedang mengambil data dan poster drama. Mohon tunggu sebentar." : uiLang === "ms" ? "Sedang mendapatkan data dan poster drama. Sila tunggu sebentar." : uiLang === "th" ? "กำลังดึงข้อมูลและโปสเตอร์ละคร โปรดรอสักครู่" : "Fetching drama details and posters. Please wait a moment."}</p>
+      </div>
+    </main>
   );
 }

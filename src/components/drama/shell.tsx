@@ -182,7 +182,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-line/70 bg-white/75 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-1 px-2 sm:gap-2 sm:px-4">
           <Link to="/" className="flex shrink-0 items-center" onClick={() => setOpen(false)}>
-            <Logo className="h-8 w-auto max-w-[108px] sm:h-10 sm:max-w-none" />
+            <Logo className="h-8 w-auto max-w-none shrink-0 sm:h-10" />
           </Link>
           <nav className="ml-4 hidden items-center gap-1 lg:flex" aria-label="Primary">
             {LINKS.map((link) => (
