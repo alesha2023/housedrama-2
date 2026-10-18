@@ -233,7 +233,6 @@ export function Player({
       const player = new Hls({
         enableWorker: true,
         capLevelToPlayerSize: true,
-        subtitleDisplay: false,
         // Avoid long default network waits before moving to another source.
         manifestLoadingTimeOut: 9000,
         manifestLoadingMaxRetry: 1,

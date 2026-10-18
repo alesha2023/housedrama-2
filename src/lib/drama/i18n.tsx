@@ -382,10 +382,10 @@ const COPY = {
     aboutLead: "Katalog percuma untuk drama pendek.",
     termsTitle: "Terma penggunaan",
   },
-} satisfies Record<string, Copy>;
+} satisfies Record<"en" | "id" | "hi" | "fil" | "ms", { [K in keyof typeof COPY_BASE.en]: string }>;
 
 export type UiLang = keyof typeof COPY;
-export type Copy = { [K in keyof (typeof COPY)["en"]]: string };
+export type Copy = { [K in keyof typeof COPY_BASE.en]: string };
 
 type Prefs = {
   uiLang: UiLang;
