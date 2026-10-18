@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clapperboard, LoaderCircle } from "lucide-react";
+import { Clapperboard, Eye, LoaderCircle } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import type { DramaCard, ProviderId } from "@/lib/drama/types";
 import { usePrefs } from "@/lib/drama/i18n";
@@ -89,6 +89,13 @@ export function DramaCardView({ item, className }: { item: DramaCard; className?
   const badgeText = item.badge === "Trending di HouseDrama" || item.badge === "Trending on HouseDrama"
     ? ({ en: "Trending on HouseDrama", id: "Trending di HouseDrama", hi: "HouseDrama पर ट्रेंडिंग", fil: "Trending sa HouseDrama", ms: "Trending di HouseDrama", th: "กำลังมาแรงบน HouseDrama" } as const)[uiLang]
     : item.badge;
+  // HouseDrama's own view count is tagged by the API with this exact suffix.
+  // Keep provider popularity numbers from being mistaken for HouseDrama views.
+  const houseViewsMatch = (item.playCount ?? "").match(/^([\d,.]+)\s+ditonton di HouseDrama$/i);
+  const houseViews = houseViewsMatch ? Number(houseViewsMatch[1].replace(/,/g, "")) : null;
+  const houseViewsLabel = houseViews === null || !Number.isFinite(houseViews)
+    ? null
+    : `${houseViews.toLocaleString(uiLang === "id" ? "id-ID" : uiLang === "hi" ? "hi-IN" : uiLang === "th" ? "th-TH" : uiLang === "ms" ? "ms-MY" : uiLang === "fil" ? "en-PH" : "en-US")} ${({ en: "views", id: "ditonton", hi: "बार देखा गया", fil: "na panonood", ms: "tontonan", th: "ครั้งที่รับชม" } as const)[uiLang]}`;
   return (
     <Link
       to="/drama/$provider/$seriesId"
@@ -105,6 +112,12 @@ export function DramaCardView({ item, className }: { item: DramaCard; className?
             <span className="rounded-full bg-bg/90 px-2 py-0.5 text-xs font-semibold text-ink">{badgeText}</span>
           ) : null}
         </div>
+        {houseViewsLabel ? (
+          <span className="absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full bg-black/75 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur-sm">
+            <Eye className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">{houseViewsLabel}</span>
+          </span>
+        ) : null}
       </div>
       <h3 className="drama-card__title mt-2 line-clamp-2 text-sm font-semibold leading-snug text-ink group-hover:text-primary">
         {title}

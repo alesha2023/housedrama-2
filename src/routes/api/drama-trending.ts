@@ -39,7 +39,7 @@ async function handleGet() {
         episodeCount: null,
         completed: null,
         scoreLabel: null,
-        playCount: String(Number(row.view_count)),
+        playCount: `${Number(row.view_count).toLocaleString("en-US")} ditonton di HouseDrama`,
         badge: "Trending di HouseDrama",
         firstEpisodeId: null,
       }));
