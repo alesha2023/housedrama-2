@@ -9,7 +9,7 @@ import { isProviderId, type ProviderId } from "@/lib/drama/types";
 export const Route = createFileRoute("/provider/$provider")({
   loader: ({ params }) => {
     const provider = isProviderId(params.provider) ? params.provider : "anyreel";
-    return getBrowseData({ data: { lang: "en", provider, page: 1, rail: null } });
+    return getBrowseData({ data: { lang: "id", provider, page: 1, rail: null } });
   },
   pendingComponent: PageSkeleton,
   head: ({ params }) => {
@@ -20,11 +20,11 @@ export const Route = createFileRoute("/provider/$provider")({
     const canonical = `https://house-drama.web.id/provider/${encodeURIComponent(params.provider)}`;
     return {
       meta: [
-        { title: `${label} Short Dramas — HouseDrama` },
-        { name: "description", content: `Browse short dramas from ${label} on HouseDrama. Explore series details, synopses, and available episodes.` },
+        { title: `Drama ${label} Subtitle Indonesia — HouseDrama` },
+        { name: "description", content: `Jelajahi daftar drama ${label} di HouseDrama. Temukan sinopsis, informasi serial, dan episode drama pendek untuk ditonton.` },
         { name: "robots", content: "index,follow" },
-        { property: "og:title", content: `${label} Short Dramas — HouseDrama` },
-        { property: "og:description", content: `Explore ${label} short dramas, synopses, and available episodes on HouseDrama.` },
+        { property: "og:title", content: `Drama ${label} Subtitle Indonesia — HouseDrama` },
+        { property: "og:description", content: `Jelajahi daftar drama ${label}, sinopsis, dan episode di HouseDrama.` },
         { property: "og:url", content: canonical },
       ],
       links: [{ rel: "canonical", href: canonical }],
@@ -49,7 +49,7 @@ function ProviderPage() {
 
   async function more() {
     setLoading(true);
-    const next = await getBrowseData({ data: { lang: "en", provider, page: page + 1, rail: null } });
+    const next = await getBrowseData({ data: { lang: "id", provider, page: page + 1, rail: null } });
     setItems((current) => [...current, ...next.items]);
     setPage(next.page);
     setHasMore(next.hasMore);

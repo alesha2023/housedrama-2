@@ -12,19 +12,19 @@ import { isProviderId } from "@/lib/drama/types";
 export const Route = createFileRoute("/drama/$provider/$seriesId")({
   loader: ({ params }) => {
     if (!isProviderId(params.provider)) throw new Error("Unknown provider");
-    return getDetailData({ data: { provider: params.provider, seriesId: params.seriesId, lang: "en" } });
+    return getDetailData({ data: { provider: params.provider, seriesId: params.seriesId, lang: "id" } });
   },
   pendingComponent: PageSkeleton,
   head: ({ loaderData, params }) => {
     const drama = loaderData?.drama;
     const dramaTitle = (drama?.displayTitle || drama?.title || "Drama China").replace(/\s+/g, " ").trim();
     const title = drama
-      ? `${dramaTitle} — Synopsis & Episodes | HouseDrama`
-      : "Drama Unavailable — HouseDrama";
+      ? `${dramaTitle} — Sinopsis & Episode Subtitle Indonesia | HouseDrama`
+      : "Drama tidak tersedia — HouseDrama";
     const sourceDescription = (drama?.displayDescription || drama?.description || "").replace(/\s+/g, " ").trim();
     const description = (drama
-      ? `${sourceDescription ? `${sourceDescription} ` : `Watch ${dramaTitle} on HouseDrama. `}Explore the synopsis, series information, and available episodes.`
-      : "This drama is temporarily unavailable on HouseDrama.").slice(0, 300);
+      ? `${sourceDescription ? `${sourceDescription} ` : `Tonton ${dramaTitle} di HouseDrama. `}Lihat sinopsis, informasi serial, dan daftar episode drama subtitle Indonesia.`
+      : "Informasi drama ini sementara tidak tersedia di HouseDrama.").slice(0, 300);
     const canonical = `https://house-drama.web.id/drama/${encodeURIComponent(params.provider)}/${encodeURIComponent(params.seriesId)}`;
     // Keep image metadata absolute. If a provider URL is a wsrv.nl wrapper,
     // unwrap it so Google/social crawlers are not sent to a proxy blocked by robots.txt.
@@ -56,8 +56,8 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },
         ...(drama?.originalTitle && drama.originalTitle !== drama.title
-          ? [{ name: "keywords", content: `${drama.originalTitle}, ${drama.displayTitle || drama.title}, Chinese short drama` }]
-          : [{ name: "keywords", content: `${drama?.displayTitle || drama?.title || "drama China"}, Chinese short drama` }]),
+          ? [{ name: "keywords", content: `${drama.originalTitle}, ${drama.displayTitle || drama.title}, drama China subtitle Indonesia` }]
+          : [{ name: "keywords", content: `${drama?.displayTitle || drama?.title || "drama China"}, drama China subtitle Indonesia` }]),
       ],
       links: [{ rel: "canonical", href: canonical }],
     };
@@ -204,8 +204,8 @@ function DetailPage() {
           </div>
         </div>
       </div>
-      <nav aria-label="Explore more dramas" className="mt-8 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-        <Link to="/discover" className="text-primary underline underline-offset-4">Explore all dramas</Link>
+      <nav aria-label="Jelajahi drama lainnya" className="mt-8 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+        <Link to="/discover" className="text-primary underline underline-offset-4">Jelajahi semua drama</Link>
         <Link to="/provider/$provider" params={{ provider: drama.provider }} className="text-primary underline underline-offset-4">Drama lainnya dari {drama.provider}</Link>
         <Link to="/trending" className="text-primary underline underline-offset-4">Drama populer</Link>
         <Link to="/latest" className="text-primary underline underline-offset-4">Drama terbaru</Link>
