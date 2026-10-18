@@ -238,21 +238,22 @@
   100% { transform: translateX(280%); }
 }
 
-/* Subtitle styling: readable and restrained on mobile and desktop.
-   This affects selectable WebVTT/HTML video tracks, not text burned into the video. */
+/* Native WebVTT subtitles: genuinely small on mobile, with no caption box. */
 video::cue {
-  background: rgba(0, 0, 0, 0.48);
   color: #fff;
-  font-family: Inter, Arial, sans-serif;
-  /* Keep provider WebVTT cues restrained; provider tracks may otherwise appear oversized on phones. */
-  font-size: 1.6vh !important;
+  background-color: transparent;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
   font-weight: 500;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
 }
 
 @media (max-width: 640px) {
   video::cue {
-    font-size: clamp(12px, 1.45vh, 16px) !important;
+    font-size: 12px;
+    color: #fff;
+    background-color: transparent;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
   }
 }
 
