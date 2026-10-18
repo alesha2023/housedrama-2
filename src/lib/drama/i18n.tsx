@@ -381,10 +381,13 @@ export function PrefsProvider({ initialLang = "id", children }: { initialLang?: 
       contentLang,
       t: COPY[uiLang],
       setUiLang: (lang) => {
+        // Catalog providers currently support English and Indonesian only.
+        // Hindi/Filipino use the English catalog while their interface is localized.
+        const catalogLang = lang === "id" ? "id" : "en";
         setUiLangState(lang);
-        setContentLangState(lang);
+        setContentLangState(catalogLang);
         localStorage.setItem("dramaluma.ui", lang);
-        localStorage.setItem("dramaluma.content", lang);
+        localStorage.setItem("dramaluma.content", catalogLang);
         localStorage.setItem("dramaluma.ui.manual", "1");
         writeLangCookie(lang, true);
         void router.invalidate();
@@ -392,11 +395,11 @@ export function PrefsProvider({ initialLang = "id", children }: { initialLang?: 
       setContentLang: (lang) => {
         const next = lang === "id" ? "id" : "en";
         setContentLangState(next);
-        setUiLangState(next);
-        localStorage.setItem("dramaluma.ui", next);
+        // Catalog language is a separate preference; do not overwrite Hindi/Filipino UI.
         localStorage.setItem("dramaluma.content", next);
         localStorage.setItem("dramaluma.ui.manual", "1");
-        writeLangCookie(next, true);
+        const currentUi = uiLang;
+        writeLangCookie(currentUi, true);
         void router.invalidate();
       },
     }),

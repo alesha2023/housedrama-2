@@ -197,20 +197,18 @@ export function Shell({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-1">
-            <button
-              type="button"
-              aria-label={uiLang === "en" ? "Switch language to Indonesian" : "Ganti bahasa ke Inggris"}
-              title={uiLang === "en" ? "Switch language to Indonesian" : "Switch language to English"}
-              className="grid h-10 min-w-10 place-items-center rounded-full border border-line px-2 text-xs font-bold hover:bg-surface"
-              onClick={() => {
-                const order = ["en", "id", "hi", "fil"] as const;
-                const nextLang = order[(order.indexOf(uiLang as (typeof order)[number]) + 1) % order.length];
-                setUiLang(nextLang);
-                setContentLang(nextLang === "id" ? "id" : "en");
-              }}
+            <label className="sr-only" htmlFor="header-language-select">Choose language</label>
+            <select
+              id="header-language-select"
+              aria-label="Choose language"
+              value={uiLang}
+              className="h-10 max-w-[108px] rounded-full border border-line bg-white/80 px-3 text-xs font-bold text-ink shadow-sm hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={(event) => setUiLang(event.target.value as typeof uiLang)}
             >
-              {uiLang === "hi" ? "HI" : uiLang === "fil" ? "PH" : uiLang === "id" ? "ID" : "EN"}
-            </button>
+              {UI_LANGS.map((lang) => (
+                <option key={lang.id} value={lang.id}>{lang.id === "hi" ? "🇮🇳 हिन्दी" : lang.id === "fil" ? "🇵🇭 Filipino" : lang.id === "id" ? "🇮🇩 Indonesia" : "🇺🇸 English"}</option>
+              ))}
+            </select>
             <Link to="/search" aria-label={t.search} className="grid size-11 place-items-center rounded-full hover:bg-surface">
               <Search className="size-5" />
             </Link>
