@@ -116,11 +116,28 @@ export async function dramaboxSearch(keyword: string, lang: string) {
 }
 
 export async function dramaboxDetail(bookId: string, lang: string) {
-  const payload = await providerFetch<Record<string, unknown>>(
-    "dramabox",
-    `/get-detail/${enc(bookId)}?${langQuery(lang)}`,
-    { cacheTtl: 120_000, cacheKey: `db-detail:${lang}:${bookId}` },
-  );
+  let payload: Record<string, unknown>;
+  try {
+    payload = await providerFetch<Record<string, unknown>>(
+      "dramabox",
+      `/get-detail/${enc(bookId)}?${langQuery(lang)}`,
+      { cacheTtl: 120_000, cacheKey: `db-detail:${lang}:${bookId}` },
+    );
+  } catch (primaryError) {
+    // Some DramaBox catalog IDs are exposed in only one language. Retry the
+    // same ID with the alternate supported catalog language before reporting
+    // the title as unavailable; never substitute a different drama ID.
+    const fallbackLang = dbLang(lang) === "in" ? "en" : "in";
+    try {
+      payload = await providerFetch<Record<string, unknown>>(
+        "dramabox",
+        `/get-detail/${enc(bookId)}?lang=${fallbackLang}`,
+        { cacheTtl: 120_000, cacheKey: `db-detail:${fallbackLang}:${bookId}` },
+      );
+    } catch {
+      throw primaryError;
+    }
+  }
   const card = mapCard(payload);
   const episodes: Episode[] = asArray(payload.episodes).flatMap((item, index) => {
     const record = asRecord(item);

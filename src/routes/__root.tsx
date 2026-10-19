@@ -37,6 +37,7 @@ export const Route = createRootRoute({
       { name: "twitter:description", content: "Watch Chinese short dramas online and discover romance, revenge, CEO stories, fantasy, and new episodes on HouseDrama." },
       { name: "twitter:image", content: "https://house-drama.web.id/og-v2.jpg" },
       { name: "theme-color", content: "#b34bff" },
+      { name: "admaven-placement", content: "BpdU4qdU6" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
