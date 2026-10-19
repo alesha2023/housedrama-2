@@ -956,7 +956,7 @@ export function Player({
 
       {pendingAdEpisode ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/65 p-5" role="dialog" aria-modal="true" aria-label="Iklan">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-5 text-center text-[#242424] shadow-2xl dark:bg-[#211d27] dark:text-white">
+          <div className="sponsor-modal w-full max-w-sm rounded-2xl bg-white p-5 text-center text-[#242424] shadow-2xl dark:bg-[#211d27] dark:text-white">
             <h2 className="text-lg font-bold text-[#242424] dark:text-white">{({ en: "Watch Sponsor First", id: "Tonton Sponsor Dulu", hi: "पहले प्रायोजक देखें", fil: "Panoorin muna ang sponsor", ms: "Tonton Penaja Dahulu", th: "ดูผู้สนับสนุนก่อน" } as const)[uiLang]}</h2>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{({
               en: `To continue to Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, please open the sponsor first. This helps support HouseDrama.`,

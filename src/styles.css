@@ -326,6 +326,20 @@ html[data-theme="dark"] [class~="bg-white/80"],
 html[data-theme="dark"] [class~="bg-white/90"] {
   background-color: #211e27 !important;
 }
+
+/* Sponsor modal follows the app theme explicitly, overriding broad dark-mode surface rules. */
+html[data-theme="light"] .sponsor-modal {
+  background-color: #ffffff !important;
+  color: #242424 !important;
+}
+html[data-theme="light"] .sponsor-modal h2 { color: #242424 !important; }
+html[data-theme="light"] .sponsor-modal p { color: #4b5563 !important; }
+html[data-theme="dark"] .sponsor-modal {
+  background-color: #211d27 !important;
+  color: #ffffff !important;
+}
+html[data-theme="dark"] .sponsor-modal h2 { color: #ffffff !important; }
+html[data-theme="dark"] .sponsor-modal p { color: #d1d5db !important; }
 html[data-theme="dark"] [class~="bg-bg"] { background-color: #17151b !important; }
 html[data-theme="dark"] [class~="bg-surface"] { background-color: #292530 !important; }
 html[data-theme="dark"] [class~="text-ink"] { color: #f5f1f6 !important; }
