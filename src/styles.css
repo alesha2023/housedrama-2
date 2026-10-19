@@ -731,3 +731,43 @@ html[data-theme="dark"] .boot-splash__glow {
 html[data-theme="dark"] .boot-splash__track {
   background: rgb(255 90 54 / 0.22);
 }
+
+/* STEP 34: keep standard drama cards aligned and give Continue Watching its own card container. */
+.page-bg main .no-scrollbar > .drama-card {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+.page-bg main .no-scrollbar > .drama-card .drama-card__content {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: 7.25rem;
+}
+.page-bg main .no-scrollbar > .drama-card .drama-card__meta {
+  min-height: 1.35em;
+}
+/* Continue Watching: restore a visible rounded wrapper around poster and details. */
+.page-bg main section.mt-8 .no-scrollbar > a.drama-card:not(:has(.drama-card__content)) {
+  flex: 0 0 calc((100% - 1.5rem) / 2.5);
+  width: calc((100% - 1.5rem) / 2.5);
+  padding: 0.75rem;
+  border: 1px solid rgb(35 25 35 / 0.08);
+  border-radius: 1.25rem;
+  background: var(--color-surface, #ffffff);
+  box-shadow: 0 1px 3px rgb(35 25 35 / 0.05);
+}
+.page-bg main section.mt-8 .no-scrollbar > a.drama-card:not(:has(.drama-card__content)) h3 {
+  min-height: 2.8em;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .no-scrollbar > a.drama-card:not(:has(.drama-card__content)) {
+  background: #29242e;
+  border-color: #39313f;
+  box-shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .boot-splash {
+    background: radial-gradient(ellipse at 50% 40%, rgb(115 45 83 / 22%) 0%, transparent 58%),
+      linear-gradient(180deg, #111014 0%, #17141b 100%);
+  }
+}
