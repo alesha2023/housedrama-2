@@ -769,7 +769,7 @@ export function Player({
         </div>
       ) : null}
 
-      <div className={cn("pointer-events-none absolute inset-x-0 top-0 z-20 bg-linear-to-b transition-opacity duration-300", controlsVisible ? "opacity-100" : "pointer-events-none opacity-0")} from-black/75 to-transparent px-1 pt-[max(0.25rem,env(safe-area-inset-top))] pb-16 text-white">
+      <div className={cn("pointer-events-none absolute inset-x-0 top-0 z-20 bg-linear-to-b from-black/75 to-transparent px-1 pt-[max(0.25rem,env(safe-area-inset-top))] pb-16 text-white transition-opacity duration-300", controlsVisible ? "opacity-100" : "pointer-events-none opacity-0")}>
         <div className="pointer-events-auto flex items-center drop-shadow">
           <Link
             to="/drama/$provider/$seriesId"
