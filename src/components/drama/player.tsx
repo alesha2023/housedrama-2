@@ -909,7 +909,7 @@ export function Player({
         </div>
       ) : null}
 
-      <div className={cn("pointer-events-none absolute inset-x-3 bottom-7 z-30 flex items-center justify-between transition-opacity duration-300", controlsVisible ? "opacity-100" : "opacity-0")} text-[11px] font-semibold tabular-nums text-white [text-shadow:0_1px_3px_rgba(0,0,0,1)]">
+      <div className={cn("pointer-events-none absolute inset-x-3 bottom-7 z-30 flex items-center justify-between transition-opacity duration-300 text-[11px] font-semibold tabular-nums text-white [text-shadow:0_1px_3px_rgba(0,0,0,1)]", controlsVisible ? "opacity-100" : "opacity-0")}>
         <span>{formatPlaybackTime(progress)}</span>
         <span>{duration && Number.isFinite(duration) ? formatPlaybackTime(duration) : "--:--"}</span>
       </div>
