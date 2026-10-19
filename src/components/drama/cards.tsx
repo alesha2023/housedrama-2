@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 
 export { providerLabel };
 
+// Poster recovery deliberately never borrows an image from another drama.
+// A poster must belong to this drama; otherwise show the neutral HouseDrama banner.
 function directPosterSource(value: string | null) {
   if (!value) return null;
   try {
@@ -43,26 +45,45 @@ export function Poster({
   priority?: boolean;
 }) {
   const [activeSrc, setActiveSrc] = useState(directPosterSource(src));
-  const [failed, setFailed] = useState(!src);
+  const [attempt, setAttempt] = useState(0);
+  const [usingFallback, setUsingFallback] = useState(false);
+  const [fallbackFailed, setFallbackFailed] = useState(false);
 
   useEffect(() => {
     setActiveSrc(directPosterSource(src));
-    setFailed(!src);
+    setAttempt(0);
+    setUsingFallback(false);
+    setFallbackFailed(false);
   }, [src]);
 
   function handleImageError() {
-    // Retry through the image optimizer only when the original provider URL fails.
-    // This keeps the original URL as the first choice for Googlebot and social crawlers.
-    if (activeSrc && !activeSrc.includes("wsrv.nl") && !activeSrc.includes("images.weserv.nl")) {
-      setActiveSrc(`https://images.weserv.nl/?url=${encodeURIComponent(activeSrc)}`);
+    const original = directPosterSource(src);
+    // Try the exact original poster URL once with a cache-busting query.
+    if (attempt === 0 && original && !usingFallback) {
+      setAttempt(1);
+      const separator = original.includes("?") ? "&" : "?";
+      setActiveSrc(`${original}${separator}_hd_retry=${Date.now()}`);
       return;
     }
-    setFailed(true);
+    // Retry the same poster through an image proxy; never substitute another drama.
+    if (attempt <= 1 && original && !usingFallback) {
+      setAttempt(2);
+      setActiveSrc(`https://images.weserv.nl/?url=${encodeURIComponent(original)}`);
+      return;
+    }
+    // Last resort: neutral local HouseDrama artwork, not a mismatched drama poster.
+    if (!usingFallback) {
+      setUsingFallback(true);
+      setAttempt(3);
+      setActiveSrc("/og-v2.jpg");
+      return;
+    }
+    setFallbackFailed(true);
   }
 
-  if (!activeSrc || failed) {
+  if ((!activeSrc && !src) || fallbackFailed) {
     return (
-      <div className={cn("grid place-items-center bg-surface text-muted", className)} role="img" aria-label={alt}>
+      <div className={cn("grid place-items-center bg-[#29242e] text-white", className)} role="img" aria-label={alt}>
         <Clapperboard className="size-8" aria-hidden="true" />
         <span className="sr-only">{alt}</span>
       </div>
@@ -71,14 +92,14 @@ export function Poster({
 
   return (
     <img
-      src={activeSrc}
+      src={activeSrc ?? "/og-v2.jpg"}
       alt={alt}
       loading={priority ? "eager" : "lazy"}
       fetchPriority={priority ? "high" : "auto"}
       decoding="async"
       referrerPolicy="no-referrer"
       onError={handleImageError}
-      className={cn("h-full w-full object-cover", className)}
+      className={cn("h-full w-full object-cover", usingFallback ? "object-center" : "", className)}
     />
   );
 }

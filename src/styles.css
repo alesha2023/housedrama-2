@@ -880,3 +880,87 @@ html[data-theme="dark"] .page-bg main section .drama-card__content .mt-1\.5 span
   color: #ffa2c8 !important;
   border-color: transparent !important;
 }
+
+/* STEP 24: dark-mode mobile rail layout correction.
+   Keep the light-mode card geometry; dark mode must not enlarge cards or wrap the View all action. */
+html[data-theme="dark"] .page-bg main section.mt-8 {
+  padding: 12px !important;
+  box-sizing: border-box;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 > div:first-child {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  min-width: 0;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 > div:first-child h2 {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-wrap: normal;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 > div:first-child > a,
+html[data-theme="dark"] .page-bg main section.mt-8 > div:first-child > a * {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .no-scrollbar {
+  min-width: 0;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .no-scrollbar > .drama-card {
+  flex: 0 0 calc((100% - 2.25rem) / 4) !important;
+  width: calc((100% - 2.25rem) / 4) !important;
+  min-width: 0 !important;
+}
+@media (max-width: 639px) {
+  html[data-theme="dark"] .page-bg main section.mt-8 .no-scrollbar > .drama-card {
+    flex-basis: calc((100% - 2.25rem) / 4) !important;
+    width: calc((100% - 2.25rem) / 4) !important;
+  }
+}
+
+/* STEP 25: Dark Mode should keep the simple, unboxed Light Mode category layout.
+   Remove category containers/dividers; keep individual drama cards dark. */
+html[data-theme="dark"] .page-bg main section,
+html[data-theme="dark"] .page-bg main section.mt-8,
+html[data-theme="dark"] .page-bg main > section,
+html[data-theme="dark"] .page-bg main > div > section {
+  background: transparent !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 2rem !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 > div:first-child {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-bottom: 0.75rem !important;
+  align-items: center !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 > div:first-child h2,
+html[data-theme="dark"] .page-bg main section.mt-8 > div:first-child h3 {
+  color: #f5f1f6 !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 > div:first-child > a {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .no-scrollbar {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+/* Individual cards retain the dark treatment; only the large category wrappers are removed. */
+html[data-theme="dark"] .page-bg main section.mt-8 .drama-card {
+  background: #29242e !important;
+  border: 1px solid #39313f !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
