@@ -397,3 +397,113 @@ html[data-theme="dark"] .page-bg main > section + section,
 html[data-theme="dark"] .page-bg main > div > section + section {
   border-top-color: rgb(240 82 156 / 18%);
 }
+
+/* Step 16 correction: cinematic dark canvas with warm light catalog panels,
+   matching the approved reference concept. Light mode remains unchanged. */
+html[data-theme="dark"] .page-bg {
+  background-color: #111014;
+  background-image:
+    radial-gradient(75% 380px at 0% 0%, rgb(240 82 156 / 10%) 0%, transparent 62%),
+    radial-gradient(70% 360px at 100% 12%, rgb(255 121 94 / 8%) 0%, transparent 58%),
+    linear-gradient(180deg, #111014 0%, #17141b 100%);
+  background-attachment: fixed;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 {
+  box-sizing: border-box;
+  padding: 16px;
+  border: 1px solid rgb(240 82 156 / 14%);
+  border-radius: 22px;
+  background: #fff1ee;
+  color: #29242b;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 h2,
+html[data-theme="dark"] .page-bg main section.mt-8 h3,
+html[data-theme="dark"] .page-bg main section.mt-8 .text-ink {
+  color: #29242b !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .text-muted,
+html[data-theme="dark"] .page-bg main section.mt-8 .drama-card__meta {
+  color: #77717a !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .drama-card {
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid rgb(41 36 43 / 5%);
+  border-radius: 18px;
+  background: #ffffff;
+  color: #29242b;
+  box-shadow: 0 3px 12px rgb(41 36 43 / 7%);
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .drama-card__poster {
+  background: #f4e9e7;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .drama-card__title {
+  color: #29242b !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .drama-card .text-muted {
+  color: #77717a !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .drama-card [class*="bg-surface"] {
+  background-color: #f6e8e6 !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .drama-card [class*="bg-bg"] {
+  background-color: rgb(255 255 255 / 92%) !important;
+  color: #29242b !important;
+}
+@media (max-width: 640px) {
+  html[data-theme="dark"] .page-bg main section.mt-8 {
+    padding: 12px;
+    border-radius: 18px;
+  }
+}
+
+/* Step 16 card design: matching the approved reference in both themes.
+   Light mode uses a white information card; dark mode uses a charcoal information card.
+   Main theme backgrounds, player, header, navigation and footer counter are untouched. */
+.drama-card {
+  overflow: hidden;
+  border-radius: 18px;
+}
+.drama-card__content {
+  padding: 10px 10px 12px;
+  border-radius: 0 0 18px 18px;
+  background: #ffffff;
+  color: #29242b;
+}
+.drama-card__title {
+  margin-top: 0 !important;
+  color: #29242b !important;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.drama-card__meta {
+  color: #77717a !important;
+  font-family: var(--font-sans);
+  font-size: .875rem;
+}
+.drama-card__content .mt-1\.5 {
+  margin-top: 8px;
+}
+.drama-card__content [class*="bg-coral"] {
+  background-color: #fce5e1 !important;
+  color: #b84d3a !important;
+}
+html[data-theme="dark"] .drama-card__content {
+  background: #292530;
+  color: #f5f1f6;
+}
+html[data-theme="dark"] .drama-card__title {
+  color: #f5f1f6 !important;
+}
+html[data-theme="dark"] .drama-card__meta {
+  color: #b5acbb !important;
+}
+html[data-theme="dark"] .drama-card__content [class*="bg-coral"] {
+  background-color: #422637 !important;
+  color: #ff9ac5 !important;
+}
+html[data-theme="dark"] .drama-card__content [class*="bg-surface"] {
+  background-color: #393340 !important;
+}

@@ -119,15 +119,17 @@ export function DramaCardView({ item, className }: { item: DramaCard; className?
           </span>
         ) : null}
       </div>
-      <h3 className="drama-card__title mt-2 line-clamp-2 text-sm font-semibold leading-snug text-ink group-hover:text-primary">
-        {title}
-      </h3>
-      <p className="drama-card__meta mt-1 text-xs text-muted">
-        {[item.episodeCount ? `${item.episodeCount} ${t.eps}` : null, item.completed ? t.completed : null]
-          .filter(Boolean)
-          .join(" · ") || t.shortDrama}
-      </p>
-      {item.tags.length ? <TagPills tags={item.tags} /> : null}
+      <div className="drama-card__content">
+        <h3 className="drama-card__title line-clamp-2 text-base font-bold leading-snug text-ink group-hover:text-primary">
+          {title}
+        </h3>
+        <p className="drama-card__meta mt-1 text-sm text-muted">
+          {[item.episodeCount ? `${item.episodeCount} ${t.eps}` : null, item.completed ? t.completed : null]
+            .filter(Boolean)
+            .join(" · ") || t.shortDrama}
+        </p>
+        {item.tags.length ? <TagPills tags={item.tags} /> : null}
+      </div>
     </Link>
   );
 }
