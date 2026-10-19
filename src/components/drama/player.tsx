@@ -161,9 +161,10 @@ export function Player({
       setControlsVisible(true);
       return;
     }
+    // Start a fresh 10-second countdown when playback begins or a menu closes.
     controlsTimer.current = setTimeout(() => setControlsVisible(false), 10_000);
     return () => { if (controlsTimer.current) clearTimeout(controlsTimer.current); };
-  }, [playing, openList, openSpeed, openSubs, error, loading, controlsVisible]);
+  }, [playing, openList, openSpeed, openSubs, error, loading]);
 
   const revealControls = () => {
     setControlsVisible(true);

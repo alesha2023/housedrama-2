@@ -507,3 +507,188 @@ html[data-theme="dark"] .drama-card__content [class*="bg-coral"] {
 html[data-theme="dark"] .drama-card__content [class*="bg-surface"] {
   background-color: #393340 !important;
 }
+
+/* Step 16 final fix: force the approved card design with theme-specific specificity. */
+.drama-card__content {
+  display: block !important;
+  box-sizing: border-box;
+  padding: 10px 10px 12px !important;
+  margin: 0 !important;
+  border-radius: 0 0 18px 18px;
+  background-color: #ffffff !important;
+  color: #29242b !important;
+}
+.drama-card__title {
+  display: -webkit-box;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #29242b !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.015em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.drama-card__meta {
+  margin: 5px 0 0 !important;
+  padding: 0 !important;
+  color: #77717a !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: .875rem !important;
+  line-height: 1.4 !important;
+}
+.drama-card__content .mt-1\.5 {
+  margin-top: 8px !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+.drama-card__content .mt-1\.5 span {
+  background-color: #fce5e1 !important;
+  color: #b84d3a !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+}
+html[data-theme="dark"] .drama-card__content {
+  background-color: #292530 !important;
+  color: #f5f1f6 !important;
+}
+html[data-theme="dark"] .drama-card__title {
+  color: #f5f1f6 !important;
+}
+html[data-theme="dark"] .drama-card__meta {
+  color: #b5acbb !important;
+}
+html[data-theme="dark"] .drama-card__content .mt-1\.5 span {
+  background-color: #422637 !important;
+  color: #ff9ac5 !important;
+}
+
+
+/* Step 17 consolidated fix: card typography by theme + preserve player controls. */
+.drama-card {
+  display: block;
+  overflow: hidden;
+  border-radius: 18px;
+}
+.drama-card__poster {
+  overflow: hidden;
+  border-radius: 18px 18px 0 0;
+}
+.drama-card__content {
+  display: block !important;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 !important;
+  padding: 10px 10px 12px !important;
+  border-radius: 0 0 18px 18px;
+  background: #ffffff !important;
+  color: #29242b !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+}
+.drama-card__title {
+  display: -webkit-box;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+  color: #29242b !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.015em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.drama-card__meta {
+  margin: 5px 0 0 !important;
+  padding: 0 !important;
+  color: #77717a !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: .875rem !important;
+  line-height: 1.4 !important;
+}
+.drama-card__content .mt-1\.5 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+.drama-card__content .mt-1\.5 span {
+  background: #fce5e1 !important;
+  color: #b84d3a !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-weight: 600;
+}
+html[data-theme="dark"] .drama-card__content {
+  background: #292530 !important;
+  color: #f5f1f6 !important;
+}
+html[data-theme="dark"] .drama-card__title {
+  color: #f5f1f6 !important;
+}
+html[data-theme="dark"] .drama-card__meta {
+  color: #b5acbb !important;
+}
+html[data-theme="dark"] .drama-card__content .mt-1\.5 span {
+  background: #422637 !important;
+  color: #ff9ac5 !important;
+}
+/* Ensure the player controls remain clickable while visible and disappear with the 10-second timer. */
+.player-controls,
+button[aria-label="Full screen"],
+button[aria-label="Exit full screen"] {
+  touch-action: manipulation;
+}
+
+
+/* STEP 18: enforce screenshot-style sans-serif drama card titles */
+/* Scope to drama cards only; leave large page headings and drama detail titles untouched. */
+.drama-card .drama-card__title,
+.drama-card__content .drama-card__title,
+.drama-card h3,
+.drama-card h4,
+.drama-card__content h3,
+.drama-card__content h4,
+.page-bg .drama-card a,
+.page-bg .drama-card__content a {
+  font-family: "Inter", Arial, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+  line-height: 1.32;
+}
+.drama-card .drama-card__title,
+.drama-card__content .drama-card__title {
+  font-size: 1rem;
+}
+@media (max-width: 640px) {
+  .drama-card .drama-card__title,
+  .drama-card__content .drama-card__title,
+  .drama-card h3,
+  .drama-card h4,
+  .drama-card__content h3,
+  .drama-card__content h4 {
+    font-size: 1rem !important;
+    line-height: 1.35 !important;
+  }
+}
+
+
+/* Step 19: enforce the approved card-title typography in both themes. */
+.drama-card .drama-card__content .drama-card__title {
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.015em;
+}
+html[data-theme="dark"] .drama-card .drama-card__content .drama-card__title {
+  color: #f5f1f6 !important;
+}
+html[data-theme="light"] .drama-card .drama-card__content .drama-card__title,
+html:not([data-theme="dark"]) .drama-card .drama-card__content .drama-card__title {
+  color: #29242b !important;
+}
