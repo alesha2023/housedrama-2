@@ -329,3 +329,8 @@ html[data-theme="dark"] .skeleton::after {
 @media (prefers-reduced-motion: reduce) {
   .hd-pwa-popup { animation: none; }
 }
+
+
+/* Step 12 polish: readable card typography and mobile header targets */
+.drama-card, .drama-card p, .drama-card span, .drama-card a, .episode-list, .episode-button, button, input, textarea, select { font-family: var(--font-sans); }
+@media (max-width: 640px) { header button, header a { min-height: 40px; } }

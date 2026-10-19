@@ -15,7 +15,7 @@ const LINKS = [
 
 function VisitorCounter() {
   const { uiLang } = usePrefs();
-  const [online, setOnline] = useState<number | null>(null);
+  const [counts, setCounts] = useState<{ online: number; today: number; total: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,12 +41,12 @@ function VisitorCounter() {
           cache: "no-store",
         });
         if (!response.ok) return;
-        const data = (await response.json()) as { online?: number };
-        if (!cancelled && typeof data.online === "number" && Number.isFinite(data.online)) {
-          setOnline(data.online);
+        const data = await response.json() as { online?: number; today?: number; total?: number };
+        if (!cancelled && Number.isFinite(data.online) && Number.isFinite(data.today) && Number.isFinite(data.total)) {
+          setCounts({ online: Math.max(0, Math.floor(data.online!)), today: Math.max(0, Math.floor(data.today!)), total: Math.max(0, Math.floor(data.total!)) });
         }
       } catch {
-        // Do not show a fabricated number if the counter service is unavailable.
+        // Hide stats rather than invent numbers when the API/database is unavailable.
       }
     };
 
@@ -54,29 +54,17 @@ function VisitorCounter() {
     const timer = window.setInterval(() => { void update(); }, 30_000);
     const refreshOnVisible = () => { if (document.visibilityState === "visible") void update(); };
     document.addEventListener("visibilitychange", refreshOnVisible);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", refreshOnVisible);
-    };
+    return () => { cancelled = true; window.clearInterval(timer); document.removeEventListener("visibilitychange", refreshOnVisible); };
   }, []);
 
-  if (online === null) return null;
-  const label = uiLang === "en" ? "online" : uiLang === "hi" ? "ऑनलाइन" : uiLang === "fil" ? "online" : uiLang === "ms" ? "dalam talian" : uiLang === "th" ? "ออนไลน์" : "online";
+  if (counts === null) return null;
+  const en = uiLang === "en";
+  const labels = en ? { online: "online", today: "today", total: "total visitors" } : { online: "online", today: "hari ini", total: "total pengunjung" };
   return (
-    <div
-      className="fixed bottom-20 right-3 z-50 inline-flex items-center gap-2 rounded-full border border-white/15 bg-[#211a2b]/95 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-black/20 backdrop-blur-md sm:bottom-5 sm:right-5"
-      role="status"
-      aria-live="polite"
-      aria-label={`${online.toLocaleString()} ${label}`}
-      title={uiLang === "en" ? "Visitors active in the last 90 seconds" : "Pengunjung aktif dalam 90 detik terakhir"}
-    >
-      <span className="relative flex size-2" aria-hidden="true">
-        <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-        <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
-      </span>
-      <span className="tabular-nums">{online.toLocaleString()}</span>
-      <span>{label}</span>
+    <div className="mt-5 flex w-full flex-wrap items-center justify-end gap-x-4 gap-y-2 border-t border-current/10 pt-3 text-xs text-muted" role="status" aria-live="polite">
+      <span className="inline-flex items-center gap-1.5"><span className="relative flex size-2" aria-hidden="true"><span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" /><span className="relative inline-flex size-2 rounded-full bg-emerald-400" /></span><strong className="font-sans tabular-nums">{counts.online.toLocaleString()}</strong> {labels.online}</span>
+      <span><strong className="font-sans tabular-nums">{counts.today.toLocaleString()}</strong> {labels.today}</span>
+      <span><strong className="font-sans tabular-nums">{counts.total.toLocaleString()}</strong> {labels.total}</span>
     </div>
   );
 }
@@ -362,10 +350,10 @@ export function Shell({ children }: { children: ReactNode }) {
               ))}
             </div>
           </section>
-          <VisitorCounter />
           <p className="max-w-md text-xs leading-relaxed text-muted">{t.footerNote}</p>
           <p className="text-[11px] text-muted">{uiLang === "en" ? "HouseDrama · Short-drama catalog from multiple providers" : uiLang === "hi" ? "HouseDrama · कई प्रदाताओं के शॉर्ट ड्रामा का कैटलॉग" : uiLang === "fil" ? "HouseDrama · Katalog ng maiikling drama mula sa iba't ibang provider" : uiLang === "ms" ? "HouseDrama · Katalog drama pendek daripada pelbagai penyedia" : uiLang === "th" ? "HouseDrama · รวมซีรีส์สั้นจากหลายแหล่ง" : "HouseDrama · Katalog drama pendek dari berbagai penyedia"}</p>
           <p className="mt-2 text-[10px] tracking-wide text-muted/80">Powered by HouseDrama © 2026</p>
+          <VisitorCounter />
         </div>
       </footer>
       )}
