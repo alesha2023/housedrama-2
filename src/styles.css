@@ -692,3 +692,38 @@ html[data-theme="light"] .drama-card .drama-card__content .drama-card__title,
 html:not([data-theme="dark"]) .drama-card .drama-card__content .drama-card__title {
   color: #29242b !important;
 }
+
+
+/* STEP 20: polish dark mode cards to match approved light information panels */
+/* Keep the outer page/header/navigation dark. Only the drama card information area
+   becomes white, matching the approved reference design. */
+html[data-theme="dark"] .drama-card__content {
+  background: #ffffff !important;
+  color: #29242b !important;
+  border-radius: 0 0 18px 18px !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] .drama-card .drama-card__content .drama-card__title,
+html[data-theme="dark"] .drama-card__content .drama-card__title,
+html[data-theme="dark"] .drama-card__content h3,
+html[data-theme="dark"] .drama-card__content h4 {
+  color: #29242b !important;
+  font-family: "Inter", Arial, sans-serif !important;
+  font-weight: 700 !important;
+}
+html[data-theme="dark"] .drama-card__content .drama-card__meta,
+html[data-theme="dark"] .drama-card__content .text-muted {
+  color: #77717a !important;
+}
+html[data-theme="dark"] .drama-card__content .mt-1\.5 {
+  background: #ffffff !important;
+}
+html[data-theme="dark"] .drama-card__content .mt-1\.5 span {
+  background: #fce5e1 !important;
+  color: #b84d3a !important;
+  border-color: transparent !important;
+}
+html[data-theme="dark"] .drama-card__poster {
+  border-radius: 18px 18px 0 0 !important;
+  overflow: hidden;
+}
