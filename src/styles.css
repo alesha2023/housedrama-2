@@ -30,7 +30,7 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background: #fff1ee;
+    background: #fff3f0;
     color: var(--color-ink);
     font-family: var(--font-sans);
     line-height: 1.5;
@@ -55,12 +55,36 @@
 }
 
 .page-bg {
-  background-color: #fff1ee;
+  background-color: #fff3f0;
   background-image:
-    radial-gradient(80% 420px at 0% 0%, #ffd0df 0%, transparent 58%),
-    radial-gradient(70% 380px at 100% 0%, #ffd8c8 0%, transparent 55%),
-    radial-gradient(60% 480px at 50% 100%, #ffe4ee 0%, transparent 50%);
+    radial-gradient(85% 360px at 0% 0%, #ffd9e4 0%, transparent 62%),
+    radial-gradient(75% 340px at 100% 12%, #ffdfd1 0%, transparent 58%),
+    radial-gradient(70% 420px at 50% 58%, #fff8f5 0%, transparent 72%),
+    radial-gradient(70% 440px at 100% 100%, #ffe6ed 0%, transparent 58%),
+    linear-gradient(180deg, #fff5f3 0%, #fff0ed 48%, #fff5f2 100%);
   background-attachment: fixed;
+}
+
+/* Gentle section separation inspired by the supplied reference: keep the same
+   warm pink identity while giving each content group a clearer visual boundary. */
+.page-bg main > section,
+.page-bg main > div > section {
+  position: relative;
+  margin-block: clamp(1.5rem, 4vw, 2.75rem);
+}
+.page-bg main > section + section,
+.page-bg main > div > section + section {
+  border-top: 1px solid rgb(255 150 157 / 0.16);
+  padding-top: clamp(1.25rem, 3vw, 2rem);
+}
+.page-bg .drama-card__poster {
+  box-shadow: 0 2px 8px rgb(84 35 44 / 0.07);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .page-bg main > section,
+  .page-bg main > div > section {
+    transition: background-color 180ms ease;
+  }
 }
 
 @utility aspect-poster {
@@ -148,11 +172,11 @@
   margin: .5rem 0 0;
   overflow: hidden;
   color: var(--color-ink);
-  font-family: var(--font-display);
-  font-size: .95rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
   font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: normal;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -334,3 +358,42 @@ html[data-theme="dark"] .skeleton::after {
 /* Step 12 polish: readable card typography and mobile header targets */
 .drama-card, .drama-card p, .drama-card span, .drama-card a, .episode-list, .episode-button, button, input, textarea, select { font-family: var(--font-sans); }
 @media (max-width: 640px) { header button, header a { min-height: 40px; } }
+
+
+/* Step 16: complete Light / Dark theme polish */
+html[data-theme="dark"] .page-bg main,
+html[data-theme="dark"] footer,
+html[data-theme="dark"] .site-footer {
+  color: #f5f1f6;
+}
+html[data-theme="dark"] header {
+  background-color: rgb(28 25 32 / 94%);
+  border-color: #393340;
+  color: #f5f1f6;
+}
+html[data-theme="dark"] header select,
+html[data-theme="dark"] header input,
+html[data-theme="dark"] header button {
+  color: #f5f1f6;
+}
+html[data-theme="dark"] header select,
+html[data-theme="dark"] header input {
+  background-color: #292530;
+  border-color: #393340;
+}
+html[data-theme="dark"] .drama-card__poster,
+html[data-theme="dark"] .drama-card__content {
+  background-color: #24212a;
+}
+html[data-theme="dark"] .drama-card__meta,
+html[data-theme="dark"] .text-muted {
+  color: #b5acbb;
+}
+html[data-theme="dark"] hr,
+html[data-theme="dark"] .border-line {
+  border-color: #393340;
+}
+html[data-theme="dark"] .page-bg main > section + section,
+html[data-theme="dark"] .page-bg main > div > section + section {
+  border-top-color: rgb(240 82 156 / 18%);
+}
