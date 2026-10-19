@@ -105,14 +105,20 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
       ? `${sourceDescription ? `${sourceDescription} ` : `Watch ${dramaTitle} on HouseDrama. `}Explore the synopsis, series information, and available episodes.`
       : "This drama is temporarily unavailable on HouseDrama.").slice(0, 300);
     const canonical = `https://house-drama.web.id/drama/${encodeURIComponent(params.provider)}/${encodeURIComponent(params.seriesId)}`;
-    // Keep image metadata absolute. If a provider URL is a wsrv.nl wrapper,
-    // unwrap it so Google/social crawlers are not sent to a proxy blocked by robots.txt.
+    // Give crawlers the real, absolute poster URL. Resolve relative URLs against
+    // HouseDrama first; unwrap image-proxy URLs so metadata points at the source
+    // poster rather than a proxy endpoint that may be blocked for crawlers.
     let image = drama?.posterUrl || "https://house-drama.web.id/og-v2.jpg";
     try {
-      const parsedImage = new URL(image);
+      let parsedImage = new URL(image, "https://house-drama.web.id");
       if (parsedImage.hostname === "wsrv.nl" || parsedImage.hostname === "images.weserv.nl") {
         const original = parsedImage.searchParams.get("url");
-        if (original && /^https?:\/\//i.test(original)) image = original;
+        if (original && /^https?:\/\//i.test(original)) parsedImage = new URL(original);
+      }
+      if (parsedImage.protocol === "https:" || parsedImage.protocol === "http:") {
+        image = parsedImage.href;
+      } else {
+        image = "https://house-drama.web.id/og-v2.jpg";
       }
     } catch {
       image = "https://house-drama.web.id/og-v2.jpg";
@@ -130,10 +136,13 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
         { property: "og:description", content: description },
         { property: "og:url", content: canonical },
         { property: "og:image", content: image },
+        { property: "og:image:secure_url", content: image },
+        { property: "og:image:alt", content: `${dramaTitle} poster` },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },
+        { name: "twitter:image:alt", content: `${dramaTitle} poster` },
         ...(drama?.originalTitle && drama.originalTitle !== drama.title
           ? [{ name: "keywords", content: `${drama.originalTitle}, ${drama.displayTitle || drama.title}, Chinese short drama` }]
           : [{ name: "keywords", content: `${drama?.displayTitle || drama?.title || "drama China"}, Chinese short drama` }]),
