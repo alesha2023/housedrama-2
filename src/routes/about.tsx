@@ -10,7 +10,9 @@ export const Route = createFileRoute("/about")({
         name: "description",
         content: "HouseDrama aggregates publicly available Chinese short-drama catalogs. It does not own the shows.",
       },
+      { name: "robots", content: "index,follow" },
     ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/about" }],
   }),
   component: AboutPage,
 });

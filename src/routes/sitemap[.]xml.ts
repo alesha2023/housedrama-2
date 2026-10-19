@@ -43,6 +43,8 @@ const FEATURED_DRAMA_PATHS = [
 // are intentionally omitted from the sitemap.
 const PATHS = [
   "/",
+  "/en",
+  "/id",
   "/discover",
   "/trending",
   "/latest",

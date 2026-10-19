@@ -7,7 +7,9 @@ export const Route = createFileRoute("/terms")({
     meta: [
       { title: "Terms — HouseDrama" },
       { name: "description", content: "Terms for using HouseDrama’s short-drama catalog." },
+      { name: "robots", content: "index,follow" },
     ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/terms" }],
   }),
   component: TermsPage,
 });

@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EnglishRouteImport } from './routes/en'
+import { Route as IndonesianRouteImport } from './routes/id'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CategoriesRouteImport } from './routes/categories'
@@ -33,6 +35,16 @@ import { Route as WatchProviderSeriesIdEpisodeIdRouteImport } from './routes/wat
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnglishRoute = EnglishRouteImport.update({
+  id: '/en',
+  path: '/en',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndonesianRoute = IndonesianRouteImport.update({
+  id: '/id',
+  path: '/id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -134,6 +146,8 @@ const WatchProviderSeriesIdEpisodeIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/en': typeof EnglishRoute
+  '/id': typeof IndonesianRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
@@ -156,6 +170,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/en': typeof EnglishRoute
+  '/id': typeof IndonesianRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
@@ -179,6 +195,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/en': typeof EnglishRoute
+  '/id': typeof IndonesianRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
@@ -203,6 +221,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/en'
+    | '/id'
     | '/about'
     | '/admin'
     | '/categories'
@@ -224,6 +244,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/en'
+    | '/id'
     | '/about'
     | '/admin'
     | '/categories'
@@ -245,6 +267,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/en'
+    | '/id'
     | '/about'
     | '/admin'
     | '/categories'
@@ -267,6 +291,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EnglishRoute: typeof EnglishRoute
+  IndonesianRoute: typeof IndonesianRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
   CategoriesRoute: typeof CategoriesRoute
@@ -295,6 +321,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en': {
+      id: '/en'
+      path: '/en'
+      fullPath: '/en'
+      preLoaderRoute: typeof EnglishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/id': {
+      id: '/id'
+      path: '/id'
+      fullPath: '/id'
+      preLoaderRoute: typeof IndonesianRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -435,6 +475,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EnglishRoute: EnglishRoute,
+  IndonesianRoute: IndonesianRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
   CategoriesRoute: CategoriesRoute,

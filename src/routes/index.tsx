@@ -35,7 +35,12 @@ export const Route = createFileRoute("/")({
       { property: "og:image:alt", content: "HouseDrama — Watch Chinese and Asian Short Dramas Online" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://house-drama.web.id/" }],
+    links: [
+      { rel: "canonical", href: "https://house-drama.web.id/" },
+      { rel: "alternate", hrefLang: "en", href: "https://house-drama.web.id/en" },
+      { rel: "alternate", hrefLang: "id", href: "https://house-drama.web.id/id" },
+      { rel: "alternate", hrefLang: "x-default", href: "https://house-drama.web.id/" },
+    ],
   }),
   component: HomePage,
 });

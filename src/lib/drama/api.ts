@@ -4,6 +4,14 @@ import { PROVIDERS } from "./types";
 
 const providerSchema = z.enum(["all", ...PROVIDERS]);
 
+export const getLocalizedHomeData = createServerFn({ method: "GET" })
+  .validator(z.object({ lang: z.enum(["en", "id"]) }))
+  .handler(async ({ data }) => {
+    const { loadHome } = await import("./server/catalog");
+    // Explicit /en and /id SEO landing pages must remain stable regardless of visitor IP.
+    return loadHome(data.lang, "all");
+  });
+
 export const getHomeData = createServerFn({ method: "GET" })
   .validator(
     z.object({

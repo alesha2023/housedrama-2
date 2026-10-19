@@ -78,18 +78,25 @@ function WatchPage() {
     return <EmptyState title={t.cantOpen} body={detail.error || t.missingDrama} />;
   }
 
-  const episode: Episode =
-    detail.episodes.find((item) => item.episodeId === params.episodeId) ?? {
-      episodeId: params.episodeId,
-      index: Number(params.episodeId) || 1,
-      title: `Episode ${params.episodeId}`,
-      coverUrl: detail.drama.posterUrl,
-      durationSec: null,
-      access: "open",
-    };
+  // Never fabricate an "open" episode when the provider did not return it.
+  // Fake episode rows make unavailable videos look playable and can mislead visitors.
+  const episode = detail.episodes.find((item) => item.episodeId === params.episodeId);
+  if (!episode) {
+    const isEnglish = (params.provider && typeof window !== "undefined" &&
+      (new URLSearchParams(window.location.search).get("lang") === "en" ||
+       document.documentElement.lang.toLowerCase().startsWith("en"))) || false;
+    return (
+      <EmptyState
+        title={isEnglish ? "Episode unavailable" : "Episode tidak tersedia"}
+        body={isEnglish
+          ? "The provider did not return this episode. Please return to the drama page and choose an episode that is available."
+          : "Provider tidak mengembalikan episode ini. Kembali ke halaman drama dan pilih episode yang tersedia."}
+      />
+    );
+  }
 
   return (
-    <Player drama={detail.drama} episodes={detail.episodes.length ? detail.episodes : [episode]} episode={episode} initial={stream} alsoOn={detail.alsoOn} autoStart={auto !== false} />
+    <Player drama={detail.drama} episodes={detail.episodes} episode={episode} initial={stream} alsoOn={detail.alsoOn} autoStart={auto !== false} />
   );
 }
 

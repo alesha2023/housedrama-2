@@ -16,7 +16,9 @@ export const Route = createFileRoute("/shorts")({
     meta: [
       { title: "Shorts — HouseDrama" },
       { name: "description", content: "A vertical autoplay feed of short dramas from every available provider." },
+      { name: "robots", content: "index,follow,max-image-preview:large" },
     ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/shorts" }],
   }),
   component: ShortsPage,
 });

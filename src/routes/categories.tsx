@@ -35,6 +35,17 @@ function CategoriesPage() {
     <div>
       <PageIntro title={t.categories} description={t.categoriesDesc} />
       <SeoItemList items={data.items} name="Chinese and Asian Short Drama Genres" />
+      <section className="mt-4 rounded-2xl border border-line bg-surface/70 p-4" aria-label="Explore short dramas">
+        <h2 className="text-base font-bold">Explore Chinese &amp; Asian Short Dramas</h2>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          Browse romance, CEO, revenge, fantasy, historical, family, and comedy short dramas. Discover popular series, newly added stories, and more titles from different drama providers.
+        </p>
+        <nav className="mt-3 flex flex-wrap gap-3 text-sm font-semibold" aria-label="More drama collections">
+          <Link to="/trending" className="text-primary underline underline-offset-4">Trending short dramas</Link>
+          <Link to="/latest" className="text-primary underline underline-offset-4">Latest short dramas</Link>
+          <Link to="/discover" search={{ rail: "all" }} className="text-primary underline underline-offset-4">Discover all dramas</Link>
+        </nav>
+      </section>
       <div className="mt-5 flex flex-wrap gap-2">
         {GENRES.map((genre) => (
           <Link key={genre} to="/discover" search={{ rail: genre }} className="rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-ink">

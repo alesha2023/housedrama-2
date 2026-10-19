@@ -121,8 +121,8 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
       meta: [
         { title },
         { name: "description", content: description },
-        { name: "robots", content: "index,follow,max-image-preview:large" },
-        { name: "googlebot", content: "index,follow,max-image-preview:large" },
+        { name: "robots", content: drama ? "index,follow,max-image-preview:large" : "noindex,follow" },
+        { name: "googlebot", content: drama ? "index,follow,max-image-preview:large" : "noindex,follow" },
         { property: "og:type", content: "video.tv_show" },
         { property: "og:locale", content: "id_ID" },
         { property: "og:site_name", content: "HouseDrama" },
@@ -211,6 +211,8 @@ function DetailPage() {
     numberOfEpisodes: drama.episodeCount || data.episodes.length || undefined,
     inLanguage: drama.language || undefined,
     genre: drama.tags,
+    keywords: [...new Set([...(drama.tags || []), "Chinese short drama", "Asian short drama", "short drama online"])].join(", "),
+    publisher: { "@type": "Organization", name: "HouseDrama", url: "https://house-drama.web.id/" },
     isAccessibleForFree: data.episodes.some((episode) => episode.access === "open") ? true : undefined,
   };
 
@@ -224,17 +226,17 @@ function DetailPage() {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Beranda", item: "https://house-drama.web.id/" },
-              { "@type": "ListItem", position: 2, name: "Drama", item: "https://house-drama.web.id/discover" },
+              { "@type": "ListItem", position: 1, name: uiLang === "id" ? "Beranda" : "Home", item: "https://house-drama.web.id/" },
+              { "@type": "ListItem", position: 2, name: uiLang === "id" ? "Drama" : "Discover Dramas", item: "https://house-drama.web.id/discover" },
               { "@type": "ListItem", position: 3, name: displayTitle, item: canonicalUrl },
             ],
           }),
         }}
       />
       <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted">
-        <Link to="/" className="hover:text-ink">Beranda</Link>
+        <Link to="/" className="hover:text-ink">{uiLang === "id" ? "Beranda" : "Home"}</Link>
         <span className="mx-2" aria-hidden="true">/</span>
-        <Link to="/discover" className="hover:text-ink">Drama</Link>
+        <Link to="/discover" className="hover:text-ink">{uiLang === "id" ? "Drama" : "Discover Dramas"}</Link>
         <span className="mx-2" aria-hidden="true">/</span>
         <span aria-current="page" className="text-ink">{displayTitle}</span>
       </nav>

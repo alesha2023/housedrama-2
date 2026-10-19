@@ -7,7 +7,9 @@ export const Route = createFileRoute("/privacy")({
     meta: [
       { title: "Privacy — HouseDrama" },
       { name: "description", content: "HouseDrama stores watch history locally in your browser and does not require an account." },
+      { name: "robots", content: "index,follow" },
     ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/privacy" }],
   }),
   component: PrivacyPage,
 });

@@ -52,7 +52,12 @@ function langFromCountry(country: string | null | undefined): CatalogLang | null
 
 /** Indonesia gets Indonesian dubs and UI. Anywhere else gets English, unless the visitor chose a language. */
 export async function resolveCatalogLang(requested?: string | null): Promise<CatalogLang> {
-  const headers = getRequest()?.headers;
+  const request = getRequest();
+  const requestPath = request?.url ? new URL(request.url).pathname : "";
+  // Locale-prefixed SEO landing pages are deterministic for Google and visitors worldwide.
+  if (requestPath === "/id" || requestPath.startsWith("/id/")) return "id";
+  if (requestPath === "/en" || requestPath.startsWith("/en/")) return "en";
+  const headers = request?.headers;
   const cookie = headers?.get("cookie") ?? "";
   const saved = cookieValue(cookie, "hd_lang");
   const manual = cookieValue(cookie, "hd_manual") === "1";

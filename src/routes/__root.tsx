@@ -42,6 +42,9 @@ export const Route = createRootRoute({
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "icon", type: "image/png", sizes: "64x64", href: "/favicon.png" },
       { rel: "shortcut icon", href: "/favicon.ico" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Nunito:wght@800&family=Outfit:wght@400;500;600;700&display=swap" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
@@ -53,13 +56,14 @@ export const Route = createRootRoute({
 function RootLayout() {
   const { lang } = Route.useLoaderData();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const routeLang = pathname === "/id" || pathname.startsWith("/id/") ? "id" : pathname === "/en" || pathname.startsWith("/en/") ? "en" : lang;
 
   // New pages should open at the top instead of restoring the previous page's footer position.
   useLayoutEffect(() => {
     if (typeof window !== "undefined") window.scrollTo(0, 0);
   }, [pathname]);
   return (
-    <html lang={lang} suppressHydrationWarning>
+    <html lang={routeLang} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -98,7 +102,7 @@ function RootLayout() {
         />
         <PreviewHostBridge />
         <AuthProvider>
-          <PrefsProvider initialLang={lang}>
+          <PrefsProvider initialLang={routeLang}>
             <Shell>
               <Outlet />
             </Shell>
