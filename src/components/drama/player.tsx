@@ -10,6 +10,8 @@ import {
   Star,
   Volume2,
   VolumeX,
+  Maximize,
+  Minimize,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -118,6 +120,9 @@ export function Player({
   const [error, setError] = useState<string | null>(initial.ok ? null : initial.message);
   const [loading, setLoading] = useState(initial.ok);
   const [playing, setPlaying] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(1);
   const [progress, setProgress] = useState(0);
@@ -141,6 +146,32 @@ export function Player({
   const currentIndex = episodes.findIndex((item) => item.episodeId === episode.episodeId);
   const previous = currentIndex > 0 ? episodes[currentIndex - 1] : null;
   const next = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const onFullscreen = () => setIsFullscreen(document.fullscreenElement === stage);
+    document.addEventListener("fullscreenchange", onFullscreen);
+    return () => document.removeEventListener("fullscreenchange", onFullscreen);
+  }, []);
+
+  useEffect(() => {
+    if (controlsTimer.current) clearTimeout(controlsTimer.current);
+    if (!playing || openList || openSpeed || openSubs || error || loading) {
+      setControlsVisible(true);
+      return;
+    }
+    controlsTimer.current = setTimeout(() => setControlsVisible(false), 10_000);
+    return () => { if (controlsTimer.current) clearTimeout(controlsTimer.current); };
+  }, [playing, openList, openSpeed, openSubs, error, loading, controlsVisible]);
+
+  const revealControls = () => {
+    setControlsVisible(true);
+    if (controlsTimer.current) clearTimeout(controlsTimer.current);
+    if (playing && !openList && !openSpeed && !openSubs && !error && !loading) {
+      controlsTimer.current = setTimeout(() => setControlsVisible(false), 10_000);
+    }
+  };
 
   useEffect(() => {
     if (sponsorWait <= 0) return;
@@ -668,7 +699,7 @@ export function Player({
 
 
   return (
-    <div ref={stageRef} className="relative h-dvh w-full overflow-hidden bg-player text-player-ink">
+    <div ref={stageRef} onPointerMove={() => { if (!controlsVisible) revealControls(); }} className="relative h-dvh w-full overflow-hidden bg-player text-player-ink">
       <video
         ref={videoRef}
         preload="auto"
@@ -680,11 +711,16 @@ export function Player({
             ignoreClick.current = false;
             return;
           }
+          if (!controlsVisible) {
+            revealControls();
+            return;
+          }
           if (openSpeed || openSubs) {
             setOpenSpeed(false);
             setOpenSubs(false);
             return;
           }
+          revealControls();
           void toggle();
         }}
       />
@@ -732,7 +768,7 @@ export function Player({
         </div>
       ) : null}
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-linear-to-b from-black/75 to-transparent px-1 pt-[max(0.25rem,env(safe-area-inset-top))] pb-16 text-white">
+      <div className={cn("pointer-events-none absolute inset-x-0 top-0 z-20 bg-linear-to-b transition-opacity duration-300", controlsVisible ? "opacity-100" : "pointer-events-none opacity-0")} from-black/75 to-transparent px-1 pt-[max(0.25rem,env(safe-area-inset-top))] pb-16 text-white">
         <div className="pointer-events-auto flex items-center drop-shadow">
           <Link
             to="/drama/$provider/$seriesId"
@@ -831,7 +867,7 @@ export function Player({
       </div>
 
       {!error ? (
-        <div className="absolute right-2 bottom-20 z-20 flex flex-col items-center gap-4 text-white drop-shadow">
+        <div className={cn("absolute right-2 bottom-20 z-20 flex flex-col items-center gap-4 text-white drop-shadow transition-opacity duration-300", controlsVisible ? "opacity-100" : "pointer-events-none opacity-0")}>
           <button type="button" aria-label={saved ? t.saved : t.save} onClick={saveDrama} className="grid size-11 place-items-center">
             <Star className={cn("size-7", saved && "fill-current text-[#ff4d6d]")} />
           </button>
@@ -857,10 +893,22 @@ export function Player({
             <Menu className="size-7" />
             <span className="text-[11px] font-medium">{uiLang === "id" ? "Daftar" : uiLang === "ms" ? "Senarai" : uiLang === "th" ? "รายการ" : "List"}</span>
           </button>
+          <button type="button" aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"} onClick={async () => {
+            const stage = stageRef.current;
+            if (!stage) return;
+            try {
+              if (document.fullscreenElement) await document.exitFullscreen();
+              else await stage.requestFullscreen();
+            } catch { /* Fullscreen may be blocked by the browser; playback remains usable. */ }
+            revealControls();
+          }} className="grid place-items-center gap-1">
+            {isFullscreen ? <Minimize className="size-7" /> : <Maximize className="size-7" />}
+            <span className="text-[11px] font-medium">{isFullscreen ? "Exit" : "Full screen"}</span>
+          </button>
         </div>
       ) : null}
 
-      <div className="pointer-events-none absolute inset-x-3 bottom-7 z-30 flex items-center justify-between text-[11px] font-semibold tabular-nums text-white [text-shadow:0_1px_3px_rgba(0,0,0,1)]">
+      <div className={cn("pointer-events-none absolute inset-x-3 bottom-7 z-30 flex items-center justify-between transition-opacity duration-300", controlsVisible ? "opacity-100" : "opacity-0")} text-[11px] font-semibold tabular-nums text-white [text-shadow:0_1px_3px_rgba(0,0,0,1)]">
         <span>{formatPlaybackTime(progress)}</span>
         <span>{duration && Number.isFinite(duration) ? formatPlaybackTime(duration) : "--:--"}</span>
       </div>
@@ -868,7 +916,7 @@ export function Player({
         type="button"
         aria-label="Seek video timeline"
         title="Geser untuk maju atau mundur"
-        className="absolute inset-x-0 bottom-0 z-20 h-8 touch-none cursor-pointer px-0"
+        className={cn("absolute inset-x-0 bottom-0 z-20 h-8 touch-none cursor-pointer px-0 transition-opacity duration-300", controlsVisible ? "opacity-100" : "pointer-events-none opacity-0")}
         onPointerDown={(event) => {
           const video = videoRef.current;
           if (!video || !duration) return;
