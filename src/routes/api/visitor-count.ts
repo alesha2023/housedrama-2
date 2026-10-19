@@ -15,17 +15,19 @@ async function ensureTable() {
 }
 
 async function counts(sql: Awaited<ReturnType<typeof getSql>>) {
-  const rows = await sql.query<{ total: string | number; today: string | number }>(`
+  const rows = await sql.query<{ total: string | number; today: string | number; online: string | number }>(`
     SELECT
       COUNT(*)::int AS total,
       COUNT(*) FILTER (
         WHERE last_visit_date = timezone('Asia/Jakarta', now())::date
-      )::int AS today
+      )::int AS today,
+      COUNT(*) FILTER (WHERE last_seen >= NOW() - INTERVAL '90 seconds')::int AS online
     FROM housedrama_visitors
   `);
   return {
     total: Number(rows[0]?.total ?? 0),
     today: Number(rows[0]?.today ?? 0),
+    online: Number(rows[0]?.online ?? 0),
   };
 }
 

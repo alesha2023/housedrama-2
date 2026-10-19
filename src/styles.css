@@ -12,8 +12,8 @@
   --color-violet: #7c5cfc;
   --color-player: #111216;
   --color-player-ink: #f7f7f8;
-  --font-sans: "Outfit", system-ui, sans-serif;
-  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
   --radius-card: 1rem;
 }
 
@@ -148,8 +148,8 @@
   margin: .5rem 0 0;
   overflow: hidden;
   color: var(--color-ink);
-  font-family: var(--font-sans);
-  font-size: .875rem;
+  font-family: var(--font-display);
+  font-size: .95rem;
   font-weight: 600;
   line-height: 1.35;
   letter-spacing: normal;

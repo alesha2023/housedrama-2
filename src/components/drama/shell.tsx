@@ -15,56 +15,69 @@ const LINKS = [
 
 function VisitorCounter() {
   const { uiLang } = usePrefs();
-  const [counts, setCounts] = useState<{ total: number; today: number } | null>(null);
+  const [online, setOnline] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    let visitorId = "";
+    try {
+      visitorId = window.localStorage.getItem("housedrama_visitor_id") || "";
+      if (!visitorId) {
+        visitorId = typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `hd-${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+        window.localStorage.setItem("housedrama_visitor_id", visitorId);
+      }
+    } catch {
+      visitorId = `hd-${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+    }
+
     const update = async () => {
       try {
-        let visitorId = window.localStorage.getItem("housedrama_visitor_id");
-        if (!visitorId) {
-          visitorId = typeof crypto.randomUUID === "function"
-            ? crypto.randomUUID()
-            : `hd-${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
-          window.localStorage.setItem("housedrama_visitor_id", visitorId);
-        }
         const response = await fetch("/api/visitor-count", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ visitorId }),
+          cache: "no-store",
         });
         if (!response.ok) return;
-        const data = (await response.json()) as { total: number; today: number };
-        if (!cancelled && Number.isFinite(data.total) && Number.isFinite(data.today)) setCounts(data);
+        const data = (await response.json()) as { online?: number };
+        if (!cancelled && typeof data.online === "number" && Number.isFinite(data.online)) {
+          setOnline(data.online);
+        }
       } catch {
-        // Keep the footer clean when storage or the counter service is unavailable.
+        // Do not show a fabricated number if the counter service is unavailable.
       }
     };
+
     void update();
-    return () => { cancelled = true; };
+    const timer = window.setInterval(() => { void update(); }, 30_000);
+    const refreshOnVisible = () => { if (document.visibilityState === "visible") void update(); };
+    document.addEventListener("visibilitychange", refreshOnVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshOnVisible);
+    };
   }, []);
 
-  if (!counts) return null;
-  const stats = [
-    { label: uiLang === "en" ? "Total visitors" : uiLang === "hi" ? "कुल आगंतुक" : uiLang === "fil" ? "Kabuuang bisita" : uiLang === "ms" ? "Jumlah pelawat" : uiLang === "th" ? "ผู้เข้าชมทั้งหมด" : "Total pengunjung", value: counts.total, Icon: Users },
-    { label: uiLang === "en" ? "Visitors today" : uiLang === "hi" ? "आज के आगंतुक" : uiLang === "fil" ? "Mga bisita ngayon" : uiLang === "ms" ? "Pelawat hari ini" : uiLang === "th" ? "ผู้เข้าชมวันนี้" : "Pengunjung hari ini", value: counts.today, Icon: UserRound },
-  ];
+  if (online === null) return null;
+  const label = uiLang === "en" ? "online" : uiLang === "hi" ? "ऑनलाइन" : uiLang === "fil" ? "online" : uiLang === "ms" ? "dalam talian" : uiLang === "th" ? "ออนไลน์" : "online";
   return (
-    <section className="mx-auto grid w-full max-w-md grid-cols-2 gap-3 py-2" aria-label="Statistik pengunjung">
-      {stats.map(({ label, value, Icon }) => (
-        <div key={label} className="flex min-w-0 items-center gap-3 rounded-2xl border border-primary/15 bg-white/75 p-3 shadow-sm">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-            <Icon className="size-5" aria-hidden="true" />
-          </span>
-          <span className="min-w-0">
-            <strong className="block text-lg font-bold leading-tight tabular-nums text-primary">
-              {value.toLocaleString("id-ID")}
-            </strong>
-            <span className="mt-1 block text-[11px] leading-tight text-muted">{label}</span>
-          </span>
-        </div>
-      ))}
-    </section>
+    <div
+      className="fixed bottom-20 right-3 z-50 inline-flex items-center gap-2 rounded-full border border-white/15 bg-[#211a2b]/95 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-black/20 backdrop-blur-md sm:bottom-5 sm:right-5"
+      role="status"
+      aria-live="polite"
+      aria-label={`${online.toLocaleString()} ${label}`}
+      title={uiLang === "en" ? "Visitors active in the last 90 seconds" : "Pengunjung aktif dalam 90 detik terakhir"}
+    >
+      <span className="relative flex size-2" aria-hidden="true">
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+        <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
+      </span>
+      <span className="tabular-nums">{online.toLocaleString()}</span>
+      <span>{label}</span>
+    </div>
   );
 }
 

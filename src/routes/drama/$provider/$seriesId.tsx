@@ -265,8 +265,8 @@ function DetailPage() {
         </div>
         <div>
           <ProviderBadge provider={drama.provider} />
-          <h1 className="mt-3 text-4xl sm:text-5xl">{pickTitle(drama, contentLang)}</h1>
-          <p className="mt-3 max-w-2xl text-sm text-muted">{pickDescription(drama, contentLang) || t.noSynopsis}</p>
+          <h1 className="mt-3 text-3xl leading-tight font-bold tracking-tight sm:text-5xl">{pickTitle(drama, contentLang)}</h1>
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">{pickDescription(drama, contentLang) || t.noSynopsis}</p>
           <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted">
             {drama.language ? <span className="rounded-full bg-surface px-3 py-1">{drama.language}</span> : null}
             {drama.episodeCount ? <span className="rounded-full bg-surface px-3 py-1">{drama.episodeCount} {t.episodeUnit}</span> : null}
@@ -287,14 +287,14 @@ function DetailPage() {
                 to="/watch/$provider/$seriesId/$episodeId"
                 params={{ provider: drama.provider, seriesId: drama.seriesId, episodeId: resumeEntry?.episodeId || first.episodeId }}
                   search={{ auto: true }}
-                className="inline-flex h-12 items-center rounded-full bg-primary px-5 font-semibold text-primary-ink"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-ink shadow-md shadow-primary/20 transition-transform hover:-translate-y-0.5 active:translate-y-0"
               >
                 {resumeEntry ? `${t.continue} · ${resumeEntry.episodeLabel}` : t.start}
               </Link>
             ) : null}
             <button
               type="button"
-              className="inline-flex h-12 items-center rounded-full border border-line px-5 font-semibold"
+              className="inline-flex min-h-12 items-center justify-center rounded-full border border-line bg-surface px-6 py-3 font-semibold transition-colors hover:border-primary hover:text-primary"
               onClick={() => {
                 const next = toggleWatchlist({
                   provider: drama.provider,
@@ -313,11 +313,11 @@ function DetailPage() {
           </div>
         </div>
       </div>
-      <nav aria-label="Explore more dramas" className="mt-8 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-        <Link to="/discover" className="text-primary underline underline-offset-4">Explore all dramas</Link>
-        <Link to="/provider/$provider" params={{ provider: drama.provider }} className="text-primary underline underline-offset-4">Drama lainnya dari {drama.provider}</Link>
-        <Link to="/trending" className="text-primary underline underline-offset-4">Drama populer</Link>
-        <Link to="/latest" className="text-primary underline underline-offset-4">Drama terbaru</Link>
+      <nav aria-label={uiLang === "id" ? "Jelajahi drama lainnya" : "Explore more dramas"} className="mt-8 flex flex-wrap gap-2">
+        <Link to="/discover" className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium transition-colors hover:border-primary hover:text-primary">{uiLang === "id" ? "Jelajahi semua drama" : "Explore all dramas"}</Link>
+        <Link to="/provider/$provider" params={{ provider: drama.provider }} className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium transition-colors hover:border-primary hover:text-primary">{uiLang === "id" ? `Drama lainnya dari ${drama.provider}` : `More from ${drama.provider}`}</Link>
+        <Link to="/trending" className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium transition-colors hover:border-primary hover:text-primary">{uiLang === "id" ? "Drama populer" : "Popular dramas"}</Link>
+        <Link to="/latest" className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium transition-colors hover:border-primary hover:text-primary">{uiLang === "id" ? "Drama terbaru" : "Latest dramas"}</Link>
       </nav>
       <section className="mt-8">
         <h2 className="mb-3 text-2xl">{t.episodes}</h2>
