@@ -11,11 +11,11 @@ export const Route = createFileRoute("/trending")({
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
-      { title: "Popular & Trending Chinese Short Dramas — HouseDrama" },
-      { name: "description", content: "Discover popular Chinese short dramas on HouseDrama, including romance, CEO stories, revenge, and fantasy." },
+      { title: "Trending Chinese Short Dramas to Watch Online — HouseDrama" },
+      { name: "description", content: "Watch popular Chinese short dramas online. Explore trending romance, CEO, revenge, and fantasy stories on HouseDrama." },
       { name: "robots", content: "index,follow,max-image-preview:large" },
-      { property: "og:title", content: "Popular & Trending Chinese Short Dramas — HouseDrama" },
-      { property: "og:description", content: "Explore popular Chinese short dramas on HouseDrama." },
+      { property: "og:title", content: "Trending Chinese Short Dramas to Watch Online — HouseDrama" },
+      { property: "og:description", content: "Explore trending Chinese and Asian short dramas, popular stories, and new favorites on HouseDrama." },
       { property: "og:url", content: "https://house-drama.web.id/trending" },
     ],
     links: [{ rel: "canonical", href: "https://house-drama.web.id/trending" }],
@@ -45,7 +45,7 @@ function TrendingPage() {
         title={watchedItems.length ? ({ en: "Most Watched on HouseDrama", id: "Paling Banyak Ditonton di HouseDrama", hi: "HouseDrama पर सबसे ज़्यादा देखे गए", fil: "Pinakamaraming Pinanood sa HouseDrama", ms: "Paling Banyak Ditonton di HouseDrama", th: "รับชมมากที่สุดบน HouseDrama" }[uiLang]) : t.trendTitle}
         description={watchedItems.length ? ({ en: "Dramas visitors have started watching most often on HouseDrama.", id: "Drama yang paling sering mulai ditonton pengunjung HouseDrama.", hi: "वे ड्रामा जिन्हें HouseDrama के दर्शकों ने सबसे ज़्यादा देखना शुरू किया।", fil: "Mga dramang pinakamadalas simulan ng mga bisita sa HouseDrama.", ms: "Drama yang paling kerap mula ditonton oleh pengunjung HouseDrama.", th: "ละครที่ผู้เข้าชม HouseDrama เริ่มรับชมบ่อยที่สุด" }[uiLang]) : t.trendBody}
       />
-      <SeoItemList items={items} name={watchedItems.length ? ({ en: "Most Watched Dramas on HouseDrama", id: "Drama Paling Banyak Ditonton di HouseDrama", hi: "HouseDrama पर सबसे ज़्यादा देखे गए ड्रामा", fil: "Pinakamaraming Pinanood na Drama sa HouseDrama", ms: "Drama Paling Banyak Ditonton di HouseDrama", th: "ละครที่มีผู้ชมมากที่สุดบน HouseDrama" }[uiLang]) : "Popular & Trending Chinese Short Dramas"} />
+      <SeoItemList items={items} name="Trending Chinese Short Dramas on HouseDrama" />
       {items.length ? <DramaGrid items={items} /> : <EmptyState title={t.noRank} body={t.noRankBody} />}
     </div>
   );

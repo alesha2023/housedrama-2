@@ -11,11 +11,11 @@ export const Route = createFileRoute("/categories")({
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
-      { title: "Chinese Short Drama Categories: Romance, CEO, Revenge — HouseDrama" },
-      { name: "description", content: "Browse Chinese short dramas by genre, including romance, CEO stories, revenge, fantasy, family, comedy, and completed dramas on HouseDrama." },
+      { title: "Chinese Short Drama Genres: Romance, CEO & Revenge — HouseDrama" },
+      { name: "description", content: "Browse Chinese and Asian short dramas by genre: romance, CEO, revenge, fantasy, family, comedy, and completed series on HouseDrama." },
       { name: "robots", content: "index,follow,max-image-preview:large" },
       { property: "og:title", content: "Chinese Short Drama Categories — HouseDrama" },
-      { property: "og:description", content: "Explore your favorite short-drama genres and discover your next story." },
+      { property: "og:description", content: "Find short dramas by genre, including romance, revenge, fantasy, and CEO stories." },
       { property: "og:url", content: "https://house-drama.web.id/categories" },
     ],
     links: [{ rel: "canonical", href: "https://house-drama.web.id/categories" }],
@@ -34,7 +34,7 @@ function CategoriesPage() {
   return (
     <div>
       <PageIntro title={t.categories} description={t.categoriesDesc} />
-      <SeoItemList items={data.items} name="Kategori Drama China Pendek" />
+      <SeoItemList items={data.items} name="Chinese and Asian Short Drama Genres" />
       <div className="mt-5 flex flex-wrap gap-2">
         {GENRES.map((genre) => (
           <Link key={genre} to="/discover" search={{ rail: genre }} className="rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-ink">

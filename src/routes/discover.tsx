@@ -15,11 +15,11 @@ export const Route = createFileRoute("/discover")({
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
-      { title: "Discover Chinese Short Dramas — HouseDrama" },
-      { name: "description", content: "Explore Chinese short dramas from multiple providers, including romance, CEO stories, revenge, fantasy, and more." },
+      { title: "Discover Chinese & Asian Short Dramas — HouseDrama" },
+      { name: "description", content: "Discover Chinese and Asian short dramas from multiple providers. Browse romance, CEO, revenge, fantasy, family, and more on HouseDrama." },
       { name: "robots", content: "index,follow,max-image-preview:large" },
-      { property: "og:title", content: "Discover Chinese Short Dramas — HouseDrama" },
-      { property: "og:description", content: "Find dramas by your favorite genres and themes on HouseDrama." },
+      { property: "og:title", content: "Discover Chinese & Asian Short Dramas — HouseDrama" },
+      { property: "og:description", content: "Explore short dramas by genre and discover your next Chinese or Asian drama on HouseDrama." },
       { property: "og:url", content: "https://house-drama.web.id/discover" },
     ],
     links: [{ rel: "canonical", href: "https://house-drama.web.id/discover" }],

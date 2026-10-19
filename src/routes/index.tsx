@@ -20,16 +20,19 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { name: "robots", content: "index,follow,max-image-preview:large" },
-      { title: "HouseDrama — Chinese Short Dramas Online" },
+      { title: "HouseDrama — Watch Chinese & Asian Short Dramas Online" },
       {
         name: "description",
         content:
-          "Watch Chinese short dramas on HouseDrama. Discover romance, CEO stories, trending dramas, and your favorite short-drama episodes.",
+          "Watch Chinese and Asian short dramas online on HouseDrama. Discover trending romance, CEO, revenge, fantasy, and new episodes from multiple drama providers.",
       },
-      { property: "og:title", content: "HouseDrama — Chinese Short Dramas Online" },
-      { property: "og:description", content: "Discover Chinese short dramas, romance, and CEO stories on HouseDrama." },
+      { property: "og:title", content: "HouseDrama — Watch Chinese & Asian Short Dramas Online" },
+      { property: "og:description", content: "Watch Chinese and Asian short dramas online, including romance, CEO, revenge, and fantasy stories on HouseDrama." },
       { property: "og:url", content: "https://house-drama.web.id/" },
       { property: "og:image", content: "https://house-drama.web.id/og-v2.jpg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "HouseDrama — Watch Chinese and Asian Short Dramas Online" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "https://house-drama.web.id/" }],

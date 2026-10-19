@@ -27,7 +27,8 @@ const FEATURED_DRAMA_PATHS = [
   "/drama/dramabox/42000023896",
   // Priority drama URLs observed in Google Search Console.
   "/drama/dramabox/420000030309",
-  "/drama/dramabox/420000030038",
+  "/drama/dramabox/42000030762",
+  "/drama/anyreel/678a7bcc8f3d553db1998228",
   "/drama/dramabox/420000030502",
   "/drama/dramabox/420000029973",
   "/drama/dramabox/420000027254",

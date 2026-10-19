@@ -9,11 +9,11 @@ export const Route = createFileRoute("/latest")({
   pendingComponent: PageSkeleton,
   head: () => ({
     meta: [
-      { title: "Latest Chinese Short Dramas & Episodes — HouseDrama" },
-      { name: "description", content: "Discover the latest Chinese short dramas and episode updates from available providers on HouseDrama." },
+      { title: "Latest Chinese Short Dramas & New Episodes — HouseDrama" },
+      { name: "description", content: "Watch the latest Chinese short dramas and discover new episodes, trending romance, CEO stories, revenge, and fantasy on HouseDrama." },
       { name: "robots", content: "index,follow,max-image-preview:large" },
-      { property: "og:title", content: "Latest Chinese Short Dramas & Episodes — HouseDrama" },
-      { property: "og:description", content: "Discover the latest dramas and new episodes on HouseDrama." },
+      { property: "og:title", content: "Latest Chinese Short Dramas & New Episodes — HouseDrama" },
+      { property: "og:description", content: "Find newly added Chinese and Asian short dramas and the latest available episodes on HouseDrama." },
       { property: "og:url", content: "https://house-drama.web.id/latest" },
     ],
     links: [{ rel: "canonical", href: "https://house-drama.web.id/latest" }],
@@ -30,7 +30,7 @@ function LatestPage() {
   return (
     <div>
       <PageIntro eyebrow={t.newEyebrow} title={t.latestTitle} description={t.latestBody} />
-      <SeoItemList items={items} name="Drama China Terbaru dan Episode Baru" />
+      <SeoItemList items={items} name="Latest Chinese Short Dramas and New Episodes" />
       {items.length ? <DramaGrid items={items} /> : <EmptyState title={t.noNew} body={t.noNewBody} />}
     </div>
   );
