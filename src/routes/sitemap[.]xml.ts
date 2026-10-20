@@ -25,6 +25,19 @@ const FEATURED_DRAMA_PATHS = [
   "/drama/dramabox/42000028283",
   "/drama/dramabox/42000021480",
   "/drama/dramabox/42000023896",
+  // Current trending titles verified against HouseDrama's live catalog (Oct 2026).
+  // Only real provider IDs copied from live catalog links; no IDs are inferred from titles.
+  "/drama/freereels/5na1FgP377", // The Goddess Returned: Rise of the White Queen
+  "/drama/melolo/7646772069891312693", // My Trial Marriage
+  "/drama/freereels/2gCQBFCwPd", // No Forgiveness, Only Revenge
+  "/drama/melolo/7635476299183574021", // Her Cure Was Love
+  "/drama/freereels/77hAc6kCOE", // Marry the Hidden Pirate King
+  "/drama/melolo/7636698880377097269", // Capital Wedding Frenzy
+  "/drama/freereels/but18YxLsA", // That Beggar Girl Reigns
+  "/drama/melolo/7512710469950376976", // Sworn Enemies in Love
+  "/drama/freereels/oylHxZfNuZ", // The Goddess Awakens: My Daughter's Revenge
+  "/drama/melolo/7535278226612947984", // Mute Husband, My Love Amplifier
+  "/drama/melolo/7622861073141468213", // Married to the CEO Overnight
   // Priority drama URLs observed in Google Search Console.
   "/drama/dramabox/420000030309",
   "/drama/dramabox/42000030762",
