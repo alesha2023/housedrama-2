@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSql } from "@/lib/db";
 
-async function ensureTable() {
+let tableReady: ReturnType<typeof ensureVisitorTableInternal> | undefined;
+async function ensureVisitorTableInternal() {
+
   const sql = await getSql();
   await sql.query(`
     CREATE TABLE IF NOT EXISTS housedrama_visitors (
@@ -13,7 +15,12 @@ async function ensureTable() {
   `);
   return sql;
 }
-
+async function ensureTable() {
+  if (!tableReady) {
+    tableReady = ensureVisitorTableInternal().catch((error) => { tableReady = undefined; throw error; });
+  }
+  return tableReady;
+}
 async function counts(sql: Awaited<ReturnType<typeof getSql>>) {
   const rows = await sql.query<{ total: string | number; today: string | number; online: string | number }>(`
     SELECT

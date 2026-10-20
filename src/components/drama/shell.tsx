@@ -57,14 +57,14 @@ function VisitorCounter() {
     return () => { cancelled = true; window.clearInterval(timer); document.removeEventListener("visibilitychange", refreshOnVisible); };
   }, []);
 
-  if (counts === null) return null;
   const en = uiLang === "en";
   const labels = en ? { online: "online", today: "today", total: "total visitors" } : { online: "online", today: "hari ini", total: "total pengunjung" };
+  const value = (number: number | undefined) => number === undefined ? "…" : number.toLocaleString();
   return (
     <div className="mt-5 flex w-full flex-wrap items-center justify-end gap-x-4 gap-y-2 border-t border-current/10 pt-3 text-xs text-muted" role="status" aria-live="polite">
-      <span className="inline-flex items-center gap-1.5"><span className="relative flex size-2" aria-hidden="true"><span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" /><span className="relative inline-flex size-2 rounded-full bg-emerald-400" /></span><strong className="font-sans tabular-nums">{counts.online.toLocaleString()}</strong> {labels.online}</span>
-      <span><strong className="font-sans tabular-nums">{counts.today.toLocaleString()}</strong> {labels.today}</span>
-      <span><strong className="font-sans tabular-nums">{counts.total.toLocaleString()}</strong> {labels.total}</span>
+      <span className="inline-flex items-center gap-1.5"><span className="relative flex size-2" aria-hidden="true"><span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" /><span className="relative inline-flex size-2 rounded-full bg-emerald-400" /></span><strong className="font-sans tabular-nums">{value(counts?.online)}</strong> {labels.online}</span>
+      <span><strong className="font-sans tabular-nums">{value(counts?.today)}</strong> {labels.today}</span>
+      <span><strong className="font-sans tabular-nums">{value(counts?.total)}</strong> {labels.total}</span>
     </div>
   );
 }
@@ -151,11 +151,19 @@ export function Shell({ children }: { children: ReactNode }) {
   const watching = pathname.startsWith("/watch/");
   const shorts = pathname === "/shorts";
   const [open, setOpen] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
+    // One-time migration: make dark mode the default for existing visitors too,
+    // while preserving their choice after they switch themes again.
+    try {
+      if (window.localStorage.getItem("housedrama_dark_default_v1") !== "1") {
+        window.localStorage.setItem("housedrama_dark_default_v1", "1");
+        window.localStorage.setItem("housedrama_theme", "dark");
+      }
+    } catch { /* Storage may be unavailable. */ }
     const saved = window.localStorage.getItem("housedrama_theme");
-    const nextTheme = saved === "dark" ? "dark" : "light";
+    const nextTheme = saved === "light" ? "light" : "dark";
     setTheme(nextTheme);
     document.documentElement.dataset.theme = nextTheme;
     document.documentElement.style.colorScheme = nextTheme;

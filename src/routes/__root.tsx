@@ -98,7 +98,7 @@ function RootLayout() {
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "window.__boot=Date.now();try{var t=window.localStorage.getItem('housedrama_theme')==='dark'?'dark':'light';document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;}catch(e){}setTimeout(function(){var n=document.querySelector('.boot-splash');if(n)n.classList.add('is-done');},1000);",
+              "window.__boot=Date.now();try{if(window.localStorage.getItem('housedrama_dark_default_v1')!=='1'){window.localStorage.setItem('housedrama_dark_default_v1','1');window.localStorage.setItem('housedrama_theme','dark');}var t=window.localStorage.getItem('housedrama_theme')==='light'?'light':'dark';document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;}catch(e){}setTimeout(function(){var n=document.querySelector('.boot-splash');if(n)n.classList.add('is-done');},1000);",
           }}
         />
         <PreviewHostBridge />

@@ -53,7 +53,11 @@ function HomePage() {
   const [data, setData] = useState<HomePayload>(initial);
   const [history, setHistory] = useState<ReturnType<typeof readHistory>>([]);
   const [slide, setSlide] = useState(0);
-  const [houseTrending, setHouseTrending] = useState<import("@/lib/drama/types").DramaCard[]>([]);
+  // Render the site's existing trending section immediately while the saved
+  // HouseDrama view-count API responds; replace it with real view-ranked items.
+  const [houseTrending, setHouseTrending] = useState<import("@/lib/drama/types").DramaCard[]>(
+    () => initial.sections.find((section) => section.id === "trending")?.items ?? [],
+  );
 
   useEffect(() => {
     let active = true;
@@ -66,7 +70,10 @@ function HomePage() {
     return () => { active = false; };
   }, []);
 
-  useEffect(() => setData(initial), [initial]);
+  useEffect(() => {
+    setData(initial);
+    setHouseTrending((current) => current.length ? current : (initial.sections.find((section) => section.id === "trending")?.items ?? []));
+  }, [initial]);
 
   useEffect(() => {
     setHistory(readHistory());

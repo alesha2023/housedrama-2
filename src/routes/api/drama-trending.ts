@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getSql } from "@/lib/db";
 import { PROVIDERS, type DramaCard, type ProviderId } from "@/lib/drama/types";
 
-async function ensureTable() {
+let tableReady: ReturnType<typeof ensureTrendingTableInternal> | undefined;
+async function ensureTrendingTableInternal() {
+
   const sql = await getSql();
   await sql.query(`
     CREATE TABLE IF NOT EXISTS housedrama_drama_views (
@@ -17,7 +19,12 @@ async function ensureTable() {
   `);
   return sql;
 }
-
+async function ensureTable() {
+  if (!tableReady) {
+    tableReady = ensureTrendingTableInternal().catch((error) => { tableReady = undefined; throw error; });
+  }
+  return tableReady;
+}
 async function handleGet() {
   try {
     const sql = await ensureTable();
