@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getSql } from "@/lib/db";
 import { PROVIDERS, type DramaCard, type ProviderId } from "@/lib/drama/types";
 
-let tableReady: ReturnType<typeof ensureTrendingTableInternal> | undefined;
-async function ensureTrendingTableInternal() {
+let tableReady: Promise<Awaited<ReturnType<typeof getSql>>> | undefined;
 
-  const sql = await getSql();
-  await sql.query(`
+async function ensureTable() {
+  tableReady ??= (async () => {
+    const sql = await getSql();
+    await sql.query(`
     CREATE TABLE IF NOT EXISTS housedrama_drama_views (
       provider TEXT NOT NULL,
       series_id TEXT NOT NULL,
@@ -16,15 +17,15 @@ async function ensureTrendingTableInternal() {
       last_viewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       PRIMARY KEY (provider, series_id)
     )
-  `);
-  return sql;
-}
-async function ensureTable() {
-  if (!tableReady) {
-    tableReady = ensureTrendingTableInternal().catch((error) => { tableReady = undefined; throw error; });
-  }
+    `);
+    return sql;
+  })().catch((error) => {
+    tableReady = undefined;
+    throw error;
+  });
   return tableReady;
 }
+
 async function handleGet() {
   try {
     const sql = await ensureTable();

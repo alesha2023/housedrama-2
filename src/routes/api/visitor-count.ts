@@ -1,26 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSql } from "@/lib/db";
 
-let tableReady: ReturnType<typeof ensureVisitorTableInternal> | undefined;
-async function ensureVisitorTableInternal() {
+let tableReady: Promise<Awaited<ReturnType<typeof getSql>>> | undefined;
 
-  const sql = await getSql();
-  await sql.query(`
+async function ensureTable() {
+  tableReady ??= (async () => {
+    const sql = await getSql();
+    await sql.query(`
     CREATE TABLE IF NOT EXISTS housedrama_visitors (
       visitor_id TEXT PRIMARY KEY,
       first_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       last_visit_date DATE NOT NULL DEFAULT (timezone('Asia/Jakarta', now())::date)
     )
-  `);
-  return sql;
-}
-async function ensureTable() {
-  if (!tableReady) {
-    tableReady = ensureVisitorTableInternal().catch((error) => { tableReady = undefined; throw error; });
-  }
+    `);
+    return sql;
+  })().catch((error) => {
+    tableReady = undefined;
+    throw error;
+  });
   return tableReady;
 }
+
 async function counts(sql: Awaited<ReturnType<typeof getSql>>) {
   const rows = await sql.query<{ total: string | number; today: string | number; online: string | number }>(`
     SELECT

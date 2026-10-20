@@ -59,12 +59,18 @@ function VisitorCounter() {
 
   const en = uiLang === "en";
   const labels = en ? { online: "online", today: "today", total: "total visitors" } : { online: "online", today: "hari ini", total: "total pengunjung" };
-  const value = (number: number | undefined) => number === undefined ? "…" : number.toLocaleString();
+  if (counts === null) {
+    return (
+      <div className="mt-5 flex w-full flex-wrap items-center justify-end gap-x-4 gap-y-2 border-t border-current/10 pt-3 text-xs text-muted" role="status" aria-live="polite">
+        <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-emerald-400" aria-hidden="true" />{en ? "Visitor stats temporarily unavailable" : "Statistik pengunjung sementara tidak tersedia"}</span>
+      </div>
+    );
+  }
   return (
     <div className="mt-5 flex w-full flex-wrap items-center justify-end gap-x-4 gap-y-2 border-t border-current/10 pt-3 text-xs text-muted" role="status" aria-live="polite">
-      <span className="inline-flex items-center gap-1.5"><span className="relative flex size-2" aria-hidden="true"><span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" /><span className="relative inline-flex size-2 rounded-full bg-emerald-400" /></span><strong className="font-sans tabular-nums">{value(counts?.online)}</strong> {labels.online}</span>
-      <span><strong className="font-sans tabular-nums">{value(counts?.today)}</strong> {labels.today}</span>
-      <span><strong className="font-sans tabular-nums">{value(counts?.total)}</strong> {labels.total}</span>
+      <span className="inline-flex items-center gap-1.5"><span className="relative flex size-2" aria-hidden="true"><span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" /><span className="relative inline-flex size-2 rounded-full bg-emerald-400" /></span><strong className="font-sans tabular-nums">{counts.online.toLocaleString()}</strong> {labels.online}</span>
+      <span><strong className="font-sans tabular-nums">{counts.today.toLocaleString()}</strong> {labels.today}</span>
+      <span><strong className="font-sans tabular-nums">{counts.total.toLocaleString()}</strong> {labels.total}</span>
     </div>
   );
 }
