@@ -20,6 +20,16 @@ function VisitorCounter() {
 
   useEffect(() => {
     let cancelled = false;
+    try {
+      const saved = window.localStorage.getItem("housedrama_visitor_counts");
+      if (saved) {
+        const value = JSON.parse(saved) as Record<string, unknown>;
+        const online = Number(value.online);
+        const today = Number(value.today);
+        const total = Number(value.total);
+        if ([online, today, total].every(Number.isFinite)) setCounts({ online, today, total });
+      }
+    } catch { /* Local cache is optional. */ }
     let visitorId = "";
     try {
       visitorId = window.localStorage.getItem("housedrama_visitor_id") || "";
@@ -40,66 +50,51 @@ function VisitorCounter() {
       const isCounts = (value: unknown): value is { online: number; today: number; total: number } => {
         if (!value || typeof value !== "object") return false;
         const data = value as Record<string, unknown>;
-        const online = typeof data.online === "string" ? Number(data.online) : data.online;
-        const today = typeof data.today === "string" ? Number(data.today) : data.today;
-        const total = typeof data.total === "string" ? Number(data.total) : data.total;
-        return Number.isFinite(online) && Number.isFinite(today) && Number.isFinite(total);
+        return [data.online, data.today, data.total].every((n) => {
+          const number = typeof n === "string" ? Number(n) : n;
+          return typeof number === "number" && Number.isFinite(number);
+        });
       };
-
-      let gotCounts = false;
       const applyCounts = (value: unknown) => {
         if (cancelled || !isCounts(value)) return false;
-        gotCounts = true;
         const data = value as Record<string, unknown>;
-        setCounts({
+        const next = {
           online: Math.max(0, Math.floor(Number(data.online))),
           today: Math.max(0, Math.floor(Number(data.today))),
           total: Math.max(0, Math.floor(Number(data.total))),
-        });
+        };
+        setCounts(next);
+        try { window.localStorage.setItem("housedrama_visitor_counts", JSON.stringify(next)); } catch { /* Cache is optional. */ }
         return true;
       };
 
-      // Record the visit first: POST already returns the latest counts, avoiding
-      // the old sequential GET + POST database round trips on every page load.
-      try {
+      // Read first in the background so the saved counter can render quickly.
+      // Record the visit in parallel; the API uses an upsert keyed by visitorId.
+      const getCounts = async () => {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 3500);
+        try {
+          const response = await fetch("/api/visitor-count", {
+            method: "GET", cache: "no-store", headers: { accept: "application/json" }, signal: controller.signal,
+          });
+          if (response.ok) applyCounts(await response.json());
+        } catch { /* Keep cached/previous counts when the API is slow. */ }
+        finally { window.clearTimeout(timeout); }
+      };
+      const recordVisit = async () => {
         const controller = new AbortController();
         const timeout = window.setTimeout(() => controller.abort(), 5000);
         try {
           const response = await fetch("/api/visitor-count", {
             method: "POST",
             headers: { "content-type": "application/json", accept: "application/json" },
-            body: JSON.stringify({ visitorId }),
-            cache: "no-store",
-            signal: controller.signal,
+            body: JSON.stringify({ visitorId }), cache: "no-store", signal: controller.signal,
           });
           if (response.ok) applyCounts(await response.json());
-        } finally {
-          window.clearTimeout(timeout);
-        }
-      } catch {
-        // If recording is temporarily unavailable, still try to read saved counts.
-      }
-
-      // A short, bounded GET fallback keeps saved statistics visible when POST fails.
-      if (!cancelled && !gotCounts) {
-        try {
-          const controller = new AbortController();
-          const timeout = window.setTimeout(() => controller.abort(), 4000);
-          try {
-            const response = await fetch("/api/visitor-count", {
-              method: "GET",
-              cache: "no-store",
-              headers: { accept: "application/json" },
-              signal: controller.signal,
-            });
-            if (response.ok) applyCounts(await response.json());
-          } finally {
-            window.clearTimeout(timeout);
-          }
-        } catch {
-          // Keep previously loaded counts if a refresh fails.
-        }
-      }
+        } catch { /* Reading stats must not depend on recording succeeding. */ }
+        finally { window.clearTimeout(timeout); }
+      };
+      await Promise.all([getCounts(), recordVisit()]);
       if (!cancelled) setAttempted(true);
       updating = false;
     };
