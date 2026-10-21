@@ -29,9 +29,13 @@ function TrendingPage() {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    // Never leave the page spinning forever if the database/API stalls.
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     fetch("/api/drama-trending", {
       headers: { accept: "application/json" },
       cache: "no-store",
+      signal: controller.signal,
     })
       .then((response) => {
         if (!response.ok) throw new Error("HouseDrama trending unavailable");
@@ -41,8 +45,15 @@ function TrendingPage() {
         if (active) setWatchedItems(Array.isArray(payload.items) ? payload.items : []);
       })
       .catch(() => { if (active) setWatchedItems([]); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+      .finally(() => {
+        clearTimeout(timeoutId);
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, []);
 
   const eyebrow = ({ en: "Trending on HouseDrama", id: "Trending di HouseDrama", hi: "HouseDrama पर ट्रेंडिंग", fil: "Trending sa HouseDrama", ms: "Trending di HouseDrama", th: "กำลังมาแรงบน HouseDrama" } as const)[uiLang];

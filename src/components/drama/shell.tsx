@@ -16,6 +16,7 @@ const LINKS = [
 function VisitorCounter() {
   const { uiLang } = usePrefs();
   const [counts, setCounts] = useState<{ online: number; today: number; total: number } | null>(null);
+  const [attempted, setAttempted] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,7 +33,10 @@ function VisitorCounter() {
       visitorId = `hd-${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
     }
 
+    let updating = false;
     const update = async () => {
+      if (updating || cancelled) return;
+      updating = true;
       const isCounts = (value: unknown): value is { online: number; today: number; total: number } => {
         if (!value || typeof value !== "object") return false;
         const data = value as Record<string, unknown>;
@@ -42,8 +46,10 @@ function VisitorCounter() {
         return Number.isFinite(online) && Number.isFinite(today) && Number.isFinite(total);
       };
 
+      let gotCounts = false;
       const applyCounts = (value: unknown) => {
         if (cancelled || !isCounts(value)) return false;
+        gotCounts = true;
         const data = value as Record<string, unknown>;
         setCounts({
           online: Math.max(0, Math.floor(Number(data.online))),
@@ -53,30 +59,49 @@ function VisitorCounter() {
         return true;
       };
 
-      // Read existing statistics first so the display works even if visit recording fails.
+      // Record the visit first: POST already returns the latest counts, avoiding
+      // the old sequential GET + POST database round trips on every page load.
       try {
-        const response = await fetch("/api/visitor-count", {
-          method: "GET",
-          cache: "no-store",
-          headers: { accept: "application/json" },
-        });
-        if (response.ok) applyCounts(await response.json());
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 5000);
+        try {
+          const response = await fetch("/api/visitor-count", {
+            method: "POST",
+            headers: { "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify({ visitorId }),
+            cache: "no-store",
+            signal: controller.signal,
+          });
+          if (response.ok) applyCounts(await response.json());
+        } finally {
+          window.clearTimeout(timeout);
+        }
       } catch {
-        // Keep the previous counts if the read fails.
+        // If recording is temporarily unavailable, still try to read saved counts.
       }
 
-      // Record this visit after reading; a write failure must not hide valid statistics.
-      try {
-        const response = await fetch("/api/visitor-count", {
-          method: "POST",
-          headers: { "content-type": "application/json", accept: "application/json" },
-          body: JSON.stringify({ visitorId }),
-          cache: "no-store",
-        });
-        if (response.ok) applyCounts(await response.json());
-      } catch {
-        // Keep any counts successfully loaded by GET.
+      // A short, bounded GET fallback keeps saved statistics visible when POST fails.
+      if (!cancelled && !gotCounts) {
+        try {
+          const controller = new AbortController();
+          const timeout = window.setTimeout(() => controller.abort(), 4000);
+          try {
+            const response = await fetch("/api/visitor-count", {
+              method: "GET",
+              cache: "no-store",
+              headers: { accept: "application/json" },
+              signal: controller.signal,
+            });
+            if (response.ok) applyCounts(await response.json());
+          } finally {
+            window.clearTimeout(timeout);
+          }
+        } catch {
+          // Keep previously loaded counts if a refresh fails.
+        }
       }
+      if (!cancelled) setAttempted(true);
+      updating = false;
     };
 
     void update();
@@ -91,7 +116,7 @@ function VisitorCounter() {
   if (counts === null) {
     return (
       <div className="mt-5 flex w-full flex-wrap items-center justify-end gap-x-4 gap-y-2 border-t border-current/10 pt-3 text-xs text-muted" role="status" aria-live="polite">
-        <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-emerald-400" aria-hidden="true" />{en ? "Visitor stats temporarily unavailable" : "Statistik pengunjung sementara tidak tersedia"}</span>
+        <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-emerald-400" aria-hidden="true" />{!attempted ? (en ? "Loading visitor statistics…" : "Memuat statistik pengunjung…") : (en ? "Visitor stats temporarily unavailable" : "Statistik pengunjung sementara tidak tersedia")}</span>
       </div>
     );
   }
