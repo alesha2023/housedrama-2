@@ -45,7 +45,7 @@ function HomePage() {
 
   useEffect(() => {
     let active = true;
-    fetch("/api/drama-trending", { headers: { accept: "application/json" } })
+    fetch("/api/drama-trending", { headers: { accept: "application/json" }, cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Trending unavailable")))
       .then((payload: { items?: import("@/lib/drama/types").DramaCard[] }) => {
         if (active && Array.isArray(payload.items)) setHouseTrending(payload.items);

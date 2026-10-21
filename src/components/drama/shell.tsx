@@ -77,7 +77,7 @@ function VisitorCounter() {
           const response = await fetch("/api/visitor-count", {
             method: "POST",
             headers: { "content-type": "application/json", accept: "application/json" },
-            body: JSON.stringify({ visitorId }), cache: "no-store", signal: controller.signal,
+            body: JSON.stringify({ visitorId }), cache: "no-store", keepalive: true, signal: controller.signal,
           });
           if (response.ok) applyCounts(await response.json());
         } catch { /* A failed stat write must not block the page. */ }

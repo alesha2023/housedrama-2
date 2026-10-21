@@ -22,6 +22,7 @@ function TrendingPage() {
   const { uiLang } = usePrefs();
   const [watchedItems, setWatchedItems] = useState<DramaCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unavailable, setUnavailable] = useState(false);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
@@ -37,9 +38,12 @@ function TrendingPage() {
         return response.json();
       })
       .then((payload: { items?: DramaCard[] }) => {
-        if (active) setWatchedItems(Array.isArray(payload.items) ? payload.items : []);
+        if (active) {
+          setWatchedItems(Array.isArray(payload.items) ? payload.items : []);
+          setUnavailable(false);
+        }
       })
-      .catch(() => { if (active) setWatchedItems([]); })
+      .catch(() => { if (active) { setWatchedItems([]); setUnavailable(true); } })
       .finally(() => {
         clearTimeout(timeoutId);
         if (active) setLoading(false);
@@ -65,8 +69,8 @@ function TrendingPage() {
         <PageSkeleton />
       ) : (
         <EmptyState
-          title={uiLang === "id" ? "Belum ada data tontonan" : "No HouseDrama view data yet"}
-          body={uiLang === "id" ? "Drama akan muncul di sini setelah pengunjung mulai menontonnya." : "Dramas will appear here after visitors start watching them."}
+          title={unavailable ? (uiLang === "id" ? "Data Trending tidak tersedia" : "Trending data unavailable") : (uiLang === "id" ? "Belum ada data tontonan" : "No HouseDrama view data yet")}
+          body={unavailable ? (uiLang === "id" ? "API atau database tidak merespons. Coba lagi nanti; periksa log Cloudflare untuk detailnya." : "The API or database did not respond. Try again later and check Cloudflare logs for details.") : (uiLang === "id" ? "Drama akan muncul di sini setelah pengunjung mulai menontonnya." : "Dramas will appear here after visitors start watching them.") }
         />
       )}
     </div>
