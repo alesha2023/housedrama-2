@@ -33,6 +33,23 @@ function VisitorCounter() {
     }
 
     const update = async () => {
+      const isCounts = (value: unknown): value is { online: number; today: number; total: number } => {
+        if (!value || typeof value !== "object") return false;
+        const data = value as Record<string, unknown>;
+        return Number.isFinite(data.online) && Number.isFinite(data.today) && Number.isFinite(data.total);
+      };
+
+      const applyCounts = (value: unknown) => {
+        if (cancelled || !isCounts(value)) return false;
+        setCounts({
+          online: Math.max(0, Math.floor(value.online)),
+          today: Math.max(0, Math.floor(value.today)),
+          total: Math.max(0, Math.floor(value.total)),
+        });
+        return true;
+      };
+
+      // First try to record this visit and get fresh counts.
       try {
         const response = await fetch("/api/visitor-count", {
           method: "POST",
@@ -40,13 +57,17 @@ function VisitorCounter() {
           body: JSON.stringify({ visitorId }),
           cache: "no-store",
         });
-        if (!response.ok) return;
-        const data = await response.json() as { online?: number; today?: number; total?: number };
-        if (!cancelled && Number.isFinite(data.online) && Number.isFinite(data.today) && Number.isFinite(data.total)) {
-          setCounts({ online: Math.max(0, Math.floor(data.online!)), today: Math.max(0, Math.floor(data.today!)), total: Math.max(0, Math.floor(data.total!)) });
-        }
+        if (response.ok && applyCounts(await response.json())) return;
       } catch {
-        // Hide stats rather than invent numbers when the API/database is unavailable.
+        // Fall through to GET: reading existing stats may still work if recording fails.
+      }
+
+      // Fallback to the read endpoint so a failed visitor write doesn't hide valid stats.
+      try {
+        const response = await fetch("/api/visitor-count", { method: "GET", cache: "no-store" });
+        if (response.ok) applyCounts(await response.json());
+      } catch {
+        // Keep the last valid counts; don't invent numbers if both requests fail.
       }
     };
 
