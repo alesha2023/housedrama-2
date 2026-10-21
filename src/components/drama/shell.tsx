@@ -36,38 +36,46 @@ function VisitorCounter() {
       const isCounts = (value: unknown): value is { online: number; today: number; total: number } => {
         if (!value || typeof value !== "object") return false;
         const data = value as Record<string, unknown>;
-        return Number.isFinite(data.online) && Number.isFinite(data.today) && Number.isFinite(data.total);
+        const online = typeof data.online === "string" ? Number(data.online) : data.online;
+        const today = typeof data.today === "string" ? Number(data.today) : data.today;
+        const total = typeof data.total === "string" ? Number(data.total) : data.total;
+        return Number.isFinite(online) && Number.isFinite(today) && Number.isFinite(total);
       };
 
       const applyCounts = (value: unknown) => {
         if (cancelled || !isCounts(value)) return false;
+        const data = value as Record<string, unknown>;
         setCounts({
-          online: Math.max(0, Math.floor(value.online)),
-          today: Math.max(0, Math.floor(value.today)),
-          total: Math.max(0, Math.floor(value.total)),
+          online: Math.max(0, Math.floor(Number(data.online))),
+          today: Math.max(0, Math.floor(Number(data.today))),
+          total: Math.max(0, Math.floor(Number(data.total))),
         });
         return true;
       };
 
-      // First try to record this visit and get fresh counts.
+      // Read existing statistics first so the display works even if visit recording fails.
+      try {
+        const response = await fetch("/api/visitor-count", {
+          method: "GET",
+          cache: "no-store",
+          headers: { accept: "application/json" },
+        });
+        if (response.ok) applyCounts(await response.json());
+      } catch {
+        // Keep the previous counts if the read fails.
+      }
+
+      // Record this visit after reading; a write failure must not hide valid statistics.
       try {
         const response = await fetch("/api/visitor-count", {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: { "content-type": "application/json", accept: "application/json" },
           body: JSON.stringify({ visitorId }),
           cache: "no-store",
         });
-        if (response.ok && applyCounts(await response.json())) return;
-      } catch {
-        // Fall through to GET: reading existing stats may still work if recording fails.
-      }
-
-      // Fallback to the read endpoint so a failed visitor write doesn't hide valid stats.
-      try {
-        const response = await fetch("/api/visitor-count", { method: "GET", cache: "no-store" });
         if (response.ok) applyCounts(await response.json());
       } catch {
-        // Keep the last valid counts; don't invent numbers if both requests fail.
+        // Keep any counts successfully loaded by GET.
       }
     };
 

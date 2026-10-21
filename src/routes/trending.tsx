@@ -24,29 +24,45 @@ export const Route = createFileRoute("/trending")({
 });
 
 function TrendingPage() {
-  const data = Route.useLoaderData();
-  const { t, uiLang } = usePrefs();
+  const { uiLang } = usePrefs();
   const [watchedItems, setWatchedItems] = useState<DramaCard[]>([]);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     let active = true;
-    fetch("/api/drama-trending", { headers: { accept: "application/json" } })
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Trending unavailable")))
-      .then((payload: { items?: DramaCard[] }) => { if (active && Array.isArray(payload.items)) setWatchedItems(payload.items); })
-      .catch(() => undefined);
+    fetch("/api/drama-trending", {
+      headers: { accept: "application/json" },
+      cache: "no-store",
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("HouseDrama trending unavailable");
+        return response.json();
+      })
+      .then((payload: { items?: DramaCard[] }) => {
+        if (active) setWatchedItems(Array.isArray(payload.items) ? payload.items : []);
+      })
+      .catch(() => { if (active) setWatchedItems([]); })
+      .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
-  const items = watchedItems.length
-    ? watchedItems
-    : data.sections.find((section) => section.id === "trending")?.items ?? [];
+
+  const eyebrow = ({ en: "Trending on HouseDrama", id: "Trending di HouseDrama", hi: "HouseDrama पर ट्रेंडिंग", fil: "Trending sa HouseDrama", ms: "Trending di HouseDrama", th: "กำลังมาแรงบน HouseDrama" } as const)[uiLang];
+  const title = ({ en: "Most Watched on HouseDrama", id: "Paling Banyak Ditonton di HouseDrama", hi: "HouseDrama पर सबसे ज़्यादा देखे गए", fil: "Pinakamaraming Pinanood sa HouseDrama", ms: "Paling Banyak Ditonton di HouseDrama", th: "รับชมมากที่สุดบน HouseDrama" } as const)[uiLang];
+  const description = ({ en: "Ranked by views recorded on HouseDrama, not by provider rankings.", id: "Diurutkan berdasarkan jumlah tontonan yang tercatat di HouseDrama, bukan peringkat penyedia.", hi: "HouseDrama पर दर्ज व्यू के आधार पर, प्रदाता की रैंकिंग से नहीं।", fil: "Batay sa mga panonood na naitala sa HouseDrama, hindi sa ranking ng provider.", ms: "Disusun mengikut tontonan yang direkodkan di HouseDrama, bukan ranking penyedia.", th: "จัดอันดับตามยอดรับชมที่บันทึกบน HouseDrama ไม่ใช่อันดับจากผู้ให้บริการ" } as const)[uiLang];
+
   return (
     <div>
-      <PageIntro
-        eyebrow={watchedItems.length ? ({ en: "Trending on HouseDrama", id: "Trending di HouseDrama", hi: "HouseDrama पर ट्रेंडिंग", fil: "Trending sa HouseDrama", ms: "Trending di HouseDrama", th: "กำลังมาแรงบน HouseDrama" }[uiLang]) : t.rankEyebrow}
-        title={watchedItems.length ? ({ en: "Most Watched on HouseDrama", id: "Paling Banyak Ditonton di HouseDrama", hi: "HouseDrama पर सबसे ज़्यादा देखे गए", fil: "Pinakamaraming Pinanood sa HouseDrama", ms: "Paling Banyak Ditonton di HouseDrama", th: "รับชมมากที่สุดบน HouseDrama" }[uiLang]) : t.trendTitle}
-        description={watchedItems.length ? ({ en: "Dramas visitors have started watching most often on HouseDrama.", id: "Drama yang paling sering mulai ditonton pengunjung HouseDrama.", hi: "वे ड्रामा जिन्हें HouseDrama के दर्शकों ने सबसे ज़्यादा देखना शुरू किया।", fil: "Mga dramang pinakamadalas simulan ng mga bisita sa HouseDrama.", ms: "Drama yang paling kerap mula ditonton oleh pengunjung HouseDrama.", th: "ละครที่ผู้เข้าชม HouseDrama เริ่มรับชมบ่อยที่สุด" }[uiLang]) : t.trendBody}
-      />
-      <SeoItemList items={items} name="Trending Chinese Short Dramas on HouseDrama" />
-      {items.length ? <DramaGrid items={items} /> : <EmptyState title={t.noRank} body={t.noRankBody} />}
+      <PageIntro eyebrow={eyebrow} title={title} description={description} />
+      <SeoItemList items={watchedItems} name="Most Watched on HouseDrama" />
+      {watchedItems.length ? (
+        <DramaGrid items={watchedItems} />
+      ) : loading ? (
+        <PageSkeleton />
+      ) : (
+        <EmptyState
+          title={uiLang === "id" ? "Belum ada data tontonan" : "No HouseDrama view data yet"}
+          body={uiLang === "id" ? "Drama akan muncul di sini setelah pengunjung mulai menontonnya." : "Dramas will appear here after visitors start watching them."}
+        />
+      )}
     </div>
   );
 }
