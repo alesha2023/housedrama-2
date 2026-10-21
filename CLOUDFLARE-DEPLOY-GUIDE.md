@@ -8,6 +8,16 @@ Panduan resmi yang diikuti: [TanStack Start di Cloudflare Workers](https://devel
 
 Situs `https://house-drama.xyz` sudah menjawab lewat Cloudflare (HTTP 200), tetapi HTML-nya masih build lama: canonical `https://house-drama.web.id/`. Mengunggah ZIP ini tidak otomatis mengganti situs itu. `house-drama.web.id` masih HTTP 200, bukan 301.
 
+## Pengaturan Cloudflare Git integration (penting)
+
+Di pengaturan Build untuk project yang terhubung ke GitHub, gunakan:
+
+- **Build command:** `npm run build:cloudflare`
+- **Deploy command:** `npx wrangler deploy --config dist/server/wrangler.json`
+- **Root directory:** direktori yang berisi `package.json` (kosong/default jika `package.json` ada di root repository).
+
+Jangan gunakan `npm run build` bersama `npx wrangler deploy` untuk proyek ini: `npm run build` menghasilkan output Nitro/Vercel, sedangkan root `wrangler.jsonc` menunjuk entry point yang tidak tersedia. Itulah penyebab error `@tanstack/react-start/server-entry was not found` pada log yang dikirim.
+
 ## Yang dipakai
 
 | Bagian | Nilai |
@@ -22,7 +32,7 @@ Situs `https://house-drama.xyz` sudah menjawab lewat Cloudflare (HTTP 200), teta
 
 `npm run dev` tetap Vite di port 8080 untuk preview. Jangan menggantinya dengan Wrangler.
 
-`npm run build` tetap build workspace (Nitro) plus migrasi lokal. Itu bukan artefak Worker. Yang di-deploy adalah `npm run build:cloudflare`.
+`npm run build` adalah build workspace/Nitro lama dan bukan artefak Worker. Untuk Cloudflare gunakan `npm run build:cloudflare`, yang mengaktifkan `DEPLOY_TARGET=cloudflare`. Perintah deploy harus memakai konfigurasi hasil plugin `dist/server/wrangler.json`, bukan `wrangler.jsonc` di root (yang menunjuk ke entry point lama `@tanstack/react-start/server-entry`).
 
 `vercel.json` dihapus. Preset Nitro `vercel` sengaja dibiarkan untuk `npm run build` workspace, karena middleware `server/` (halaman install) hanya terpasang lewat itu. Jangan menjalankan hasil build itu di Vercel.
 
@@ -94,7 +104,7 @@ Zona `house-drama.xyz` harus sudah berada di akun Cloudflare yang sama.
 npm run deploy:production
 ```
 
-Itu menjalankan `wrangler deploy --config wrangler.production.jsonc`, yang meminta custom domain:
+Perintah ini membangun Cloudflare output, lalu membuat `dist/server/wrangler.production.json` dari konfigurasi hasil build dan menambahkan custom domain berikut. Jangan jalankan sebelum secret Neon sudah terpasang dan preview di `workers.dev` sudah diuji:
 
 - `house-drama.xyz`
 - `www.house-drama.xyz`

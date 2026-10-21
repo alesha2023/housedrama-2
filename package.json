@@ -18,9 +18,9 @@
     "check:auth": "node scripts/check-auth-invariant.mjs",
     "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/preview-path-prefix.test.ts src/lib/drama/images.test.ts src/lib/drama/proxy-guard.test.ts src/lib/drama/server/generic.test.ts src/lib/drama/server/audience.test.ts src/lib/drama/site.test.ts",
     "build:cloudflare": "DEPLOY_TARGET=cloudflare node scripts/with-app-env.mjs vite build",
-    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy",
-    "deploy:production": "npm run build:cloudflare && wrangler deploy --config wrangler.production.jsonc",
-    "preview:cloudflare": "npm run build:cloudflare && wrangler dev",
+    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy --config dist/server/wrangler.json",
+    "deploy:production": "npm run build:cloudflare && node scripts/with-cloudflare-production-config.mjs && wrangler deploy --config dist/server/wrangler.production.json",
+    "preview:cloudflare": "npm run build:cloudflare && wrangler dev --config dist/server/wrangler.json",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
