@@ -22,9 +22,11 @@ This is a configuration correction based on the supplied build log, not proof of
 - The app stylesheet is preloaded to reduce unstyled flash; actual behavior still needs a live browser check.
 
 
-## HouseDrama Trending / Visitor verification
-- Build: `npm run build:cloudflare`; deploy: `npx wrangler deploy --config dist/server/wrangler.json`.
-- Keep the existing Neon `DATABASE_URL` secret in the Cloudflare Worker runtime; do not create a new database.
-- `/api/drama-trending` now uses `no-store`; database read failures return HTTP 503 instead of pretending trending is simply empty.
-- Visitor count uses unique browser IDs in `housedrama_visitors`; `online` means a visitor heartbeat within the last 90 seconds. It is not a fabricated number.
-- Verify production by opening `/api/visitor-count` and `/api/drama-trending`; check Cloudflare Worker logs if either returns an error. A ZIP alone cannot verify production secrets/database connectivity.
+ ## Trending, visitor counter, and refresh diagnostics
+ - Build with `npm run build:cloudflare`; deploy with `npx wrangler deploy --config dist/server/wrangler.json`.
+ - Keep the existing Neon `DATABASE_URL` secret in the Cloudflare Worker Production runtime. Do not create a new database or delete old visitor rows.
+ - `/api/drama-trending` now avoids caching and returns HTTP 503 when the database read fails, instead of returning a misleading empty list.
+ - The visitor counter uses the existing `housedrama_visitors` table and 90-second `last_seen` heartbeat window. A failed POST/GET still requires checking Cloudflare Worker logs and the existing Neon connection; code changes cannot repair a missing/wrong secret.
+ - Test after deployment: open `/api/visitor-count` (should return `online`, `today`, `total`) and `/api/drama-trending` (should return `items`). If visitor endpoint returns 503, check Worker Production `DATABASE_URL` and runtime logs. If trending returns an empty `items` array with 200, there are no valid recorded rows for supported providers yet; watch an episode to create a view record.
+ - A small critical dark CSS rule was added to reduce the unstyled flash while the main stylesheet loads; verify on a real mobile refresh.
+ 

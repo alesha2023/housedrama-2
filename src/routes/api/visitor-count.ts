@@ -85,3 +85,4 @@ async function handlePost({ request }: { request: Request }) {
 export const Route = createFileRoute("/api/visitor-count")({
   server: { handlers: { GET: handleGet, POST: handlePost } },
 });
+

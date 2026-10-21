@@ -495,8 +495,17 @@ const SOCIALS: { name: string; href: string; icon: () => ReactNode; className: s
 ];
 
 function SocialGlyph({ children }: { children: ReactNode }) {
+  // Explicit dimensions prevent the SVG's 300x150 browser default from flashing
+  // at full size before the app stylesheet finishes loading on a hard refresh.
   return (
-    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      width={20}
+      height={20}
+      className="size-5 shrink-0"
+      style={{ display: "block", width: 20, height: 20, flexShrink: 0 }}
+      aria-hidden="true"
+    >
       {children}
     </svg>
   );

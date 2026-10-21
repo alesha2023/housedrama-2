@@ -55,6 +55,7 @@ function RootLayout() {
   return (
     <html lang={routeLang} suppressHydrationWarning>
       <head>
+        <style>{`html,body{margin:0;min-height:100%;background:#07080b;color:#f4f4f5}html{color-scheme:dark}body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}`}</style>
         <HeadContent />
       </head>
       <body>
