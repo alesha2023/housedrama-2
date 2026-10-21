@@ -31,7 +31,7 @@ export const Route = createFileRoute("/")({
       { property: "og:url", content: "https://house-drama.web.id/" },
       { property: "og:image", content: "https://house-drama.web.id/og-v2.jpg" },
       { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "630" },
+      { property: "og:image:height", content: "1200" },
       { property: "og:image:alt", content: "HouseDrama — Watch Chinese and Asian Short Dramas Online" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

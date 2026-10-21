@@ -30,7 +30,7 @@ export const Route = createRootRoute({
       { property: "og:description", content: "Discover Chinese and Asian short dramas, trending romance, CEO stories, and new episodes on HouseDrama." },
       { property: "og:image", content: "https://house-drama.web.id/og-v2.jpg" },
       { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "630" },
+      { property: "og:image:height", content: "1200" },
       { property: "og:image:alt", content: "HouseDrama — Watch Chinese and Asian Short Dramas Online" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "HouseDrama — Chinese & Asian Short Dramas" },
