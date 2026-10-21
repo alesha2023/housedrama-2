@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "house-drama",
+  "compatibility_date": "2026-10-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "observability": { "enabled": true },
+  "workers_dev": true,
+  "vars": {
+    "HOUSEDRAMA_REQUIRE_DATABASE": "1"
+  }
+}

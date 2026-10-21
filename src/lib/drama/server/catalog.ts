@@ -33,18 +33,18 @@ const GENRES: { id: string; title: string; test: RegExp }[] = [
 // Mix popular catalogues from several providers so the Popular rail is not
 // dominated by a single source. The core providers are fetched separately.
 const POPULAR_PROVIDER_IDS: ProviderId[] = [
-  "goodshort",
-  "netshort",
   "reelshort",
+  "netshort",
   "shortmax",
-  "flextv",
-  "dramawave",
-  "melolo",
-  "joyreels",
-  "flickreels",
   "vigloo",
-  "stardusttv",
-  "shortical",
+  "dramawave",
+  "flickreels",
+  "joyreels",
+  "flextv",
+  "velolo",
+  "happyshort",
+  "reelbuzz",
+  "melolo",
 ];
 
 function mixSources(groups: DramaCard[][], limit: number, start = 0) {
@@ -694,7 +694,7 @@ async function loadDetailInternal(provider: ProviderId, seriesId: string, lang: 
     try {
       const raw = await genericDetail(provider, seriesId, lang);
       if (!raw.card) {
-        return { ok: false, error: "This drama could not be found.", drama: null, episodes: [], similar: [], more: [], alsoOn: [] };
+        return { ok: false, code: "not_found", error: "This drama could not be found.", drama: null, episodes: [], similar: [], more: [], alsoOn: [] };
       }
       const [dramaList, episodes, relatedResult] = await Promise.all([
         localizeCards([raw.card], lang, true),
@@ -718,6 +718,7 @@ async function loadDetailInternal(provider: ProviderId, seriesId: string, lang: 
     } catch (error) {
       return {
         ok: false,
+        code: "unavailable",
         error: error instanceof Error ? error.message : "The provider did not return this drama.",
         drama: null,
         episodes: [],
@@ -735,7 +736,7 @@ async function loadDetailInternal(provider: ProviderId, seriesId: string, lang: 
           ? await dramaboxDetail(seriesId, lang)
           : await freereelsDetail(seriesId, lang);
     if (!detail.card) {
-      return { ok: false, error: "This drama could not be found.", drama: null, episodes: [], similar: [], more: [], alsoOn: [] };
+      return { ok: false, code: "not_found", error: "This drama could not be found.", drama: null, episodes: [], similar: [], more: [], alsoOn: [] };
     }
     const dramaPromise = localizeCards([detail.card], lang, true);
     const episodePromise = localizeEpisodes(detail.episodes, lang);
@@ -768,6 +769,7 @@ async function loadDetailInternal(provider: ProviderId, seriesId: string, lang: 
   } catch (error) {
     return {
       ok: false,
+      code: "unavailable",
       error: error instanceof Error ? error.message : "The provider did not return this drama.",
       drama: null,
       episodes: [],
@@ -830,7 +832,7 @@ export async function loadPlayback(
     ]);
     if (!raw.card) {
       return {
-        detail: { ok: false, error: "This drama could not be found.", drama: null, episodes: [], similar: [], more: [], alsoOn: [] },
+        detail: { ok: false, code: "not_found", error: "This drama could not be found.", drama: null, episodes: [], similar: [], more: [], alsoOn: [] },
         stream,
       };
     }
@@ -842,6 +844,7 @@ export async function loadPlayback(
     return {
       detail: {
         ok: false,
+        code: "unavailable",
         error: error instanceof Error ? error.message : "The provider did not return this drama.",
         drama: null,
         episodes: [],

@@ -726,14 +726,14 @@ export function Player({
         }}
       />
       {caption && !error ? (
-        <p className="player-caption pointer-events-none absolute bottom-14 left-4 right-16 z-30 text-center font-medium text-white">{caption}</p>
+        <p className="player-caption pointer-events-none absolute z-30 text-center text-white">{caption}</p>
       ) : null}
       {loading && !error ? (
         <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center bg-linear-to-b from-black/25 via-black/35 to-black/55">
           <div className="grid place-items-center gap-4">
             <div className="relative grid size-20 place-items-center">
               <span className="absolute inset-0 rounded-full border border-white/15" />
-              <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#ff4d6d] border-r-[#ffb3c1]" />
+              <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#ff2d8d] border-r-[#ffb3c1]" />
               <img src="/logo.png?v=4" alt="" className="h-9 w-auto" />
             </div>
             <p className="text-sm font-medium text-white/85">{({ en: "Loading video…", id: "Memuat video…", hi: "वीडियो लोड हो रहा है…", fil: "Nilo-load ang video…", ms: "Memuatkan video…", th: "กำลังโหลดวิดีโอ…" } as const)[uiLang]}</p>
@@ -800,7 +800,7 @@ export function Player({
             }}
             className="grid size-10 shrink-0 place-items-center"
           >
-            <Globe className={cn("size-5", subtitleLang && "text-[#ff4d6d]")} />
+            <Globe className={cn("size-5", subtitleLang && "text-[#ff2d8d]")} />
           </button>
           <p className="px-2 text-sm tabular-nums">
             {Math.max(currentIndex + 1, 1)}/{episodes.length || 1}
@@ -834,7 +834,7 @@ export function Player({
               }}
               className={cn("col-span-3 min-h-10 rounded-xl px-3 text-left text-xs font-semibold", autoplay ? "bg-white/20 text-white" : "bg-black/55 text-white/75")}
             >
-              {autoplay ? "✓ Putar episode berikutnya otomatis" : "○ Autoplay episode berikutnya mati"}
+              {autoplay ? `✓ ${t.autoplayOn}` : `○ ${t.autoplayOff}`}
             </button>
           </div>
         ) : null}
@@ -843,7 +843,7 @@ export function Player({
             <button
               type="button"
               onClick={() => pickSubtitle(null)}
-              className={cn("block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold", !subtitleLang && "text-[#ff4d6d]")}
+              className={cn("block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold", !subtitleLang && "text-[#ff2d8d]")}
             >
               {uiLang === "id" ? "Mati" : uiLang === "ms" ? "Tutup" : uiLang === "th" ? "ปิด" : "Off"}
             </button>
@@ -854,7 +854,7 @@ export function Player({
                 onClick={() => pickSubtitle(track.lang || track.label)}
                 className={cn(
                   "block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold",
-                  subtitleLang === (track.lang || track.label) && "text-[#ff4d6d]",
+                  subtitleLang === (track.lang || track.label) && "text-[#ff2d8d]",
                 )}
               >
                 {track.label || track.lang}
@@ -870,7 +870,7 @@ export function Player({
       {!error ? (
         <div className={cn("absolute right-2 bottom-20 z-20 flex flex-col items-center gap-4 text-white drop-shadow transition-opacity duration-300", controlsVisible ? "opacity-100" : "pointer-events-none opacity-0")}>
           <button type="button" aria-label={saved ? t.saved : t.save} onClick={saveDrama} className="grid size-11 place-items-center">
-            <Star className={cn("size-7", saved && "fill-current text-[#ff4d6d]")} />
+            <Star className={cn("size-7", saved && "fill-current text-[#ff2d8d]")} />
           </button>
           <button
             type="button"
@@ -950,7 +950,7 @@ export function Player({
         }}
       >
         <span className="absolute inset-x-0 bottom-0 h-1.5 bg-white/55 shadow-[0_0_5px_rgba(0,0,0,0.8)]">
-          <span className="block h-full bg-[#ff4d6d] shadow-[0_0_5px_rgba(255,77,109,0.9)]" style={{ width: `${duration ? Math.min(100, (progress / duration) * 100) : 0}%` }} />
+          <span className="block h-full bg-[#ff2d8d] shadow-[0_0_5px_rgba(255,45,141,0.65)]" style={{ width: `${duration ? Math.min(100, (progress / duration) * 100) : 0}%` }} />
         </span>
       </button>
 
@@ -966,7 +966,7 @@ export function Player({
               ms: `Untuk meneruskan ke Episod ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, buka penaja dahulu. Ini membantu menyokong HouseDrama.`,
               th: `หากต้องการไปยังตอนที่ ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1} โปรดเปิดลิงก์ผู้สนับสนุนก่อน เพื่อช่วยสนับสนุน HouseDrama`,
             } as const)[uiLang]}</p>
-            <button type="button" className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#ff4d8d] to-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => {
+            <button type="button" className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#ff5cab] to-[#ff2d8d] px-4 py-3 font-semibold text-white" onClick={() => {
               // Open a sponsor in a new tab from this explicit user click. The viewer
               // returns to HouseDrama and presses Continue; no ad completion is claimed.
               const provider = Math.random() < 0.5 ? "monetag" : "adsterra";
@@ -988,7 +988,7 @@ export function Player({
                 : ({ en: "Open Sponsor in New Tab", id: "Buka Sponsor di Tab Baru", hi: "नए टैब में प्रायोजक खोलें", fil: "Buksan ang sponsor sa bagong tab", ms: "Buka Penaja dalam Tab Baharu", th: "เปิดผู้สนับสนุนในแท็บใหม่" } as const)[uiLang]}
             </button>
             {sponsorOpened ? (
-              <button type="button" className={`mt-2 w-full rounded-xl border px-4 py-3 font-semibold transition-colors ${sponsorWait > 0 ? "border-gray-300 text-gray-400 dark:border-white/20 dark:text-gray-500" : "border-[#ff4d6d] bg-[#ff4d6d] text-white dark:border-[#ff4d6d] dark:bg-[#ff4d6d] dark:text-white"}`} onClick={continuePendingEpisode} disabled={sponsorWait > 0}>
+              <button type="button" className={`mt-2 w-full rounded-xl border px-4 py-3 font-semibold transition-colors ${sponsorWait > 0 ? "border-gray-300 text-gray-400 dark:border-white/20 dark:text-gray-500" : "border-[#ff2d8d] bg-[#ff2d8d] text-white dark:border-[#ff2d8d] dark:bg-[#ff2d8d] dark:text-white"}`} onClick={continuePendingEpisode} disabled={sponsorWait > 0}>
                 {sponsorWait > 0
                   ? ({ en: `Continue in ${sponsorWait}s`, id: `Lanjutkan dalam ${sponsorWait} dtk`, hi: `${sponsorWait} सेकंड में जारी रखें`, fil: `Magpatuloy sa loob ng ${sponsorWait}s`, ms: `Teruskan dalam ${sponsorWait}s`, th: `ดำเนินการต่อใน ${sponsorWait} วินาที` } as const)[uiLang]
                   : ({ en: "Return & Continue Episode", id: "Kembali & Lanjutkan Episode", hi: "वापस जाएँ और एपिसोड जारी रखें", fil: "Bumalik at magpatuloy sa episode", ms: "Kembali & Teruskan Episod", th: "กลับไปดูตอนต่อ" } as const)[uiLang]}
@@ -1020,7 +1020,7 @@ export function Player({
                     key={page}
                     type="button"
                     onClick={() => setRangePage(page)}
-                    className={page === rangePage ? "text-[#ff4d6d]" : "text-white/70"}
+                    className={page === rangePage ? "text-[#ff2d8d]" : "text-white/70"}
                   >
                     {start}-{end}
                   </button>
@@ -1071,10 +1071,10 @@ export function EpisodeGrid({
               onClick={() => { onPick?.(); }}
               className={cn(
                 "relative grid aspect-square place-items-center rounded-xl bg-[#3a3a3a] text-base font-medium text-white",
-                active && "border-2 border-[#ff4d6d]",
+                active && "border-2 border-[#ff2d8d]",
               )}
             >
-              {active ? <AudioLines className="size-6 text-[#ff4d6d]" /> : item.index}
+              {active ? <AudioLines className="size-6 text-[#ff2d8d]" /> : item.index}
             </Link>
           );
         })}
@@ -1090,7 +1090,7 @@ export function EpisodeGrid({
           params={{ provider, seriesId, episodeId: item.episodeId }}
           onClick={() => { onPick?.(); }}
           className={cn(
-            "flex h-12 items-center justify-center rounded-xl border text-sm font-semibold",
+            "episode-button flex min-h-12 items-center justify-center rounded-xl border px-2 text-sm font-semibold",
             item.episodeId === current ? "border-primary bg-primary text-primary-ink" : "border-line bg-surface text-ink",
           )}
         >

@@ -1,0 +1,7 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "house-drama-legacy-redirect",
+  "compatibility_date": "2026-10-21",
+  "main": "workers/legacy-domain-redirect.js",
+  "routes": [{ "pattern": "house-drama.web.id/*", "zone_name": "house-drama.web.id" }]
+}

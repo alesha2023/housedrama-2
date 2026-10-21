@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { isBlockedProxyHost } from "@/lib/drama/proxy-guard";
 
 const ALLOWED = [
   /(^|\.)videoint\.anyreel\.app$/i,
@@ -9,18 +10,7 @@ const ALLOWED = [
 ];
 
 function blockedHost(hostname: string) {
-  const host = hostname.toLowerCase().replace(/\.+$/, "");
-  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal")) return true;
-  if (host === "metadata.google.internal" || host === "169.254.169.254") return true;
-  const ipv4 = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
-  if (ipv4) {
-    const a = Number(ipv4[1]);
-    const b = Number(ipv4[2]);
-    if (a === 10 || a === 127 || a === 0 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31) || (a === 169 && b === 254)) {
-      return true;
-    }
-  }
-  return false;
+  return isBlockedProxyHost(hostname);
 }
 
 function looksLikeMedia(url: URL) {
@@ -29,12 +19,34 @@ function looksLikeMedia(url: URL) {
 }
 
 function allowed(url: URL) {
+  if (url.username || url.password) return false;
+  if (url.port && url.port !== "443" && url.port !== "80") return false;
   if (blockedHost(url.hostname)) return false;
   if (ALLOWED.some((pattern) => pattern.test(url.hostname))) return true;
   // Melolo's playable edge is melolo2.narto-drama.com and the path is an opaque token, not a .mp4 name.
   if (/(^|\.)narto-drama\.com$/i.test(url.hostname)) return true;
   // Playback falls back to this proxy when a CDN omits CORS. Only media-shaped URLs are accepted.
   return looksLikeMedia(url);
+}
+
+async function fetchChecked(start: URL, headers: Headers) {
+  let current = start;
+  for (let hop = 0; hop < 4; hop += 1) {
+    if (!allowed(current)) return { error: 403 as const };
+    const upstream = await fetch(current.toString().replace(/^http:\/\//i, "https://"), {
+      headers,
+      redirect: "manual",
+      signal: AbortSignal.timeout(20000),
+    });
+    if (upstream.status >= 300 && upstream.status < 400) {
+      const location = upstream.headers.get("location");
+      if (!location) return { error: 502 as const };
+      current = new URL(location, current);
+      continue;
+    }
+    return { upstream, finalUrl: upstream.url || current.toString() };
+  }
+  return { error: 502 as const };
 }
 
 function isPlaylist(contentType: string, pathname: string) {
@@ -79,19 +91,18 @@ async function handle({ request }: { request: Request }) {
   const range = request.headers.get("range");
   if (range) headers.set("range", range);
 
-  let upstream: Response;
+  let fetched: Awaited<ReturnType<typeof fetchChecked>>;
   try {
-    upstream = await fetch(parsed.toString().replace(/^http:\/\//i, "https://"), {
-      headers,
-      redirect: "follow",
-      signal: AbortSignal.timeout(20000),
-    });
+    fetched = await fetchChecked(parsed, headers);
   } catch {
     return new Response("Media host did not respond", { status: 502 });
   }
-
+  if ("error" in fetched) {
+    return new Response(fetched.error === 403 ? "Host is not allowed" : "Media host did not respond", { status: fetched.error });
+  }
+  const upstream = fetched.upstream;
+  const finalUrl = fetched.finalUrl;
   const contentType = upstream.headers.get("content-type") || "";
-  const finalUrl = upstream.url || parsed.toString();
   if (isPlaylist(contentType, new URL(finalUrl).pathname)) {
     const text = await upstream.text();
     return new Response(rewritePlaylist(text, finalUrl), {

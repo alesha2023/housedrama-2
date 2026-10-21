@@ -72,8 +72,8 @@ export function ProviderPicker({
                       setQuery("");
                     }
                   }}
-                  placeholder="Cari nama penyedia..."
-                  aria-label="Cari nama penyedia"
+                  placeholder={t.searchProviders}
+                  aria-label={t.searchProviders}
                   className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
                 />
               </div>
@@ -103,7 +103,7 @@ export function ProviderPicker({
                 </PickerOption>
               ))}
               {!filteredProviders.length && query.trim() ? (
-                <p className="px-3 py-4 text-center text-sm text-muted">Tidak ada penyedia yang cocok.</p>
+                <p className="px-3 py-4 text-center text-sm text-muted">{t.noProviderMatch}</p>
               ) : null}
             </div>
           </div>

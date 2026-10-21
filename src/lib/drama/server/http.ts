@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import type { ProviderId } from "../types";
 import { providerOrigin } from "../providers";
 import { providerEnabled, recordFailure, recordSuccess, setCacheEntries } from "./metrics";
+import { normalizeImageUrl } from "../images";
 
 type CacheEntry = { exp: number; data: unknown };
 
@@ -145,12 +146,7 @@ export function tagList(value: unknown): string[] {
 }
 
 export function absoluteUrl(value: unknown, fallbackBase?: string): string | null {
-  const raw = str(value);
-  if (!raw) return null;
-  if (/^https?:\/\//i.test(raw)) return raw.replace(/^http:\/\//i, "https://");
-  if (raw.startsWith("//")) return `https:${raw}`;
-  if (fallbackBase && !raw.includes(" ")) return `${fallbackBase.replace(/\/$/, "")}/${raw.replace(/^\//, "")}`;
-  return null;
+  return normalizeImageUrl(value, fallbackBase);
 }
 
 export function enc(value: string) {
@@ -175,5 +171,5 @@ export function guessFormat(url: string): "hls" | "mp4" {
 }
 
 export function upgradeHttps(url: string) {
-  return url.replace(/^http:\/\//i, "https://");
+  return normalizeImageUrl(url) ?? url.replace(/^http:\/\//i, "https://");
 }

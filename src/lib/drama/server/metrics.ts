@@ -148,14 +148,12 @@ export function setSectionEnabled(id: string, enabled: boolean) {
 
 function adminPassword() {
   const configured = process.env.DRAMA_ADMIN_PASSWORD;
-  if (configured) return configured;
-  return "171093Lt$";
+  return configured?.trim() ? configured : "";
 }
 
 function adminSecret() {
   const configured = process.env.DRAMA_ADMIN_SECRET;
-  if (configured) return configured;
-  return "dramaluma-session";
+  return configured?.trim() ? configured : "";
 }
 
 function safeEqual(a: string, b: string) {

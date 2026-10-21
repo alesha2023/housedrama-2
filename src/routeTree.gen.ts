@@ -10,13 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as EnglishRouteImport } from './routes/en'
-import { Route as IndonesianRouteImport } from './routes/id'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as DiscoverRouteImport } from './routes/discover'
+import { Route as EnRouteImport } from './routes/en'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as IdRouteImport } from './routes/id'
 import { Route as LatestRouteImport } from './routes/latest'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SearchRouteImport } from './routes/search'
@@ -25,9 +25,10 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TrendingRouteImport } from './routes/trending'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
-import { Route as ApiMediaRouteImport } from './routes/api/media'
-import { Route as ApiVisitorCountRouteImport } from './routes/api/visitor-count'
 import { Route as ApiDramaTrendingRouteImport } from './routes/api/drama-trending'
+import { Route as ApiMediaRouteImport } from './routes/api/media'
+import { Route as ApiPosterRouteImport } from './routes/api/poster'
+import { Route as ApiVisitorCountRouteImport } from './routes/api/visitor-count'
 import { Route as ProviderProviderRouteImport } from './routes/provider/$provider'
 import { Route as DramaProviderSeriesIdRouteImport } from './routes/drama/$provider/$seriesId'
 import { Route as WatchProviderSeriesIdEpisodeIdRouteImport } from './routes/watch/$provider/$seriesId/$episodeId'
@@ -35,16 +36,6 @@ import { Route as WatchProviderSeriesIdEpisodeIdRouteImport } from './routes/wat
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EnglishRoute = EnglishRouteImport.update({
-  id: '/en',
-  path: '/en',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndonesianRoute = IndonesianRouteImport.update({
-  id: '/id',
-  path: '/id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -67,9 +58,19 @@ const DiscoverRoute = DiscoverRouteImport.update({
   path: '/discover',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EnRoute = EnRouteImport.update({
+  id: '/en',
+  path: '/en',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IdRoute = IdRouteImport.update({
+  id: '/id',
+  path: '/id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LatestRoute = LatestRouteImport.update({
@@ -112,19 +113,24 @@ const WatchlistRoute = WatchlistRouteImport.update({
   path: '/watchlist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDramaTrendingRoute = ApiDramaTrendingRouteImport.update({
+  id: '/api/drama-trending',
+  path: '/api/drama-trending',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiMediaRoute = ApiMediaRouteImport.update({
   id: '/api/media',
   path: '/api/media',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPosterRoute = ApiPosterRouteImport.update({
+  id: '/api/poster',
+  path: '/api/poster',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiVisitorCountRoute = ApiVisitorCountRouteImport.update({
   id: '/api/visitor-count',
   path: '/api/visitor-count',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiDramaTrendingRoute = ApiDramaTrendingRouteImport.update({
-  id: '/api/drama-trending',
-  path: '/api/drama-trending',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProviderProviderRoute = ProviderProviderRouteImport.update({
@@ -146,13 +152,13 @@ const WatchProviderSeriesIdEpisodeIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/en': typeof EnglishRoute
-  '/id': typeof IndonesianRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
   '/discover': typeof DiscoverRoute
+  '/en': typeof EnRoute
   '/history': typeof HistoryRoute
+  '/id': typeof IdRoute
   '/latest': typeof LatestRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
@@ -161,22 +167,23 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/trending': typeof TrendingRoute
   '/watchlist': typeof WatchlistRoute
-  '/api/media': typeof ApiMediaRoute
-  '/api/visitor-count': typeof ApiVisitorCountRoute
   '/api/drama-trending': typeof ApiDramaTrendingRoute
+  '/api/media': typeof ApiMediaRoute
+  '/api/poster': typeof ApiPosterRoute
+  '/api/visitor-count': typeof ApiVisitorCountRoute
   '/provider/$provider': typeof ProviderProviderRoute
   '/drama/$provider/$seriesId': typeof DramaProviderSeriesIdRoute
   '/watch/$provider/$seriesId/$episodeId': typeof WatchProviderSeriesIdEpisodeIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/en': typeof EnglishRoute
-  '/id': typeof IndonesianRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
   '/discover': typeof DiscoverRoute
+  '/en': typeof EnRoute
   '/history': typeof HistoryRoute
+  '/id': typeof IdRoute
   '/latest': typeof LatestRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
@@ -185,9 +192,10 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/trending': typeof TrendingRoute
   '/watchlist': typeof WatchlistRoute
-  '/api/media': typeof ApiMediaRoute
-  '/api/visitor-count': typeof ApiVisitorCountRoute
   '/api/drama-trending': typeof ApiDramaTrendingRoute
+  '/api/media': typeof ApiMediaRoute
+  '/api/poster': typeof ApiPosterRoute
+  '/api/visitor-count': typeof ApiVisitorCountRoute
   '/provider/$provider': typeof ProviderProviderRoute
   '/drama/$provider/$seriesId': typeof DramaProviderSeriesIdRoute
   '/watch/$provider/$seriesId/$episodeId': typeof WatchProviderSeriesIdEpisodeIdRoute
@@ -195,13 +203,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/en': typeof EnglishRoute
-  '/id': typeof IndonesianRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
   '/discover': typeof DiscoverRoute
+  '/en': typeof EnRoute
   '/history': typeof HistoryRoute
+  '/id': typeof IdRoute
   '/latest': typeof LatestRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
@@ -210,9 +218,10 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/trending': typeof TrendingRoute
   '/watchlist': typeof WatchlistRoute
-  '/api/media': typeof ApiMediaRoute
-  '/api/visitor-count': typeof ApiVisitorCountRoute
   '/api/drama-trending': typeof ApiDramaTrendingRoute
+  '/api/media': typeof ApiMediaRoute
+  '/api/poster': typeof ApiPosterRoute
+  '/api/visitor-count': typeof ApiVisitorCountRoute
   '/provider/$provider': typeof ProviderProviderRoute
   '/drama/$provider/$seriesId': typeof DramaProviderSeriesIdRoute
   '/watch/$provider/$seriesId/$episodeId': typeof WatchProviderSeriesIdEpisodeIdRoute
@@ -221,13 +230,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/en'
-    | '/id'
     | '/about'
     | '/admin'
     | '/categories'
     | '/discover'
+    | '/en'
     | '/history'
+    | '/id'
     | '/latest'
     | '/privacy'
     | '/search'
@@ -236,7 +245,9 @@ export interface FileRouteTypes {
     | '/terms'
     | '/trending'
     | '/watchlist'
+    | '/api/drama-trending'
     | '/api/media'
+    | '/api/poster'
     | '/api/visitor-count'
     | '/provider/$provider'
     | '/drama/$provider/$seriesId'
@@ -244,13 +255,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/en'
-    | '/id'
     | '/about'
     | '/admin'
     | '/categories'
     | '/discover'
+    | '/en'
     | '/history'
+    | '/id'
     | '/latest'
     | '/privacy'
     | '/search'
@@ -259,7 +270,9 @@ export interface FileRouteTypes {
     | '/terms'
     | '/trending'
     | '/watchlist'
+    | '/api/drama-trending'
     | '/api/media'
+    | '/api/poster'
     | '/api/visitor-count'
     | '/provider/$provider'
     | '/drama/$provider/$seriesId'
@@ -267,13 +280,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/en'
-    | '/id'
     | '/about'
     | '/admin'
     | '/categories'
     | '/discover'
+    | '/en'
     | '/history'
+    | '/id'
     | '/latest'
     | '/privacy'
     | '/search'
@@ -282,7 +295,9 @@ export interface FileRouteTypes {
     | '/terms'
     | '/trending'
     | '/watchlist'
+    | '/api/drama-trending'
     | '/api/media'
+    | '/api/poster'
     | '/api/visitor-count'
     | '/provider/$provider'
     | '/drama/$provider/$seriesId'
@@ -291,13 +306,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  EnglishRoute: typeof EnglishRoute
-  IndonesianRoute: typeof IndonesianRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
   CategoriesRoute: typeof CategoriesRoute
   DiscoverRoute: typeof DiscoverRoute
+  EnRoute: typeof EnRoute
   HistoryRoute: typeof HistoryRoute
+  IdRoute: typeof IdRoute
   LatestRoute: typeof LatestRoute
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
@@ -306,9 +321,10 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   TrendingRoute: typeof TrendingRoute
   WatchlistRoute: typeof WatchlistRoute
-  ApiMediaRoute: typeof ApiMediaRoute
-  ApiVisitorCountRoute: typeof ApiVisitorCountRoute
   ApiDramaTrendingRoute: typeof ApiDramaTrendingRoute
+  ApiMediaRoute: typeof ApiMediaRoute
+  ApiPosterRoute: typeof ApiPosterRoute
+  ApiVisitorCountRoute: typeof ApiVisitorCountRoute
   ProviderProviderRoute: typeof ProviderProviderRoute
   DramaProviderSeriesIdRoute: typeof DramaProviderSeriesIdRoute
   WatchProviderSeriesIdEpisodeIdRoute: typeof WatchProviderSeriesIdEpisodeIdRoute
@@ -321,20 +337,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/en': {
-      id: '/en'
-      path: '/en'
-      fullPath: '/en'
-      preLoaderRoute: typeof EnglishRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/id': {
-      id: '/id'
-      path: '/id'
-      fullPath: '/id'
-      preLoaderRoute: typeof IndonesianRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -365,11 +367,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiscoverRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/en': {
+      id: '/en'
+      path: '/en'
+      fullPath: '/en'
+      preLoaderRoute: typeof EnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/history': {
       id: '/history'
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/id': {
+      id: '/id'
+      path: '/id'
+      fullPath: '/id'
+      preLoaderRoute: typeof IdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/latest': {
@@ -428,6 +444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WatchlistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/drama-trending': {
+      id: '/api/drama-trending'
+      path: '/api/drama-trending'
+      fullPath: '/api/drama-trending'
+      preLoaderRoute: typeof ApiDramaTrendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/media': {
       id: '/api/media'
       path: '/api/media'
@@ -435,18 +458,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/poster': {
+      id: '/api/poster'
+      path: '/api/poster'
+      fullPath: '/api/poster'
+      preLoaderRoute: typeof ApiPosterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/visitor-count': {
       id: '/api/visitor-count'
       path: '/api/visitor-count'
       fullPath: '/api/visitor-count'
       preLoaderRoute: typeof ApiVisitorCountRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/drama-trending': {
-      id: '/api/drama-trending'
-      path: '/api/drama-trending'
-      fullPath: '/api/drama-trending'
-      preLoaderRoute: typeof ApiDramaTrendingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/provider/$provider': {
@@ -475,13 +498,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  EnglishRoute: EnglishRoute,
-  IndonesianRoute: IndonesianRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
   CategoriesRoute: CategoriesRoute,
   DiscoverRoute: DiscoverRoute,
+  EnRoute: EnRoute,
   HistoryRoute: HistoryRoute,
+  IdRoute: IdRoute,
   LatestRoute: LatestRoute,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
@@ -490,9 +513,10 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   TrendingRoute: TrendingRoute,
   WatchlistRoute: WatchlistRoute,
-  ApiMediaRoute: ApiMediaRoute,
-  ApiVisitorCountRoute: ApiVisitorCountRoute,
   ApiDramaTrendingRoute: ApiDramaTrendingRoute,
+  ApiMediaRoute: ApiMediaRoute,
+  ApiPosterRoute: ApiPosterRoute,
+  ApiVisitorCountRoute: ApiVisitorCountRoute,
   ProviderProviderRoute: ProviderProviderRoute,
   DramaProviderSeriesIdRoute: DramaProviderSeriesIdRoute,
   WatchProviderSeriesIdEpisodeIdRoute: WatchProviderSeriesIdEpisodeIdRoute,

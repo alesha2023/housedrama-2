@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getSql } from "@/lib/db";
+import { recordVisitorDay } from "@/lib/drama/server/audience";
 
 let tableReady: Promise<Awaited<ReturnType<typeof getSql>>> | undefined;
 
@@ -67,6 +68,11 @@ async function handlePost({ request }: { request: Request }) {
            last_visit_date = timezone('Asia/Jakarta', now())::date`,
       [visitorId],
     );
+    try {
+      await recordVisitorDay(visitorId);
+    } catch (error) {
+      console.error("[visitor-count] daily row failed:", error);
+    }
     return Response.json(await counts(sql), {
       headers: { "cache-control": "no-store" },
     });

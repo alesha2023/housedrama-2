@@ -145,7 +145,13 @@ function authPopupPlugin(): Plugin {
 // `0.0.0.0:8080` is the live-preview contract — don't change host/port.
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
-export default defineConfig(({ command, isPreview }) => ({
+// DEPLOY_TARGET=cloudflare swaps Nitro/Vercel for the official Cloudflare Vite plugin.
+export default defineConfig(async ({ command, isPreview }) => {
+  const useCloudflare = process.env.DEPLOY_TARGET === "cloudflare";
+  const cloudflarePlugin = useCloudflare
+    ? [(await import("@cloudflare/vite-plugin")).cloudflare({ viteEnvironment: { name: "ssr" } })]
+    : [];
+  return {
   server: {
     host: "0.0.0.0",
     port: 8080,
@@ -156,8 +162,14 @@ export default defineConfig(({ command, isPreview }) => ({
     port: 8081,
     strictPort: true,
   },
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    tsconfigPaths: true,
+    alias: useCloudflare
+      ? { "@electric-sql/pglite": join(process.cwd(), "src/lib/pglite-workers-stub.ts") }
+      : {},
+  },
   plugins: [
+    ...cloudflarePlugin,
     pgliteBootstrapPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.
     authPopupPlugin(),
@@ -167,7 +179,7 @@ export default defineConfig(({ command, isPreview }) => ({
     grokPwaPlugin(),
     tailwindcss(),
     tanstackStart(),
-    ...(command === "build" || isPreview
+    ...(!useCloudflare && (command === "build" || isPreview)
       ? [
           nitro({
             preset: "vercel",
@@ -180,4 +192,4 @@ export default defineConfig(({ command, isPreview }) => ({
       : []),
     viteReact(),
   ],
-}));
+};});

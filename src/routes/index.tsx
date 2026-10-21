@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ErrorNote, PageSkeleton, Poster, ProviderBadge, Rail, TagPills, byPopularity } from "@/components/drama/cards";
+import { SeoItemList } from "@/components/drama/seo-item-list";
 import { ProviderPicker } from "@/components/drama/provider-picker";
 import { getHomeData } from "@/lib/drama/api";
 import { railTitle, usePrefs } from "@/lib/drama/i18n";
@@ -9,6 +10,7 @@ import { pickDescription, pickTitle, useDisplayTitles } from "@/lib/drama/displa
 import { readHistory } from "@/lib/drama/storage";
 import { isProviderId, type HomePayload, type ProviderId } from "@/lib/drama/types";
 import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
+import { absoluteSiteUrl, pageSeo } from "@/lib/drama/site";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): { provider?: ProviderId } => ({
@@ -17,29 +19,15 @@ export const Route = createFileRoute("/")({
   loaderDeps: ({ search }): { provider: "all" | ProviderId } => ({ provider: search.provider ?? "all" }),
   loader: ({ deps }) => getHomeData({ data: { lang: "en", provider: deps.provider } }),
   pendingComponent: PageSkeleton,
-  head: () => ({
-    meta: [
-      { name: "robots", content: "index,follow,max-image-preview:large" },
-      { title: "HouseDrama — Watch Chinese & Asian Short Dramas Online" },
-      {
-        name: "description",
-        content:
-          "Watch Chinese and Asian short dramas online on HouseDrama. Discover trending romance, CEO, revenge, fantasy, and new episodes from multiple drama providers.",
-      },
-      { property: "og:title", content: "HouseDrama — Watch Chinese & Asian Short Dramas Online" },
-      { property: "og:description", content: "Watch Chinese and Asian short dramas online, including romance, CEO, revenge, and fantasy stories on HouseDrama." },
-      { property: "og:url", content: "https://house-drama.web.id/" },
-      { property: "og:image", content: "https://house-drama.web.id/og-v2.jpg" },
-      { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "1200" },
-      { property: "og:image:alt", content: "HouseDrama — Watch Chinese and Asian Short Dramas Online" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [
-      { rel: "canonical", href: "https://house-drama.web.id/" },
-      { rel: "alternate", hrefLang: "en", href: "https://house-drama.web.id/en" },
-      { rel: "alternate", hrefLang: "id", href: "https://house-drama.web.id/id" },
-      { rel: "alternate", hrefLang: "x-default", href: "https://house-drama.web.id/" },
+  head: ({ match }) => pageSeo({
+    title: "HouseDrama — Watch Chinese & Asian Short Dramas Online",
+    description: "Watch Chinese and Asian short dramas online on HouseDrama. Discover trending romance, CEO, revenge, fantasy, and new episodes from multiple drama providers.",
+    path: "/",
+    robots: match.search.provider ? "noindex,follow" : "index,follow,max-image-preview:large",
+    extraLinks: [
+      { rel: "alternate", hrefLang: "en", href: absoluteSiteUrl("/") },
+      { rel: "alternate", hrefLang: "id", href: absoluteSiteUrl("/id") },
+      { rel: "alternate", hrefLang: "x-default", href: absoluteSiteUrl("/") },
     ],
   }),
   component: HomePage,
@@ -92,9 +80,11 @@ function HomePage() {
     contentLang,
   );
   const down = data.providers.filter((item) => !item.ok);
+  const seoItems = [...data.hero, ...data.sections.flatMap((section) => section.items)];
 
   return (
     <div>
+      <SeoItemList items={seoItems} name="Chinese and Asian Short Dramas on HouseDrama" />
       {down.length ? <ErrorNote message={`${t.providersDown} (${down.map((item) => item.id).join(", ")})`} /> : null}
       <div className="mb-4">
         <p className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
@@ -110,27 +100,31 @@ function HomePage() {
         />
       </div>
       {current ? (
-        <section className="relative overflow-hidden rounded-3xl bg-ink shadow-[0_16px_40px_rgb(17_18_22_/_0.12)]">
+        <section className="hd-hero relative -mx-4 overflow-hidden bg-[#07080b] shadow-[0_24px_70px_rgb(0_0_0_/_0.35)] sm:mx-0 sm:rounded-[1.75rem]">
           <div className="grid lg:grid-cols-[1.3fr_0.7fr]">
-            <div className="relative aspect-[4/5] overflow-hidden sm:aspect-[16/9] lg:aspect-auto lg:min-h-[28rem]">
+            <div className="relative aspect-[4/5] overflow-hidden min-[480px]:aspect-[16/10] lg:aspect-auto lg:min-h-[32rem]">
               <div
                 className="flex h-full transition-transform duration-700 ease-out"
                 style={{ width: `${hero.length * 100}%`, transform: `translateX(-${(slide % Math.max(hero.length, 1)) * (100 / Math.max(hero.length, 1))}%)` }}
               >
-                {hero.map((item) => (
+                {hero.map((item, index) => (
                   <div key={`${item.provider}-${item.seriesId}`} className="relative h-full shrink-0" style={{ width: `${100 / Math.max(hero.length, 1)}%` }}>
-                    <Poster src={item.bannerUrl || item.posterUrl} alt="" priority className="absolute inset-0 h-full w-full" />
-                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/55 to-black/15" />
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-5 pb-8 text-white sm:p-8">
+                    <Poster src={item.bannerUrl || item.posterUrl} alt={pickTitle(item, contentLang)} priority className="absolute inset-0 h-full w-full" />
+                    <div className="hd-hero__shade absolute inset-0" />
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-5 pb-8 text-white sm:p-8 lg:p-10">
                       <div className="mb-3 flex flex-wrap gap-2">
                         <ProviderBadge provider={item.provider} />
                         {item.tags.slice(0, 3).map((tag) => (
                           <span key={tag} className="rounded-full bg-white/15 px-2 py-0.5 text-xs">{tag}</span>
                         ))}
                       </div>
-                      <p className="mb-2 text-xs font-semibold tracking-[0.16em] text-white/80 uppercase">{uiLang === "id" ? "Unggulan" : uiLang === "ms" ? "Pilihan" : uiLang === "th" ? "แนะนำ" : "Featured"}</p>
-                      <h1 className="max-w-xl text-3xl sm:text-5xl">{pickTitle(item, contentLang)}</h1>
-                      <p className="mt-3 max-w-xl line-clamp-3 text-sm text-white/85">{pickDescription(item, contentLang) || t.heroFallback}</p>
+                      <p className="hd-kicker mb-2 text-xs font-semibold tracking-[0.18em] text-white/75 uppercase">{uiLang === "id" ? "Unggulan" : uiLang === "ms" ? "Pilihan" : uiLang === "th" ? "แนะนำ" : "Featured"}</p>
+                      {index === slide ? (
+                        <h1 className="hd-hero__title max-w-2xl text-[1.85rem] leading-[1.08] sm:text-5xl">{pickTitle(item, contentLang)}</h1>
+                      ) : (
+                        <p className="hd-hero__title max-w-2xl text-[1.85rem] leading-[1.08] sm:text-5xl">{pickTitle(item, contentLang)}</p>
+                      )}
+                      <p className="mt-3 line-clamp-3 max-w-xl text-sm leading-relaxed text-white/80 sm:text-[15px]">{pickDescription(item, contentLang) || t.heroFallback}</p>
                       <div className="pointer-events-auto mt-5 flex flex-wrap gap-2">
                         {item.firstEpisodeId ? (
                           <Link
@@ -138,7 +132,7 @@ function HomePage() {
                             params={{ provider: item.provider, seriesId: item.seriesId, episodeId: item.firstEpisodeId }}
                             onClick={() => maybeOpenMonetagAd()}
                             search={{ auto: true }}
-                            className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-5 font-semibold text-primary-ink"
+                            className="inline-flex h-12 min-h-12 items-center gap-2 rounded-full bg-primary px-5 font-semibold text-primary-ink shadow-[0_10px_24px_rgb(255_45_141_/_0.22)]"
                           >
                             <Play className="size-4 fill-current" />
                             {t.play}
@@ -147,7 +141,7 @@ function HomePage() {
                           <Link
                             to="/drama/$provider/$seriesId"
                             params={{ provider: item.provider, seriesId: item.seriesId }}
-                            className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-5 font-semibold text-primary-ink"
+                            className="inline-flex h-12 min-h-12 items-center gap-2 rounded-full bg-primary px-5 font-semibold text-primary-ink shadow-[0_10px_24px_rgb(255_45_141_/_0.22)]"
                           >
                             <Play className="size-4 fill-current" />
                             {t.play}
@@ -156,7 +150,7 @@ function HomePage() {
                         <Link
                           to="/drama/$provider/$seriesId"
                           params={{ provider: item.provider, seriesId: item.seriesId }}
-                          className="inline-flex h-12 items-center rounded-full bg-white px-5 font-semibold text-ink"
+                          className="inline-flex h-12 min-h-12 items-center rounded-full border border-white/25 bg-white/10 px-5 font-semibold text-white backdrop-blur-sm"
                         >
                           {t.details}
                         </Link>
@@ -166,20 +160,20 @@ function HomePage() {
                 ))}
               </div>
             </div>
-            <div className="hidden flex-col gap-2 bg-surface p-4 text-ink lg:flex">
+            <div className="hd-hero__rail hidden flex-col gap-1.5 p-4 text-white lg:flex">
               {hero.map((item, index) => (
                 <button
                   key={`${item.provider}-${item.seriesId}`}
                   type="button"
                   onClick={() => setSlide(index)}
-                  className={`flex items-center gap-3 rounded-2xl p-2 text-left ${index === slide ? "bg-bg" : "hover:bg-bg/70"}`}
+                  className={`hd-hero__pick flex min-h-11 items-center gap-3 rounded-2xl p-2 text-left ${index === slide ? "is-active" : ""}`}
                 >
                   <span className="h-16 w-12 overflow-hidden rounded-lg">
-                    <Poster src={item.posterUrl} alt="" />
+                    <Poster src={item.posterUrl} alt={pickTitle(item, contentLang)} />
                   </span>
                   <span>
-                    <span className="block text-sm font-semibold">{pickTitle(item, contentLang)}</span>
-                    <span className="text-xs text-muted">{item.tags[0] || item.provider}</span>
+                    <span className="block line-clamp-2 text-sm font-semibold text-white">{pickTitle(item, contentLang)}</span>
+                    <span className="text-xs text-white/60">{item.tags[0] || item.provider}</span>
                   </span>
                 </button>
               ))}
@@ -201,13 +195,13 @@ function HomePage() {
         <ErrorNote message={t.catalogsEmpty} />
       )}
 
-      <div className="no-scrollbar -mx-4 mt-4 flex gap-2 overflow-x-auto px-4">
+      <div className="hd-chips no-scrollbar -mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1">
         {(["romance", "revenge", "billionaire", "ceo", "fantasy", "historical", "completed"] as const).map((id) => (
           <Link
             key={id}
             to="/discover"
             search={{ rail: id }}
-            className="shrink-0 rounded-full bg-surface px-3.5 py-1.5 text-sm font-medium text-ink ring-1 ring-line"
+            className="hd-chip shrink-0 rounded-full px-3.5 py-2 text-sm font-medium"
           >
             {railTitle(uiLang, id, id)}
           </Link>
@@ -215,7 +209,7 @@ function HomePage() {
       </div>
 
       {history.length ? (
-        <section className="mt-8">
+        <section className="hd-rail mt-8">
           <div className="mb-3 flex items-end justify-between">
             <h2 className="text-lg font-semibold tracking-tight">{t.continue}</h2>
             <Link to="/history" className="text-sm font-semibold text-primary">

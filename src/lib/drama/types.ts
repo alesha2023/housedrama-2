@@ -135,9 +135,13 @@ export type HomePayload = {
   generatedAt: number;
 };
 
+export type DetailFailureCode = "not_found" | "unavailable";
+
 export type DetailPayload = {
   ok: boolean;
   error: string | null;
+  /** Distinguishes a missing title from a temporary provider failure. Omitted on success. */
+  code?: DetailFailureCode;
   drama: DramaCard | null;
   episodes: Episode[];
   similar: DramaCard[];

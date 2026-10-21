@@ -5,13 +5,16 @@ import { EmptyState, PageIntro, Poster, ProviderBadge } from "@/components/drama
 import { usePrefs } from "@/lib/drama/i18n";
 import { useDisplayTitles } from "@/lib/drama/display";
 import { readWatchlist, toggleWatchlist, type SavedDrama } from "@/lib/drama/storage";
+import { absoluteSiteUrl } from "@/lib/drama/site";
 
 export const Route = createFileRoute("/watchlist")({
   head: () => ({
     meta: [
-      { title: "Daftar Tontonan — HouseDrama" },
+      { title: "Watchlist — HouseDrama" },
+      { name: "description", content: "Your HouseDrama watchlist is stored in this browser and is not a public catalog page." },
       { name: "robots", content: "noindex,follow" },
     ],
+    links: [{ rel: "canonical", href: absoluteSiteUrl("/watchlist") }],
   }),
   component: WatchlistPage,
 });

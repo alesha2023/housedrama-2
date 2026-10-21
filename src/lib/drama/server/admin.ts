@@ -1,5 +1,6 @@
 import type { ProviderId } from "../types";
 import { pingProviders } from "./catalog";
+import { readAudience, type AudienceReport } from "./audience";
 import {
   setProviderEnabled,
   setSectionEnabled,
@@ -20,7 +21,13 @@ export async function pingSafe() {
 export async function snapshot(_health: typeof pingSafe) {
   const health = await _health();
   const base = readSnapshot();
-  return { ...base, health };
+  let audience: AudienceReport | null = null;
+  try {
+    audience = await readAudience();
+  } catch (error) {
+    console.error("[admin] audience read failed:", error);
+  }
+  return { ...base, health, audience };
 }
 
 export function applySettings(input: {

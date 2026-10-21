@@ -1,15 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageIntro } from "@/components/drama/cards";
+import { pageSeo } from "@/lib/drama/site";
 import { usePrefs } from "@/lib/drama/i18n";
 
 export const Route = createFileRoute("/terms")({
-  head: () => ({
-    meta: [
-      { title: "Terms — HouseDrama" },
-      { name: "description", content: "Terms for using HouseDrama’s short-drama catalog." },
-      { name: "robots", content: "index,follow" },
-    ],
-    links: [{ rel: "canonical", href: "https://house-drama.web.id/terms" }],
+  head: () => pageSeo({
+    title: "Terms — HouseDrama",
+    description: "Terms for using the HouseDrama short-drama catalog. Streams play only when a provider returns a real URL.",
+    path: "/terms",
+    robots: "index,follow",
   }),
   component: TermsPage,
 });

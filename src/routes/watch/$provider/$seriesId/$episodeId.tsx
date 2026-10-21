@@ -1,10 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { EmptyState } from "@/components/drama/cards";
+import { MissingPage } from "@/components/drama/not-found";
 import { Player } from "@/components/drama/player";
 import { getWatchData } from "@/lib/drama/api";
 import { usePrefs } from "@/lib/drama/i18n";
-import { isProviderId, type Episode } from "@/lib/drama/types";
+import { applyHttpStatus } from "@/lib/drama/http-status";
+import { absoluteSiteUrl } from "@/lib/drama/site";
+import { isProviderId } from "@/lib/drama/types";
 
 export const Route = createFileRoute("/watch/$provider/$seriesId/$episodeId")({
   validateSearch: (search: Record<string, unknown>): { auto?: boolean; lang?: string } => ({
@@ -12,30 +15,47 @@ export const Route = createFileRoute("/watch/$provider/$seriesId/$episodeId")({
     ...(typeof search.lang === "string" ? { lang: search.lang } : {}),
   }),
   loader: async ({ params }) => {
-    if (!isProviderId(params.provider)) throw new Error("Unknown provider");
-    return getWatchData({
+    if (!isProviderId(params.provider)) throw notFound();
+    const data = await getWatchData({
       data: { provider: params.provider, seriesId: params.seriesId, episodeId: params.episodeId, lang: "en" },
     });
+    if (!data.detail.drama) {
+      if (data.detail.code === "not_found") throw notFound();
+      await applyHttpStatus(503);
+      return data;
+    }
+    const episode = data.detail.episodes.find((item) => item.episodeId === params.episodeId);
+    if (!episode) await applyHttpStatus(data.detail.episodes.length ? 404 : 503);
+    return data;
   },
   staleTime: 60_000,
   pendingMs: 0,
   pendingMinMs: 300,
   pendingComponent: WatchPending,
-  head: ({ loaderData, params }) => ({
-    meta: [
-      {
-        title: loaderData?.detail.drama
-          ? `Tonton ${loaderData.detail.drama.displayTitle || loaderData.detail.drama.title} — HouseDrama`
-          : "Tonton Drama — HouseDrama",
-      },
-      { name: "robots", content: "noindex,follow" },
-      {
-        name: "description",
-        content: `Tonton episode ${params.episodeId} di HouseDrama. Buka halaman detail drama untuk melihat informasi dan daftar episode.`,
-      },
-    ],
-  }),
+  head: ({ loaderData, params }) => {
+    const titleName = loaderData?.detail.drama?.displayTitle || loaderData?.detail.drama?.title;
+    const title = titleName ? `${titleName} — Watch on HouseDrama` : "Watch — HouseDrama";
+    return {
+      meta: [
+        { title },
+        { name: "robots", content: "noindex,follow" },
+        {
+          name: "description",
+          content: titleName
+            ? `Watch ${titleName} on HouseDrama. The synopsis and episode list are on the drama page.`
+            : "This episode page is for playback. Open the drama page for the synopsis and episode list.",
+        },
+      ],
+      links: [{ rel: "canonical", href: absoluteSiteUrl(`/drama/${encodeURIComponent(params.provider)}/${encodeURIComponent(params.seriesId)}`) }],
+    };
+  },
   component: WatchPage,
+  notFoundComponent: () => (
+    <MissingPage
+      title="Episode not found"
+      body="This watch URL is not in the catalog. Open Discover and choose a drama that is actually listed."
+    />
+  ),
 });
 
 function WatchPage() {
@@ -75,28 +95,35 @@ function WatchPage() {
   }, [initial]);
 
   if (!isProviderId(params.provider) || !detail.drama) {
-    return <EmptyState title={t.cantOpen} body={detail.error || t.missingDrama} />;
+    return (
+      <>
+        <h1 className="sr-only">Episode unavailable</h1>
+        <EmptyState title={t.cantOpen} body={detail.error || t.missingDrama} />
+      </>
+    );
   }
 
   // Never fabricate an "open" episode when the provider did not return it.
   // Fake episode rows make unavailable videos look playable and can mislead visitors.
   const episode = detail.episodes.find((item) => item.episodeId === params.episodeId);
   if (!episode) {
-    const isEnglish = (params.provider && typeof window !== "undefined" &&
-      (new URLSearchParams(window.location.search).get("lang") === "en" ||
-       document.documentElement.lang.toLowerCase().startsWith("en"))) || false;
     return (
-      <EmptyState
-        title={isEnglish ? "Episode unavailable" : "Episode tidak tersedia"}
-        body={isEnglish
-          ? "The provider did not return this episode. Please return to the drama page and choose an episode that is available."
-          : "Provider tidak mengembalikan episode ini. Kembali ke halaman drama dan pilih episode yang tersedia."}
-      />
+      <>
+        <h1 className="sr-only">Episode unavailable</h1>
+        <EmptyState
+          title="Episode unavailable"
+          body="The provider did not return this episode. Go back to the drama page and choose an episode that is listed."
+        />
+      </>
     );
   }
 
+  const titleName = detail.drama.displayTitle || detail.drama.title;
   return (
-    <Player drama={detail.drama} episodes={detail.episodes} episode={episode} initial={stream} alsoOn={detail.alsoOn} autoStart={auto !== false} />
+    <>
+      <h1 className="sr-only">{titleName}</h1>
+      <Player drama={detail.drama} episodes={detail.episodes} episode={episode} initial={stream} alsoOn={detail.alsoOn} autoStart={auto !== false} />
+    </>
   );
 }
 
@@ -108,7 +135,7 @@ function WatchPending() {
       <div className="grid place-items-center gap-4">
         <div className="relative grid size-20 place-items-center">
           <span className="absolute inset-0 rounded-full border border-white/15" />
-          <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#ff4d6d] border-r-[#ffb3c1]" />
+          <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#ff2d8d] border-r-[#ffc4d6]" />
           <img src="/logo.png?v=4" alt="" className="h-9 w-auto" />
         </div>
         <p className="text-sm font-medium text-white/80">{loadingText}</p>

@@ -51,7 +51,7 @@ async function handleGet() {
         badge: "Trending di HouseDrama",
         firstEpisodeId: null,
       }));
-    return Response.json({ items }, { headers: { "cache-control": "no-store" } });
+    return Response.json({ items }, { headers: { "cache-control": "public, max-age=30" } });
   } catch (error) {
     console.error("[drama-trending] read failed:", error);
     return Response.json({ items: [] }, { headers: { "cache-control": "no-store" } });

@@ -84,6 +84,7 @@ const API_PREFIX = new Set<ProviderId>([
   "myrelle",
   "playlet",
   "reelala",
+  "reelbuzz",
   "reelife",
   "sarostv",
   "shortical",
@@ -112,6 +113,10 @@ const HIDDEN_PROVIDERS = new Set<ProviderId>([
   "flareflow",
   "freedrama",
   "fundrama",
+  "goodshort",
+  "microdrama",
+  "moviebox",
+  "dramanova",
   "minidrama",
   "minishorts",
   "minutedrama",
@@ -133,8 +138,50 @@ export function isProviderHidden(id: ProviderId) {
 }
 
 export function visibleProviders() {
-  return PROVIDERS.filter((id) => !HIDDEN_PROVIDERS.has(id));
+  const visible = PROVIDERS.filter((id) => !HIDDEN_PROVIDERS.has(id));
+  const rank = new Map(PICKER_ORDER.map((id, index) => [id, index]));
+  return [...visible].sort((a, b) => (rank.get(a) ?? 80) - (rank.get(b) ?? 80));
 }
+
+/**
+ * Picker order from the 2026-10-21 catalog probe.
+ * Working, widely used catalogs stay first. Proven failures stay last and
+ * remain selectable so they can recover without a code change.
+ */
+const PICKER_ORDER: ProviderId[] = [
+  "dramabox",
+  "freereels",
+  "anyreel",
+  "reelshort",
+  "netshort",
+  "shortmax",
+  "vigloo",
+  "melolo",
+  "dramawave",
+  "flickreels",
+  "joyreels",
+  "flextv",
+  "velolo",
+  "happyshort",
+  "reelbuzz",
+  "reelala",
+  "bibishort",
+  "cubetv",
+  "candyjar",
+  "idrama",
+  "myrelle",
+  "pinedrama",
+  "reelife",
+  "shortical",
+  "starshort",
+  "vyntage",
+  "moboreels",
+  "sarostv",
+  "kalostv",
+  "mydrama",
+  "playlet",
+  "stardusttv",
+];
 
 export function isCoreProvider(id: ProviderId) {
   return id === "anyreel" || id === "dramabox" || id === "freereels";
@@ -149,11 +196,20 @@ export function providerOrigin(id: ProviderId) {
 }
 
 export function homeCandidates(id: ProviderId) {
+  if (id === "reelbuzz") return ["/get-tabs", "/get-categories"];
+  if (id === "mydrama") return ["/get-home", "/get-foryou"];
+  if (id === "sarostv") return ["/get-foryou", "/get-home"];
+  if (id === "starshort") return ["/get-foryou", "/get-home"];
+  if (id === "stardusttv") return ["/get-hot"];
   if (id === "vigloo") return ["/get-discover", "/get-rank"];
   if (id === "dramawave") return ["/get-foryou", "/get-channels"];
   if (id === "flickreels") return ["/get-home-channels"];
   if (id === "goodshort") return ["/get-home-channels/id", "/get-home-channels/en"];
   if (id === "happyshort") return ["/get-channels", "/get-ranking"];
+  if (id === "flextv") return ["/get-hot", "/get-foryou", "/get-home", "/get-list"];
+  if (id === "velolo") return ["/get-list", "/get-hot", "/get-home"];
+  if (id === "shortmax") return ["/get-home", "/get-hot"];
+  if (id === "kalostv") return ["/get-foryou", "/get-discover"];
   if (id === "netshort") return ["/get-home", "/get-foryou", "/get-charts"];
   return ["/get-home", "/get-foryou", "/get-discover", "/get-list", "/get-hot"];
 }

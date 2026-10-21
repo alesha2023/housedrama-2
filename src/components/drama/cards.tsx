@@ -5,6 +5,7 @@ import type { DramaCard, ProviderId } from "@/lib/drama/types";
 import { usePrefs } from "@/lib/drama/i18n";
 import { pickTitle } from "@/lib/drama/display";
 import { providerLabel } from "@/lib/drama/providers";
+import { browserPosterUrl } from "@/lib/drama/images";
 import { cn } from "@/lib/utils";
 
 export { providerLabel };
@@ -12,17 +13,7 @@ export { providerLabel };
 // Poster recovery deliberately never borrows an image from another drama.
 // A poster must belong to this drama; otherwise show the neutral HouseDrama banner.
 function directPosterSource(value: string | null) {
-  if (!value) return null;
-  try {
-    const parsed = new URL(value);
-    if (parsed.hostname === "wsrv.nl" || parsed.hostname === "images.weserv.nl") {
-      const original = parsed.searchParams.get("url");
-      if (original && /^https?:\/\//i.test(original)) return original;
-    }
-  } catch {
-    return value;
-  }
-  return value;
+  return browserPosterUrl(value);
 }
 
 export function ProviderBadge({ provider, className }: { provider: ProviderId; className?: string }) {
@@ -65,10 +56,10 @@ export function Poster({
       setActiveSrc(`${original}${separator}_hd_retry=${Date.now()}`);
       return;
     }
-    // Retry the same poster through an image proxy; never substitute another drama.
-    if (attempt <= 1 && original && !usingFallback) {
+    // Same poster, once, through the same-origin image proxy. Never borrow another drama's art.
+    if (attempt <= 1 && original && !usingFallback && /^https:\/\//i.test(original)) {
       setAttempt(2);
-      setActiveSrc(`https://images.weserv.nl/?url=${encodeURIComponent(original)}`);
+      setActiveSrc(`/api/poster?u=${encodeURIComponent(original)}`);
       return;
     }
     // Last resort: neutral local HouseDrama artwork, not a mismatched drama poster.
@@ -163,7 +154,7 @@ export function TagPills({ tags }: { tags: string[] }) {
       {clean.map((tag) => (
         <span
           key={tag}
-          className="max-w-full rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold leading-snug break-words text-primary"
+          className="max-w-full rounded-full bg-[#2a2229] px-2 py-0.5 text-[10px] font-medium leading-snug break-words text-[#f0d5e0]"
         >
           {tag}
         </span>
@@ -189,7 +180,7 @@ export function byPopularity(items: DramaCard[]) {
 
 export function DramaGrid({ items }: { items: DramaCard[] }) {
   return (
-    <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+    <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
       {items.map((item) => (
         <DramaCardView key={`${item.provider}-${item.seriesId}`} item={item} className="w-auto" />
       ))}
@@ -211,7 +202,7 @@ export function Rail({
   const ordered = byPopularity(items);
   if (!ordered.length) return null;
   return (
-    <section className="mt-8">
+    <section className="hd-rail mt-8">
       <div className="mb-3 flex items-end justify-between gap-3">
         <h2 className="text-lg font-semibold tracking-tight text-ink">{title}</h2>
         {more ?? (action ? <span className="text-sm font-semibold text-primary">{action}</span> : null)}
@@ -235,17 +226,17 @@ export function PageIntro({
   description?: string;
 }) {
   return (
-    <header className="max-w-2xl">
-      {eyebrow ? <p className="text-sm font-semibold text-primary">{eyebrow}</p> : null}
-      <h1 className="mt-1 text-4xl text-ink sm:text-5xl">{title}</h1>
-      {description ? <p className="mt-3 text-base text-muted">{description}</p> : null}
+    <header className="hd-intro max-w-2xl">
+      {eyebrow ? <p className="hd-kicker text-sm font-semibold text-primary">{eyebrow}</p> : null}
+      <h1 className="hd-intro__title mt-1 text-4xl text-ink sm:text-5xl">{title}</h1>
+      {description ? <p className="mt-3 max-w-xl text-base leading-relaxed text-muted">{description}</p> : null}
     </header>
   );
 }
 
 export function EmptyState({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
   return (
-    <div className="mt-8 rounded-card border border-line bg-surface px-6 py-12 text-center">
+    <div className="hd-empty mt-8 rounded-3xl border border-line bg-surface px-6 py-14 text-center">
       <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-bg text-primary">
         <Clapperboard className="size-7" aria-hidden="true" />
       </div>
@@ -258,7 +249,7 @@ export function EmptyState({ title, body, action }: { title: string; body: strin
 
 export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div className="rounded-card border border-coral/30 bg-coral/8 px-4 py-3 text-sm text-ink">
+    <div className="hd-error rounded-2xl border border-coral/35 bg-coral/10 px-4 py-3 text-sm text-ink" role="alert">
       <p>{message}</p>
       {onRetry ? (
         <button type="button" onClick={onRetry} className="mt-2 font-semibold text-primary">
@@ -278,12 +269,21 @@ export function PageSkeleton() {
   const { uiLang } = usePrefs();
   const label = uiLang === "id" ? "Memuat konten HouseDrama…" : uiLang === "ms" ? "Memuatkan kandungan HouseDrama…" : uiLang === "th" ? "กำลังโหลดเนื้อหา HouseDrama…" : "Loading HouseDrama content…";
   return (
-    <main className="grid min-h-[48vh] place-items-center px-4 py-12" role="status" aria-live="polite" aria-busy="true">
-      <div className="flex max-w-sm flex-col items-center rounded-3xl border border-line bg-surface/80 px-7 py-9 text-center shadow-sm">
-        <LoaderCircle className="size-10 animate-spin text-primary" aria-hidden="true" />
-        <p className="mt-4 text-base font-semibold text-ink">{label}</p>
-        <p className="mt-2 text-sm text-muted">{uiLang === "id" ? "Sedang mengambil data dan poster drama. Mohon tunggu sebentar." : uiLang === "ms" ? "Sedang mendapatkan data dan poster drama. Sila tunggu sebentar." : uiLang === "th" ? "กำลังดึงข้อมูลและโปสเตอร์ละคร โปรดรอสักครู่" : "Fetching drama details and posters. Please wait a moment."}</p>
+    <div className="hd-skeleton" role="status" aria-live="polite" aria-busy="true">
+      <div className="hd-skeleton__hero skeleton" />
+      <p className="mt-4 flex items-center gap-2 text-sm font-medium text-muted">
+        <LoaderCircle className="size-4 shrink-0 animate-spin text-primary" aria-hidden="true" />
+        <span>{label}</span>
+      </p>
+      <div className="hd-skeleton__row" aria-hidden="true">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="hd-skeleton__card">
+            <div className="skeleton aspect-poster rounded-2xl" />
+            <div className="skeleton mt-3 h-3 w-4/5 rounded-full" />
+            <div className="skeleton mt-2 h-3 w-2/5 rounded-full" />
+          </div>
+        ))}
       </div>
-    </main>
+    </div>
   );
 }

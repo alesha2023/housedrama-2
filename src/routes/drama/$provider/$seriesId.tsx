@@ -1,12 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { LoaderCircle, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { EmptyState, Poster, ProviderBadge, Rail } from "@/components/drama/cards";
 import { EpisodeGrid } from "@/components/drama/player";
 import { getDetailData } from "@/lib/drama/api";
+import { browserPosterUrl } from "@/lib/drama/images";
 import { usePrefs } from "@/lib/drama/i18n";
 import { pickDescription, pickTitle } from "@/lib/drama/display";
 import { readHistory, readWatchlist, toggleWatchlist, type HistoryEntry } from "@/lib/drama/storage";
+import { absoluteSiteUrl, jsonLdScript } from "@/lib/drama/site";
+import { applyHttpStatus } from "@/lib/drama/http-status";
+import { MissingPage } from "@/components/drama/not-found";
 import { isProviderId, type DetailPayload, type ProviderId } from "@/lib/drama/types";
 
 const DETAIL_CACHE_PREFIX = "housedrama:detail:v1:";
@@ -59,8 +63,9 @@ async function loadDetailResilient(provider: string, seriesId: string): Promise<
   const key = cacheKey(provider, seriesId);
   const cached = readDetailCache(key);
   if (cached) return cached;
-  const empty: DetailPayload = { ok: false, error: "Drama belum berhasil dimuat. Silakan coba lagi.", drama: null, episodes: [], similar: [], more: [], alsoOn: [] };
+  const empty: DetailPayload = { ok: false, code: "unavailable", error: "This drama could not be loaded. Please try again.", drama: null, episodes: [], similar: [], more: [], alsoOn: [] };
   let lastError = empty.error;
+  let lastCode: DetailPayload["code"] = "unavailable";
 
   // Retry thrown failures, timeouts, and ordinary API failure payloads. Only a
   // successful payload with a drama object is cached.
@@ -69,7 +74,7 @@ async function loadDetailResilient(provider: string, seriesId: string): Promise<
     try {
       const request = getDetailData({ data: { provider: provider as ProviderId, seriesId, lang: "en" } });
       const timeout = new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error("Pemuatan detail terlalu lama.")), 7500);
+        timeoutId = setTimeout(() => reject(new Error("Loading this drama took too long.")), 7500);
       });
       const result = await Promise.race([request, timeout]);
       if (result.ok && result.drama) {
@@ -77,52 +82,48 @@ async function loadDetailResilient(provider: string, seriesId: string): Promise<
         return result;
       }
       lastError = result.error || empty.error;
+      lastCode = result.code === "not_found" ? "not_found" : "unavailable";
     } catch (error) {
       lastError = error instanceof Error ? error.message : empty.error;
+      lastCode = "unavailable";
     } finally {
       if (timeoutId) clearTimeout(timeoutId);
     }
 
     if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 250));
   }
-  return { ...empty, error: lastError };
+  return { ...empty, error: lastError, code: lastCode };
 }
 
 export const Route = createFileRoute("/drama/$provider/$seriesId")({
-  loader: ({ params }) => {
-    if (!isProviderId(params.provider)) throw new Error("Unknown provider");
-    return loadDetailResilient(params.provider, params.seriesId);
+  loader: async ({ params }) => {
+    if (!isProviderId(params.provider)) throw notFound();
+    const data = await loadDetailResilient(params.provider, params.seriesId);
+    if (!data.drama) {
+      if (data.code === "not_found") throw notFound();
+      await applyHttpStatus(503);
+    }
+    return data;
   },
   pendingComponent: DetailPending,
   head: ({ loaderData, params }) => {
     const drama = loaderData?.drama;
-    const dramaTitle = (drama?.displayTitle || drama?.title || "Drama China").replace(/\s+/g, " ").trim();
+    const missing = !loaderData || loaderData.code === "not_found";
+    const dramaTitle = (drama?.displayTitle || drama?.title || "HouseDrama").replace(/\s+/g, " ").trim();
     const title = drama
       ? `${dramaTitle} — Synopsis & Episodes | HouseDrama`
-      : "Drama Unavailable — HouseDrama";
+      : missing
+        ? "Drama Not Found — HouseDrama"
+        : "Drama Unavailable — HouseDrama";
     const sourceDescription = (drama?.displayDescription || drama?.description || "").replace(/\s+/g, " ").trim();
     const description = (drama
       ? `${sourceDescription ? `${sourceDescription} ` : `Watch ${dramaTitle} on HouseDrama. `}Explore the synopsis, series information, and available episodes.`
-      : "This drama is temporarily unavailable on HouseDrama.").slice(0, 300);
-    const canonical = `https://house-drama.web.id/drama/${encodeURIComponent(params.provider)}/${encodeURIComponent(params.seriesId)}`;
-    // Give crawlers the real, absolute poster URL. Resolve relative URLs against
-    // HouseDrama first; unwrap image-proxy URLs so metadata points at the source
-    // poster rather than a proxy endpoint that may be blocked for crawlers.
-    let image = drama?.posterUrl || "https://house-drama.web.id/og-v2.jpg";
-    try {
-      let parsedImage = new URL(image, "https://house-drama.web.id");
-      if (parsedImage.hostname === "wsrv.nl" || parsedImage.hostname === "images.weserv.nl") {
-        const original = parsedImage.searchParams.get("url");
-        if (original && /^https?:\/\//i.test(original)) parsedImage = new URL(original);
-      }
-      if (parsedImage.protocol === "https:" || parsedImage.protocol === "http:") {
-        image = parsedImage.href;
-      } else {
-        image = "https://house-drama.web.id/og-v2.jpg";
-      }
-    } catch {
-      image = "https://house-drama.web.id/og-v2.jpg";
-    }
+      : missing
+        ? "This drama URL is not in the HouseDrama catalog."
+        : "This drama is temporarily unavailable on HouseDrama. No substitute title is shown.").slice(0, 300);
+    const canonical = absoluteSiteUrl(`/drama/${encodeURIComponent(params.provider)}/${encodeURIComponent(params.seriesId)}`);
+    // Keep a JPEG converter URL when the source poster is HEIC. Other proxy URLs still unwrap.
+    const image = browserPosterUrl(drama?.posterUrl) || absoluteSiteUrl("/og.jpg");
     return {
       meta: [
         { title },
@@ -130,7 +131,7 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
         { name: "robots", content: drama ? "index,follow,max-image-preview:large" : "noindex,follow" },
         { name: "googlebot", content: drama ? "index,follow,max-image-preview:large" : "noindex,follow" },
         { property: "og:type", content: "video.tv_show" },
-        { property: "og:locale", content: "id_ID" },
+        { property: "og:locale", content: "en_US" },
         { property: "og:site_name", content: "HouseDrama" },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
@@ -143,15 +144,25 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },
         { name: "twitter:image:alt", content: `${dramaTitle} poster` },
-        ...(drama?.originalTitle && drama.originalTitle !== drama.title
-          ? [{ name: "keywords", content: `${drama.originalTitle}, ${drama.displayTitle || drama.title}, Chinese short drama` }]
-          : [{ name: "keywords", content: `${drama?.displayTitle || drama?.title || "drama China"}, Chinese short drama` }]),
+        ...(drama
+          ? [{ name: "keywords", content: `${drama.originalTitle && drama.originalTitle !== drama.title ? `${drama.originalTitle}, ` : ""}${drama.displayTitle || drama.title}, Chinese short drama` }]
+          : []),
       ],
       links: [{ rel: "canonical", href: canonical }],
     };
   },
   component: DetailPage,
+  notFoundComponent: DramaNotFound,
 });
+
+function DramaNotFound() {
+  return (
+    <MissingPage
+      title="Drama not found"
+      body="This title is not in the HouseDrama catalog. It was not replaced with a different drama."
+    />
+  );
+}
 
 function DetailPending() {
   const { uiLang } = usePrefs();
@@ -165,7 +176,7 @@ function DetailPending() {
   }[uiLang];
   return (
     <main className="mx-auto min-h-[55vh] max-w-6xl px-4 py-10 sm:px-6" aria-live="polite" aria-busy="true">
-      <div className="mx-auto flex max-w-md flex-col items-center justify-center rounded-3xl border border-line bg-surface/80 px-6 py-12 text-center shadow-sm">
+      <div className="mx-auto flex max-w-md flex-col items-center justify-center rounded-3xl border border-line bg-surface/80 px-6 py-12 text-center">
         <LoaderCircle className="size-9 animate-spin text-primary" aria-hidden="true" />
         <h1 className="mt-4 text-lg font-semibold">{pendingCopy.title}</h1>
         <p className="mt-2 text-sm text-muted">{pendingCopy.body}</p>
@@ -206,42 +217,37 @@ function DetailPage() {
   }
 
   const first = data.episodes[0];
-  const canonicalUrl = `https://house-drama.web.id/drama/${encodeURIComponent(drama.provider)}/${encodeURIComponent(drama.seriesId)}`;
+  const canonicalUrl = absoluteSiteUrl(`/drama/${encodeURIComponent(drama.provider)}/${encodeURIComponent(drama.seriesId)}`);
   const displayTitle = drama.displayTitle || drama.title;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "TVSeries",
     url: canonicalUrl,
     mainEntityOfPage: canonicalUrl,
-    name: drama.displayTitle || drama.title,
-    alternateName: drama.originalTitle && drama.originalTitle !== drama.title ? drama.originalTitle : undefined,
-    description: drama.displayDescription || drama.description || undefined,
-    image: drama.posterUrl || undefined,
-    numberOfEpisodes: drama.episodeCount || data.episodes.length || undefined,
-    inLanguage: drama.language || undefined,
-    genre: drama.tags,
-    keywords: [...new Set([...(drama.tags || []), "Chinese short drama", "Asian short drama", "short drama online"])].join(", "),
-    publisher: { "@type": "Organization", name: "HouseDrama", url: "https://house-drama.web.id/" },
-    isAccessibleForFree: data.episodes.some((episode) => episode.access === "open") ? true : undefined,
+    name: displayTitle,
+    ...(drama.originalTitle && drama.originalTitle !== drama.title ? { alternateName: drama.originalTitle } : {}),
+    ...(drama.displayDescription || drama.description ? { description: drama.displayDescription || drama.description } : {}),
+    ...(browserPosterUrl(drama.posterUrl) ? { image: browserPosterUrl(drama.posterUrl) } : {}),
+    ...(drama.episodeCount || data.episodes.length ? { numberOfEpisodes: drama.episodeCount || data.episodes.length } : {}),
+    ...(drama.language ? { inLanguage: drama.language } : {}),
+    ...(drama.tags?.length ? { genre: drama.tags } : {}),
+    publisher: { "@type": "Organization", name: "HouseDrama", url: absoluteSiteUrl("/") },
+    ...(data.episodes.some((episode) => episode.access === "open") ? { isAccessibleForFree: true } : {}),
+  };
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: uiLang === "id" ? "Beranda" : "Home", item: absoluteSiteUrl("/") },
+      { "@type": "ListItem", position: 2, name: uiLang === "id" ? "Drama" : "Discover Dramas", item: absoluteSiteUrl("/discover") },
+      { "@type": "ListItem", position: 3, name: displayTitle, item: canonicalUrl },
+    ],
   };
 
   return (
-    <article>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            itemListElement: [
-              { "@type": "ListItem", position: 1, name: uiLang === "id" ? "Beranda" : "Home", item: "https://house-drama.web.id/" },
-              { "@type": "ListItem", position: 2, name: uiLang === "id" ? "Drama" : "Discover Dramas", item: "https://house-drama.web.id/discover" },
-              { "@type": "ListItem", position: 3, name: displayTitle, item: canonicalUrl },
-            ],
-          }),
-        }}
-      />
+    <article className="hd-detail">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumb) }} />
       <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted">
         <Link to="/" className="hover:text-ink">{uiLang === "id" ? "Beranda" : "Home"}</Link>
         <span className="mx-2" aria-hidden="true">/</span>
@@ -249,8 +255,8 @@ function DetailPage() {
         <span className="mx-2" aria-hidden="true">/</span>
         <span aria-current="page" className="text-ink">{displayTitle}</span>
       </nav>
-      <div className="grid gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
-        <div className="overflow-hidden rounded-card">
+      <div className="hd-detail__layout grid gap-6 md:grid-cols-[minmax(180px,260px)_minmax(0,1fr)] md:items-start">
+        <div className="hd-detail__poster overflow-hidden rounded-[1.25rem]">
           {first ? (
             <Link
               to="/watch/$provider/$seriesId/$episodeId"
@@ -272,9 +278,9 @@ function DetailPage() {
             </div>
           )}
         </div>
-        <div>
+        <div className="hd-detail__copy min-w-0">
           <ProviderBadge provider={drama.provider} />
-          <h1 className="mt-3 text-3xl leading-tight font-bold tracking-tight sm:text-5xl">{pickTitle(drama, contentLang)}</h1>
+          <h1 className="hd-detail__title mt-3 text-3xl leading-[1.08] font-bold tracking-tight sm:text-5xl">{pickTitle(drama, contentLang)}</h1>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">{pickDescription(drama, contentLang) || t.noSynopsis}</p>
           <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted">
             {drama.language ? <span className="rounded-full bg-surface px-3 py-1">{drama.language}</span> : null}
@@ -285,7 +291,7 @@ function DetailPage() {
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {drama.tags.map((tag) => (
-              <Link key={tag} to="/search" search={{ q: tag, provider: "all" }} className="rounded-full border border-line px-3 py-1 text-sm">
+              <Link key={tag} to="/search" search={{ q: tag, provider: "all" }} className="rounded-full bg-[#2a2229] px-3 py-1 text-sm text-[#f0d5e0]">
                 {tag}
               </Link>
             ))}
@@ -328,8 +334,8 @@ function DetailPage() {
         <Link to="/trending" className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium transition-colors hover:border-primary hover:text-primary">{uiLang === "id" ? "Drama populer" : "Popular dramas"}</Link>
         <Link to="/latest" className="inline-flex min-h-10 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium transition-colors hover:border-primary hover:text-primary">{uiLang === "id" ? "Drama terbaru" : "Latest dramas"}</Link>
       </nav>
-      <section className="mt-8">
-        <h2 className="mb-3 text-2xl">{t.episodes}</h2>
+      <section className="hd-episodes mt-10">
+        <h2 className="mb-4 text-2xl">{t.episodes}</h2>
         {data.episodes.length ? (
           <EpisodeGrid episodes={data.episodes} provider={drama.provider} seriesId={drama.seriesId} />
         ) : (

@@ -3,7 +3,7 @@ import { loadBrowse } from "@/lib/drama/server/catalog";
 import { visibleProviders } from "@/lib/drama/providers";
 import type { DramaCard, ProviderId } from "@/lib/drama/types";
 
-const SITE_ORIGIN = "https://house-drama.web.id";
+const SITE_ORIGIN = "https://house-drama.xyz";
 const CACHE_MS = 30 * 60 * 1000;
 
 // Curated drama URLs confirmed by the site owner. Keep these in the sitemap
@@ -56,7 +56,6 @@ const FEATURED_DRAMA_PATHS = [
 // are intentionally omitted from the sitemap.
 const PATHS = [
   "/",
-  "/en",
   "/id",
   "/discover",
   "/trending",
@@ -90,6 +89,7 @@ function detailUrl(card: DramaCard) {
 
 async function collectProviderCards(providers: ProviderId[]) {
   const urls = new Set<string>();
+  const withItems = new Set<string>();
   // Include the first browse catalog for every visible provider. AnyReel and
   // FreeReels support pagination in loadBrowse(), so crawl additional pages
   // to discover more real detail URLs. Do not synthesize IDs from trend titles.
@@ -110,11 +110,14 @@ async function collectProviderCards(providers: ProviderId[]) {
       if (result.status !== "fulfilled") continue;
       for (const card of result.value.items) {
         const url = detailUrl(card);
-        if (url) urls.add(url);
+        if (url) {
+          urls.add(url);
+          withItems.add(card.provider);
+        }
       }
     }
   }
-  return urls;
+  return { urls, withItems };
 }
 
 async function buildSitemap() {
@@ -123,8 +126,12 @@ async function buildSitemap() {
     // Build detail URLs from each visible provider's own browse catalog instead
     // of only the homepage rails, which are intentionally limited.
     const providers = visibleProviders();
-    const dramaUrls = await collectProviderCards(providers);
-    for (const url of dramaUrls) urls.add(url);
+    const collected = await collectProviderCards(providers);
+    for (const url of collected.urls) urls.add(url);
+    for (const id of collected.withItems) {
+      if (!providers.includes(id as ProviderId)) continue;
+      urls.add(`${SITE_ORIGIN}/provider/${encodeURIComponent(id)}`);
+    }
   } catch {
     // Keep core public URLs available if catalog providers are temporarily down.
   }
