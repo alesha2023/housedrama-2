@@ -170,10 +170,7 @@ export default defineConfig(({ command, isPreview }) => ({
     ...(command === "build" || isPreview
       ? [
           nitro({
-            // This project is deployed to Cloudflare Workers. Using the Vercel
-            // preset emits a different server/static-asset layout and can leave
-            // built CSS assets unavailable to crawlers after deployment.
-            preset: process.env.NITRO_PRESET ?? "cloudflare_module",
+            preset: "cloudflare_module",
             // Auto-registers server/middleware/* (the PWA install page +
             // manifest + head-tag middleware). Nitro v3 defaults serverDir to
             // false, so removing this silently unwires /?install=1 on deploys.

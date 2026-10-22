@@ -19,8 +19,8 @@
     "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/preview-path-prefix.test.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "build:cloudflare": "NITRO_PRESET=cloudflare_module node scripts/with-app-env.mjs vite build",
-    "deploy:cloudflare": "npm run build:cloudflare && (test -f .output/server/wrangler.json && npx wrangler deploy --config .output/server/wrangler.json || (echo 'ERROR: .output/server/wrangler.json not found; inspect build output before deploying.' >&2 && exit 1))"
+    "build:cloudflare": "node scripts/with-app-env.mjs vite build",
+    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy --config .output/server/wrangler.json"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
