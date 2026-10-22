@@ -154,26 +154,28 @@ export function Player({
   const next = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
 
   useEffect(() => {
-    // Every episode gets its own sponsor popup, including direct links and
-    // automatic next-episode navigation. A one-time sessionStorage bypass is
-    // consumed only when returning from the popup to the selected episode.
+    // Episode 1 is always ad-free. Sponsor popup starts from Episode 2,
+    // including direct links and automatic/manual episode transitions.
+    // A one-time sessionStorage bypass is consumed when returning from a
+    // popup that was already completed for the selected episode.
+    const isEpisodeOne = episode.episodeId === episodes[0]?.episodeId;
     const bypassKey = `housedrama-sponsor-bypass:${drama.provider}:${drama.seriesId}:${episode.episodeId}`;
     try {
-      if (window.sessionStorage.getItem(bypassKey) === "1") {
-        window.sessionStorage.removeItem(bypassKey);
+      if (isEpisodeOne || window.sessionStorage.getItem(bypassKey) === "1") {
+        if (!isEpisodeOne) window.sessionStorage.removeItem(bypassKey);
         setPendingAdEpisode(null);
       } else {
         setPendingAdEpisode(episode.episodeId);
       }
     } catch {
-      setPendingAdEpisode(episode.episodeId);
+      setPendingAdEpisode(isEpisodeOne ? null : episode.episodeId);
     }
     setSponsorOpened(false);
     setSponsorWait(0);
     setSponsorClosing(false);
     setSponsorProvider(null);
     setFirstEpisodePopupReady(true);
-  }, [drama.provider, drama.seriesId, episode.episodeId]);
+  }, [drama.provider, drama.seriesId, episode.episodeId, episodes]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -568,7 +570,7 @@ export function Player({
 
 
   function go(episodeId: string, _auto = false) {
-    // Require a sponsor popup for every episode transition (manual or autoplay).
+    // Require a sponsor popup from Episode 2 onward (manual or autoplay).
     videoRef.current?.pause();
     setPlaying(false);
     setPendingAdEpisode(episodeId);
