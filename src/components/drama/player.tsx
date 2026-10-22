@@ -586,8 +586,18 @@ export function Player({
         // The transition still works if sessionStorage is unavailable.
       }
     }
-    // Also navigate when continuing the current episode so autoStart becomes
-    // true and Episode 1 starts automatically after its countdown.
+    // If the sponsor popup was shown for the episode already on screen, navigating
+    // to the same URL may not remount the route or update its `auto` search param.
+    // Start playback directly instead. Mobile browsers may block unmuted autoplay,
+    // so playContent() retries muted playback and leaves the Play control available
+    // if the browser/provider still refuses to start.
+    if (episodeId === episode.episodeId) {
+      window.setTimeout(() => { void playContent(); }, 0);
+      return;
+    }
+
+    // A different episode needs a route transition; its `auto` flag lets the
+    // player attempt playback after the new stream is ready.
     void navigate({
       to: "/watch/$provider/$seriesId/$episodeId",
       params: { provider: drama.provider, seriesId: drama.seriesId, episodeId },
