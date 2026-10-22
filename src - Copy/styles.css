@@ -1,0 +1,864 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #fff6f4;
+  --color-surface: #f6f7f9;
+  --color-ink: #17181d;
+  --color-muted: #6d7280;
+  --color-line: #e7e9ee;
+  --color-primary: #ff5a36;
+  --color-primary-ink: #fffaf7;
+  --color-coral: #ff477e;
+  --color-violet: #7c5cfc;
+  --color-player: #111216;
+  --color-player-ink: #f7f7f8;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
+  --radius-card: 1rem;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #fff3f0;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+
+  h1,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+  }
+
+  h2,
+  h3 {
+    font-family: var(--font-sans);
+    letter-spacing: -0.02em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.page-bg {
+  background-color: #fff3f0;
+  background-image:
+    radial-gradient(85% 360px at 0% 0%, #ffd9e4 0%, transparent 62%),
+    radial-gradient(75% 340px at 100% 12%, #ffdfd1 0%, transparent 58%),
+    radial-gradient(70% 420px at 50% 58%, #fff8f5 0%, transparent 72%),
+    radial-gradient(70% 440px at 100% 100%, #ffe6ed 0%, transparent 58%),
+    linear-gradient(180deg, #fff5f3 0%, #fff0ed 48%, #fff5f2 100%);
+  background-attachment: fixed;
+}
+
+/* Gentle section separation inspired by the supplied reference: keep the same
+   warm pink identity while giving each content group a clearer visual boundary. */
+.page-bg main > section,
+.page-bg main > div > section {
+  position: relative;
+  margin-block: clamp(1.5rem, 4vw, 2.75rem);
+}
+.page-bg main > section + section,
+.page-bg main > div > section + section {
+  border-top: 1px solid rgb(255 150 157 / 0.16);
+  padding-top: clamp(1.25rem, 3vw, 2rem);
+}
+.page-bg .drama-card__poster {
+  box-shadow: 0 2px 8px rgb(84 35 44 / 0.07);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .page-bg main > section,
+  .page-bg main > div > section {
+    transition: background-color 180ms ease;
+  }
+}
+
+@utility aspect-poster {
+  aspect-ratio: 2 / 3;
+}
+
+@utility aspect-drama {
+  aspect-ratio: 9 / 16;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+  .rise:hover {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #f3e7e4;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.7), transparent);
+  animation: shimmer 1.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+.drama-card {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.no-scrollbar > .drama-card {
+  flex: 0 0 calc((100% - 1.5rem) / 2.5);
+  width: calc((100% - 1.5rem) / 2.5);
+}
+.drama-card__poster {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+.drama-card__image {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+}
+.drama-card__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.drama-card__title {
+  display: -webkit-box;
+  margin: .5rem 0 0;
+  overflow: hidden;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.drama-card__meta {
+  display: block;
+  margin: .25rem 0 0;
+  color: var(--color-muted);
+  font-family: var(--font-sans);
+  font-size: .75rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (min-width: 640px) {
+  .no-scrollbar > .drama-card {
+    flex-basis: calc((100% - 2.25rem) / 4);
+    width: calc((100% - 2.25rem) / 4);
+  }
+}
+@media (min-width: 1024px) {
+  .no-scrollbar > .drama-card {
+    flex-basis: calc((100% - 3rem) / 5);
+    width: calc((100% - 3rem) / 5);
+  }
+}
+
+.boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse at 50% 40%, #ffd0df 0%, transparent 58%),
+    linear-gradient(180deg, #fff6f8 0%, #fff1ee 100%);
+  animation: boot-dismiss 1s linear forwards;
+}
+
+@keyframes boot-dismiss {
+  0%,
+  72% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+.boot-splash.is-done {
+  display: none;
+}
+
+.boot-splash__glow {
+  position: absolute;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(255 71 126 / 0.35), transparent 68%);
+  filter: blur(8px);
+}
+
+.boot-splash__logo {
+  position: relative;
+  z-index: 1;
+}
+
+.boot-splash__track {
+  position: absolute;
+  bottom: 18%;
+  width: 9rem;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(255 90 54 / 0.18);
+}
+
+.boot-splash__track span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff5a36, #ff477e);
+  animation: boot-bar 1s ease-in-out infinite;
+}
+
+@keyframes boot-bar {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(280%); }
+}
+
+/* Native WebVTT cues ignore author font-size on Android and render huge.
+   Hide them and draw a fixed-size overlay instead. */
+video::-webkit-media-text-track-container {
+  display: none !important;
+}
+
+video::cue {
+  visibility: hidden !important;
+  font-size: 0 !important;
+  color: transparent !important;
+  background: transparent !important;
+}
+
+.player-caption {
+  font-family: "Nunito", sans-serif;
+  font-size: 25px !important;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: pre-line;
+  text-shadow: 0 1px 2px #000, 0 0 2px #000;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+/* HouseDrama theme switch: preserve the existing light look and offer an opt-in dark palette. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #17151b;
+  --color-surface: #24212a;
+  --color-ink: #f5f1f6;
+  --color-muted: #b5acbb;
+  --color-line: #393340;
+  --color-primary-ink: #fffaf7;
+}
+
+html[data-theme="dark"] body {
+  background: #17151b;
+  color: #f5f1f6;
+}
+
+html[data-theme="dark"] .page-bg {
+  background-color: #17151b;
+  background-image:
+    radial-gradient(80% 420px at 0% 0%, rgb(115 45 83 / 22%) 0%, transparent 58%),
+    radial-gradient(70% 380px at 100% 0%, rgb(107 58 44 / 18%) 0%, transparent 55%),
+    radial-gradient(60% 480px at 50% 100%, rgb(72 45 90 / 14%) 0%, transparent 50%);
+}
+
+html[data-theme="dark"] [class~="bg-white"],
+html[data-theme="dark"] [class~="bg-white/75"],
+html[data-theme="dark"] [class~="bg-white/80"],
+html[data-theme="dark"] [class~="bg-white/90"] {
+  background-color: #211e27 !important;
+}
+
+/* Sponsor modal follows the app theme explicitly, overriding broad dark-mode surface rules. */
+html[data-theme="light"] .sponsor-modal {
+  background-color: #ffffff !important;
+  color: #242424 !important;
+}
+html[data-theme="light"] .sponsor-modal h2 { color: #242424 !important; }
+html[data-theme="light"] .sponsor-modal p { color: #4b5563 !important; }
+html[data-theme="dark"] .sponsor-modal {
+  background-color: #211d27 !important;
+  color: #ffffff !important;
+}
+html[data-theme="dark"] .sponsor-modal h2 { color: #ffffff !important; }
+html[data-theme="dark"] .sponsor-modal p { color: #d1d5db !important; }
+html[data-theme="dark"] [class~="bg-bg"] { background-color: #17151b !important; }
+html[data-theme="dark"] [class~="bg-surface"] { background-color: #292530 !important; }
+html[data-theme="dark"] [class~="text-ink"] { color: #f5f1f6 !important; }
+html[data-theme="dark"] [class~="text-muted"] { color: #b5acbb !important; }
+html[data-theme="dark"] [class~="border-line"] { border-color: #393340 !important; }
+html[data-theme="dark"] .drama-card { color: #f5f1f6; }
+html[data-theme="dark"] .drama-card__poster { background: #24212a; }
+html[data-theme="dark"] .drama-card__title { color: #f5f1f6; }
+html[data-theme="dark"] .skeleton { background: #292530; }
+html[data-theme="dark"] .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent);
+}
+
+
+/* Small, centered PWA install prompt with a gentle floating motion. */
+.hd-pwa-popup {
+  transform-origin: center;
+  animation: hd-pwa-float 3.2s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes hd-pwa-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.012); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hd-pwa-popup { animation: none; }
+}
+
+
+/* Step 12 polish: readable card typography and mobile header targets */
+.drama-card, .drama-card p, .drama-card span, .drama-card a, .episode-list, .episode-button, button, input, textarea, select { font-family: var(--font-sans); }
+@media (max-width: 640px) { header button, header a { min-height: 40px; } }
+
+
+/* Step 16: complete Light / Dark theme polish */
+html[data-theme="dark"] .page-bg main,
+html[data-theme="dark"] footer,
+html[data-theme="dark"] .site-footer {
+  color: #f5f1f6;
+}
+html[data-theme="dark"] header {
+  background-color: rgb(28 25 32 / 94%);
+  border-color: #393340;
+  color: #f5f1f6;
+}
+html[data-theme="dark"] header select,
+html[data-theme="dark"] header input,
+html[data-theme="dark"] header button {
+  color: #f5f1f6;
+}
+html[data-theme="dark"] header select,
+html[data-theme="dark"] header input {
+  background-color: #292530;
+  border-color: #393340;
+}
+html[data-theme="dark"] .drama-card__poster,
+html[data-theme="dark"] .drama-card__content {
+  background-color: #24212a;
+}
+html[data-theme="dark"] .drama-card__meta,
+html[data-theme="dark"] .text-muted {
+  color: #b5acbb;
+}
+html[data-theme="dark"] hr,
+html[data-theme="dark"] .border-line {
+  border-color: #393340;
+}
+html[data-theme="dark"] .page-bg main > section + section,
+html[data-theme="dark"] .page-bg main > div > section + section {
+  border-top-color: rgb(240 82 156 / 18%);
+}
+
+/* Dark mode changes colors only. Keep the same catalog layout and spacing as Light Mode. */
+html[data-theme="dark"] .page-bg {
+  background-color: #111014;
+  background-image: linear-gradient(180deg, #111014 0%, #17141b 100%);
+  background-attachment: fixed;
+}
+
+/* Step 16 card design: matching the approved reference in both themes.
+   Light mode uses a white information card; dark mode uses a charcoal information card.
+   Main theme backgrounds, player, header, navigation and footer counter are untouched. */
+.drama-card {
+  overflow: hidden;
+  border-radius: 18px;
+}
+.drama-card__content {
+  padding: 10px 10px 12px;
+  border-radius: 0 0 18px 18px;
+  background: #ffffff;
+  color: #29242b;
+}
+.drama-card__title {
+  margin-top: 0 !important;
+  color: #29242b !important;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.drama-card__meta {
+  color: #77717a !important;
+  font-family: var(--font-sans);
+  font-size: .875rem;
+}
+.drama-card__content .mt-1\.5 {
+  margin-top: 8px;
+}
+.drama-card__content [class*="bg-coral"] {
+  background-color: #fce5e1 !important;
+  color: #b84d3a !important;
+}
+html[data-theme="dark"] .drama-card__content {
+  background: #292530;
+  color: #f5f1f6;
+}
+html[data-theme="dark"] .drama-card__title {
+  color: #f5f1f6 !important;
+}
+html[data-theme="dark"] .drama-card__meta {
+  color: #b5acbb !important;
+}
+html[data-theme="dark"] .drama-card__content [class*="bg-coral"] {
+  background-color: #422637 !important;
+  color: #ff9ac5 !important;
+}
+html[data-theme="dark"] .drama-card__content [class*="bg-surface"] {
+  background-color: #393340 !important;
+}
+
+/* Step 16 final fix: force the approved card design with theme-specific specificity. */
+.drama-card__content {
+  display: block !important;
+  box-sizing: border-box;
+  padding: 10px 10px 12px !important;
+  margin: 0 !important;
+  border-radius: 0 0 18px 18px;
+  background-color: #ffffff !important;
+  color: #29242b !important;
+}
+.drama-card__title {
+  display: -webkit-box;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #29242b !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.015em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.drama-card__meta {
+  margin: 5px 0 0 !important;
+  padding: 0 !important;
+  color: #77717a !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: .875rem !important;
+  line-height: 1.4 !important;
+}
+.drama-card__content .mt-1\.5 {
+  margin-top: 8px !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+.drama-card__content .mt-1\.5 span {
+  background-color: #fce5e1 !important;
+  color: #b84d3a !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+}
+html[data-theme="dark"] .drama-card__content {
+  background-color: #292530 !important;
+  color: #f5f1f6 !important;
+}
+html[data-theme="dark"] .drama-card__title {
+  color: #f5f1f6 !important;
+}
+html[data-theme="dark"] .drama-card__meta {
+  color: #b5acbb !important;
+}
+html[data-theme="dark"] .drama-card__content .mt-1\.5 span {
+  background-color: #422637 !important;
+  color: #ff9ac5 !important;
+}
+
+
+/* Step 17 consolidated fix: card typography by theme + preserve player controls. */
+.drama-card {
+  display: block;
+  overflow: hidden;
+  border-radius: 18px;
+}
+.drama-card__poster {
+  overflow: hidden;
+  border-radius: 18px 18px 0 0;
+}
+.drama-card__content {
+  display: block !important;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 !important;
+  padding: 10px 10px 12px !important;
+  border-radius: 0 0 18px 18px;
+  background: #ffffff !important;
+  color: #29242b !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+}
+.drama-card__title {
+  display: -webkit-box;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+  color: #29242b !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.015em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.drama-card__meta {
+  margin: 5px 0 0 !important;
+  padding: 0 !important;
+  color: #77717a !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: .875rem !important;
+  line-height: 1.4 !important;
+}
+.drama-card__content .mt-1\.5 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+.drama-card__content .mt-1\.5 span {
+  background: #fce5e1 !important;
+  color: #b84d3a !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-weight: 600;
+}
+html[data-theme="dark"] .drama-card__content {
+  background: #292530 !important;
+  color: #f5f1f6 !important;
+}
+html[data-theme="dark"] .drama-card__title {
+  color: #f5f1f6 !important;
+}
+html[data-theme="dark"] .drama-card__meta {
+  color: #b5acbb !important;
+}
+html[data-theme="dark"] .drama-card__content .mt-1\.5 span {
+  background: #422637 !important;
+  color: #ff9ac5 !important;
+}
+/* Ensure the player controls remain clickable while visible and disappear with the 10-second timer. */
+.player-controls,
+button[aria-label="Full screen"],
+button[aria-label="Exit full screen"] {
+  touch-action: manipulation;
+}
+
+
+/* STEP 18: enforce screenshot-style sans-serif drama card titles */
+/* Scope to drama cards only; leave large page headings and drama detail titles untouched. */
+.drama-card .drama-card__title,
+.drama-card__content .drama-card__title,
+.drama-card h3,
+.drama-card h4,
+.drama-card__content h3,
+.drama-card__content h4,
+.page-bg .drama-card a,
+.page-bg .drama-card__content a {
+  font-family: "Inter", Arial, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+  line-height: 1.32;
+}
+.drama-card .drama-card__title,
+.drama-card__content .drama-card__title {
+  font-size: 1rem;
+}
+@media (max-width: 640px) {
+  .drama-card .drama-card__title,
+  .drama-card__content .drama-card__title,
+  .drama-card h3,
+  .drama-card h4,
+  .drama-card__content h3,
+  .drama-card__content h4 {
+    font-size: 1rem !important;
+    line-height: 1.35 !important;
+  }
+}
+
+
+/* Step 19: enforce the approved card-title typography in both themes. */
+.drama-card .drama-card__content .drama-card__title {
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.015em;
+}
+html[data-theme="dark"] .drama-card .drama-card__content .drama-card__title {
+  color: #f5f1f6 !important;
+}
+html[data-theme="light"] .drama-card .drama-card__content .drama-card__title,
+html:not([data-theme="dark"]) .drama-card .drama-card__content .drama-card__title {
+  color: #29242b !important;
+}
+
+
+/* STEP 20: polish dark mode cards to match approved light information panels */
+/* Keep the outer page/header/navigation dark. Only the drama card information area
+   becomes white, matching the approved reference design. */
+html[data-theme="dark"] .drama-card__content {
+  background: #ffffff !important;
+  color: #29242b !important;
+  border-radius: 0 0 18px 18px !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] .drama-card .drama-card__content .drama-card__title,
+html[data-theme="dark"] .drama-card__content .drama-card__title,
+html[data-theme="dark"] .drama-card__content h3,
+html[data-theme="dark"] .drama-card__content h4 {
+  color: #29242b !important;
+  font-family: "Inter", Arial, sans-serif !important;
+  font-weight: 700 !important;
+}
+html[data-theme="dark"] .drama-card__content .drama-card__meta,
+html[data-theme="dark"] .drama-card__content .text-muted {
+  color: #77717a !important;
+}
+html[data-theme="dark"] .drama-card__content .mt-1\.5 {
+  background: #ffffff !important;
+}
+html[data-theme="dark"] .drama-card__content .mt-1\.5 span {
+  background: #fce5e1 !important;
+  color: #b84d3a !important;
+  border-color: transparent !important;
+}
+html[data-theme="dark"] .drama-card__poster {
+  border-radius: 18px 18px 0 0 !important;
+  overflow: hidden;
+}
+
+
+/* STEP 32: remove the unwanted dark panels/separator boxes around catalog sections.
+   Keep the Light Mode section spacing and card layout; only individual drama cards get surfaces. */
+html[data-theme="dark"] .page-bg main > section,
+html[data-theme="dark"] .page-bg main > div > section,
+html[data-theme="dark"] .page-bg main section.mt-8:not(:has(.drama-card)) {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .drama-card {
+  background: #29242e !important;
+  border: 1px solid #39313f !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+/* STEP 30: dark mode color-only correction based on the approved Light Mode layout.
+   Do not change card dimensions, poster sizing, spacing, or typography metrics. */
+html[data-theme="dark"] .drama-card__content {
+  background: #29242e !important;
+  color: #f8f5fa !important;
+  border-color: #39313f !important;
+}
+html[data-theme="dark"] .drama-card .drama-card__content .drama-card__title,
+html[data-theme="dark"] .drama-card__content .drama-card__title,
+html[data-theme="dark"] .drama-card__content h3,
+html[data-theme="dark"] .drama-card__content h4 {
+  color: #f8f5fa !important;
+}
+html[data-theme="dark"] .drama-card__content .drama-card__meta,
+html[data-theme="dark"] .drama-card__content .text-muted {
+  color: #b8b1bf !important;
+}
+html[data-theme="dark"] .drama-card__content .mt-1\.5 {
+  background: transparent !important;
+}
+html[data-theme="dark"] .drama-card__content .mt-1\.5 span {
+  background: #422637 !important;
+  color: #f4a8c8 !important;
+  border-color: transparent !important;
+}
+
+/* Step 31: boot/loading splash follows the selected theme; layout and animation stay unchanged. */
+html[data-theme="dark"] .boot-splash {
+  background:
+    radial-gradient(ellipse at 50% 40%, rgb(115 45 83 / 22%) 0%, transparent 58%),
+    linear-gradient(180deg, #111014 0%, #17141b 100%);
+}
+html[data-theme="dark"] .boot-splash__glow {
+  background: radial-gradient(circle, rgb(255 71 126 / 0.22), transparent 68%);
+}
+html[data-theme="dark"] .boot-splash__track {
+  background: rgb(255 90 54 / 0.22);
+}
+
+/* STEP 34: keep standard drama cards aligned and give Continue Watching its own card container. */
+.page-bg main .no-scrollbar > .drama-card {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+.page-bg main .no-scrollbar > .drama-card .drama-card__content {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: 7.25rem;
+}
+.page-bg main .no-scrollbar > .drama-card .drama-card__meta {
+  min-height: 1.35em;
+}
+/* Continue Watching: restore a visible rounded wrapper around poster and details. */
+.page-bg main section.mt-8 .no-scrollbar > a.drama-card:not(:has(.drama-card__content)) {
+  flex: 0 0 calc((100% - 1.5rem) / 2.5);
+  width: calc((100% - 1.5rem) / 2.5);
+  padding: 0.75rem;
+  border: 1px solid rgb(35 25 35 / 0.08);
+  border-radius: 1.25rem;
+  background: var(--color-surface, #ffffff);
+  box-shadow: 0 1px 3px rgb(35 25 35 / 0.05);
+}
+.page-bg main section.mt-8 .no-scrollbar > a.drama-card:not(:has(.drama-card__content)) h3 {
+  min-height: 2.8em;
+}
+html[data-theme="dark"] .page-bg main section.mt-8 .no-scrollbar > a.drama-card:not(:has(.drama-card__content)) {
+  background: #29242e;
+  border-color: #39313f;
+  box-shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .boot-splash {
+    background: radial-gradient(ellipse at 50% 40%, rgb(115 45 83 / 22%) 0%, transparent 58%),
+      linear-gradient(180deg, #111014 0%, #17141b 100%);
+  }
+}
+
+
+/* HouseDrama dark-black palette: colors only; preserve all existing layout and spacing. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #08090d;
+  --color-surface: #17181d;
+  --color-ink: #f5f5f7;
+  --color-muted: #a4a5ae;
+  --color-line: #292a31;
+  --color-primary: #ff5368;
+  --color-primary-ink: #ffffff;
+  --color-coral: #ff477e;
+  --color-violet: #8b7cff;
+  --color-player: #050608;
+  --color-player-ink: #f7f7f8;
+}
+html[data-theme="dark"] body { background: #08090d; color: #f5f5f7; }
+html[data-theme="dark"] .page-bg {
+  background-color: #08090d;
+  background-image: linear-gradient(180deg, #08090d 0%, #0b0c11 100%);
+  background-attachment: fixed;
+}
+html[data-theme="dark"] header {
+  background-color: rgb(19 20 25 / 96%);
+  border-color: #25262d;
+  color: #f5f5f7;
+}
+html[data-theme="dark"] header select,
+html[data-theme="dark"] header input,
+html[data-theme="dark"] header button { color: #f5f5f7; }
+html[data-theme="dark"] header select,
+html[data-theme="dark"] header input { background-color: #1b1c22; border-color: #303139; }
+html[data-theme="dark"] [class~="bg-white"],
+html[data-theme="dark"] [class~="bg-white/75"],
+html[data-theme="dark"] [class~="bg-white/80"],
+html[data-theme="dark"] [class~="bg-white/90"] { background-color: #15161b !important; }
+html[data-theme="dark"] [class~="bg-bg"] { background-color: #08090d !important; }
+html[data-theme="dark"] [class~="bg-surface"] { background-color: #17181d !important; }
+html[data-theme="dark"] [class~="text-ink"] { color: #f5f5f7 !important; }
+html[data-theme="dark"] [class~="text-muted"] { color: #a4a5ae !important; }
+html[data-theme="dark"] [class~="border-line"] { border-color: #292a31 !important; }
+html[data-theme="dark"] .drama-card,
+html[data-theme="dark"] .drama-card__poster,
+html[data-theme="dark"] .drama-card__content,
+html[data-theme="dark"] .page-bg main section.mt-8 .drama-card {
+  background-color: #101115 !important;
+  border-color: #202127 !important;
+  color: #f5f5f7 !important;
+}
+html[data-theme="dark"] .drama-card__title,
+html[data-theme="dark"] .drama-card__content .drama-card__title,
+html[data-theme="dark"] .drama-card__content h3,
+html[data-theme="dark"] .drama-card__content h4 { color: #f5f5f7 !important; }
+html[data-theme="dark"] .drama-card__meta,
+html[data-theme="dark"] .drama-card__content .text-muted { color: #b0b1b9 !important; }
+html[data-theme="dark"] .drama-card__content .mt-1\.5 span {
+  background-color: #303138 !important; color: #f2f2f5 !important; border-color: transparent !important;
+}
+html[data-theme="dark"] footer,
+html[data-theme="dark"] .site-footer { color: #f5f5f7; }
+html[data-theme="dark"] footer a.inline-flex { background-color: #17181d; border-color: #303139; }
+html[data-theme="dark"] footer section a { background-color: #17181d !important; border-color: #303139 !important; color: #b9bac2 !important; }
+html[data-theme="dark"] footer section a span:first-child { background-color: #292a31 !important; color: #ff7185 !important; }
+html[data-theme="dark"] nav[aria-label="Mobile"] {
+  background-color: rgb(18 19 24 / 97%) !important;
+  border-color: #292a31 !important;
+  color: #f5f5f7;
+}
+html[data-theme="dark"] nav[aria-label="Mobile"] a { color: #a4a5ae; }
+html[data-theme="dark"] nav[aria-label="Mobile"] a[data-status="active"] { color: #f5f5f7; }
+html[data-theme="dark"] .skeleton { background: #17181d; }
+html[data-theme="dark"] .boot-splash {
+  background: radial-gradient(ellipse at 50% 40%, rgb(255 71 126 / 12%) 0%, transparent 58%),
+    linear-gradient(180deg, #08090d 0%, #0b0c11 100%);
+}
+html[data-theme="dark"] .boot-splash__track { background: rgb(255 83 104 / 22%); }
