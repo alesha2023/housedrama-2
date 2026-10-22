@@ -5,6 +5,9 @@ import type { DramaCard, ProviderId } from "@/lib/drama/types";
 
 const SITE_ORIGIN = "https://house-drama.xyz";
 const CACHE_MS = 30 * 60 * 1000;
+const MAX_SITEMAP_URLS = 50000;
+// Return a valid sitemap quickly even when provider catalog APIs are slow.
+const CATALOG_BUDGET_MS = 4500;
 
 // Curated drama URLs confirmed by the site owner. Keep these in the sitemap
 // even when a provider's page-1 catalog does not return them.
@@ -88,50 +91,74 @@ function detailUrl(card: DramaCard) {
   return `${SITE_ORIGIN}/drama/${encodeURIComponent(card.provider)}/${encodeURIComponent(card.seriesId)}`;
 }
 
-async function collectProviderCards(providers: ProviderId[]) {
+async function collectProviderCards(providers: ProviderId[], deadline: number) {
   const urls = new Set<string>();
-  // Include the first browse catalog for every visible provider. AnyReel and
-  // FreeReels support pagination in loadBrowse(), so crawl additional pages
-  // to discover more real detail URLs. Do not synthesize IDs from trend titles.
+  const withItems = new Set<string>();
   const requests = providers.flatMap((provider) => {
-    const pages = provider === "anyreel" || provider === "freereels" ? [1, 2, 3, 4, 5] : [1];
+    const pages = provider === "anyreel" || provider === "freereels" ? [1, 2, 3] : [1];
     return pages.map((page) => ({ provider, page }));
   });
-
-  // Limit concurrency so one sitemap request doesn't overwhelm providers or
-  // exceed the serverless function's execution budget.
-  const batchSize = 6;
-  for (let i = 0; i < requests.length; i += batchSize) {
-    const batch = requests.slice(i, i + batchSize);
-    const results = await Promise.allSettled(
-      batch.map(({ provider, page }) => loadBrowse({ lang: "en", provider, page })),
-    );
+  const pending = requests.map(async ({ provider, page }) => {
+    try {
+      const result = await loadBrowse({ lang: "en", provider, page });
+      return { provider, items: result.items };
+    } catch {
+      return { provider, items: [] as DramaCard[] };
+    }
+  });
+  const remaining = Math.max(0, deadline - Date.now());
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), remaining);
+  });
+  try {
+    const results = await Promise.race([Promise.all(pending), timeout]);
+    if (!results) return { urls, withItems };
     for (const result of results) {
-      if (result.status !== "fulfilled") continue;
-      for (const card of result.value.items) {
+      for (const card of result.items) {
         const url = detailUrl(card);
-        if (url) urls.add(url);
+        if (url) {
+          urls.add(url);
+          withItems.add(card.provider);
+        }
       }
     }
+  } finally {
+    if (timer) clearTimeout(timer);
   }
-  return urls;
+  return { urls, withItems };
+}
+
+function renderSitemap(urls: Set<string>) {
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...urls].slice(0, MAX_SITEMAP_URLS)
+    .map((url) => `  <url><loc>${xmlEscape(url)}</loc></url>`)
+    .join("\n")}\n</urlset>`;
+}
+
+function coreSitemap() {
+  return renderSitemap(new Set([
+    ...PATHS,
+    ...FEATURED_DRAMA_PATHS,
+  ].map((path) => `${SITE_ORIGIN}${path}`)));
 }
 
 async function buildSitemap() {
   const urls = new Set([...PATHS, ...FEATURED_DRAMA_PATHS].map((path) => `${SITE_ORIGIN}${path}`));
+  const deadline = Date.now() + CATALOG_BUDGET_MS;
   try {
-    // Build detail URLs from each visible provider's own browse catalog instead
-    // of only the homepage rails, which are intentionally limited.
     const providers = visibleProviders();
-    const dramaUrls = await collectProviderCards(providers);
-    for (const url of dramaUrls) urls.add(url);
+    const collected = await collectProviderCards(providers, deadline);
+    for (const url of collected.urls) {
+      if (urls.size >= MAX_SITEMAP_URLS) break;
+      urls.add(url);
+    }
+    for (const id of collected.withItems) {
+      if (providers.includes(id as ProviderId)) urls.add(`${SITE_ORIGIN}/provider/${encodeURIComponent(id)}`);
+    }
   } catch {
-    // Keep core public URLs available if catalog providers are temporarily down.
+    // Keep valid core and curated URLs when a provider is unavailable.
   }
-
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...urls]
-    .map((url) => `  <url><loc>${xmlEscape(url)}</loc></url>`)
-    .join("\n")}\n</urlset>`;
+  return renderSitemap(urls);
 }
 
 export const Route = createFileRoute("/sitemap.xml")({
