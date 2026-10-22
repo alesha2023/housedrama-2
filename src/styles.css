@@ -246,6 +246,11 @@
 .boot-splash__logo {
   position: relative;
   z-index: 1;
+  display: block;
+  width: 190px;
+  max-width: 75vw;
+  height: auto;
+  object-fit: contain;
 }
 
 .boot-splash__track {

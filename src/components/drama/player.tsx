@@ -136,6 +136,7 @@ export function Player({
   const [firstEpisodePopupReady, setFirstEpisodePopupReady] = useState(false);
   const [sponsorOpened, setSponsorOpened] = useState(false);
   const [sponsorWait, setSponsorWait] = useState(0);
+  const [sponsorClosing, setSponsorClosing] = useState(false);
   const [sponsorProvider, setSponsorProvider] = useState<"monetag" | "adsterra" | null>(null);
   const lastSponsorIndex = useRef<number>(-1);
   const [rate, setRate] = useState(1);
@@ -152,18 +153,26 @@ export function Player({
   const next = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
 
   useEffect(() => {
-    if (episodes[0]?.episodeId !== episode.episodeId) {
-      setFirstEpisodePopupReady(true);
-      return;
-    }
-    const firstSponsorKey = `housedrama-first-sponsor:${drama.provider}:${drama.seriesId}`;
+    // Every episode gets its own sponsor popup, including direct links and
+    // automatic next-episode navigation. A one-time sessionStorage bypass is
+    // consumed only when returning from the popup to the selected episode.
+    const bypassKey = `housedrama-sponsor-bypass:${drama.provider}:${drama.seriesId}:${episode.episodeId}`;
     try {
-      if (!window.sessionStorage.getItem(firstSponsorKey)) setPendingAdEpisode(episode.episodeId);
+      if (window.sessionStorage.getItem(bypassKey) === "1") {
+        window.sessionStorage.removeItem(bypassKey);
+        setPendingAdEpisode(null);
+      } else {
+        setPendingAdEpisode(episode.episodeId);
+      }
     } catch {
       setPendingAdEpisode(episode.episodeId);
     }
+    setSponsorOpened(false);
+    setSponsorWait(0);
+    setSponsorClosing(false);
+    setSponsorProvider(null);
     setFirstEpisodePopupReady(true);
-  }, [drama.provider, drama.seriesId, episode.episodeId, episodes[0]?.episodeId]);
+  }, [drama.provider, drama.seriesId, episode.episodeId]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -193,10 +202,18 @@ export function Player({
   };
 
   useEffect(() => {
-    if (sponsorWait <= 0) return;
+    if (!sponsorOpened || sponsorWait <= 0) return;
     const timer = window.setTimeout(() => setSponsorWait((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearTimeout(timer);
-  }, [sponsorWait]);
+  }, [sponsorOpened, sponsorWait]);
+
+  useEffect(() => {
+    if (!sponsorOpened || sponsorWait !== 0 || sponsorClosing || !pendingAdEpisode) return;
+    // Let the modal animate out, then continue automatically to the selected episode.
+    setSponsorClosing(true);
+    const timer = window.setTimeout(() => continuePendingEpisode(), 350);
+    return () => window.clearTimeout(timer);
+  }, [sponsorOpened, sponsorWait, sponsorClosing, pendingAdEpisode]);
 
   useEffect(() => {
     setAutoplay(localStorage.getItem("dramaluma.autoplay") !== "0");
@@ -534,23 +551,15 @@ export function Player({
   }, [autoplay, drama, episode, next]);
 
 
-  function go(episodeId: string, auto = false) {
-    // Ask for a sponsor after every 2nd episode, including automatic next-episode navigation.
-    const isSecondEpisodeBoundary = currentIndex >= 0 && (currentIndex + 1) % 2 === 0;
-    if (isSecondEpisodeBoundary) {
-      videoRef.current?.pause();
-      setPlaying(false);
-      setPendingAdEpisode(episodeId);
-      setSponsorOpened(false);
-      setSponsorWait(0);
-      setSponsorProvider(null);
-      return;
-    }
-    void navigate({
-      to: "/watch/$provider/$seriesId/$episodeId",
-      params: { provider: drama.provider, seriesId: drama.seriesId, episodeId },
-      search: auto ? { auto: true, lang: contentLang } : { lang: contentLang },
-    });
+  function go(episodeId: string, _auto = false) {
+    // Require a sponsor popup for every episode transition (manual or autoplay).
+    videoRef.current?.pause();
+    setPlaying(false);
+    setPendingAdEpisode(episodeId);
+    setSponsorOpened(false);
+    setSponsorWait(0);
+    setSponsorClosing(false);
+    setSponsorProvider(null);
   }
 
   function continuePendingEpisode() {
@@ -565,12 +574,24 @@ export function Player({
     setPendingAdEpisode(null);
     setSponsorOpened(false);
     setSponsorWait(0);
+    setSponsorClosing(false);
     setSponsorProvider(null);
     if (!episodeId) return;
+    // If moving to a different episode, let that route consume a one-time
+    // bypass so its initial popup does not reopen after this popup completes.
+    if (episodeId !== episode.episodeId) {
+      try {
+        window.sessionStorage.setItem(`housedrama-sponsor-bypass:${drama.provider}:${drama.seriesId}:${episodeId}`, "1");
+      } catch {
+        // The transition still works if sessionStorage is unavailable.
+      }
+    }
+    // Also navigate when continuing the current episode so autoStart becomes
+    // true and Episode 1 starts automatically after its countdown.
     void navigate({
       to: "/watch/$provider/$seriesId/$episodeId",
       params: { provider: drama.provider, seriesId: drama.seriesId, episodeId },
-      search: { lang: contentLang },
+      search: { auto: true, lang: contentLang },
     });
   }
 
@@ -989,8 +1010,8 @@ export function Player({
       </button>
 
       {pendingAdEpisode ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/65 p-5" role="dialog" aria-modal="true" aria-label="Iklan">
-          <div className="sponsor-modal w-full max-w-sm rounded-2xl bg-white p-5 text-center text-[#242424] shadow-2xl dark:bg-[#211d27] dark:text-white">
+        <div className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/65 p-5 transition-opacity duration-300 ease-in-out ${sponsorClosing ? "opacity-0" : "opacity-100"}`} role="dialog" aria-modal="true" aria-label="Iklan">
+          <div className={`sponsor-modal w-full max-w-sm rounded-2xl bg-white p-5 text-center text-[#242424] shadow-2xl transition-all duration-300 ease-in-out dark:bg-[#211d27] dark:text-white ${sponsorClosing ? "translate-y-3 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"}`}>
             <h2 className="text-lg font-bold text-[#242424] dark:text-white">{isFirstEpisodeSponsor
               ? ({ en: "Support HouseDrama to Start", id: "Dukung HouseDrama untuk Mulai", hi: "शुरू करने के लिए HouseDrama का समर्थन करें", fil: "Suportahan ang HouseDrama para Magsimula", ms: "Sokong HouseDrama untuk Bermula", th: "สนับสนุน HouseDrama เพื่อเริ่มรับชม" } as const)[uiLang]
               : ({ en: "Watch Sponsor First", id: "Tonton Sponsor Dulu", hi: "पहले प्रायोजक देखें", fil: "Panoorin muna ang sponsor", ms: "Tonton Penaja Dahulu", th: "ดูผู้สนับสนุนก่อน" } as const)[uiLang]}</h2>
@@ -1025,8 +1046,9 @@ export function Player({
                 const link = SPONSOR_SMARTLINKS[Math.floor(Math.random() * SPONSOR_SMARTLINKS.length)];
                 window.open(link, "_blank", "noopener,noreferrer");
               }
+              setSponsorClosing(false);
               setSponsorOpened(true);
-              setSponsorWait(7);
+              setSponsorWait(10);
             }} disabled={sponsorOpened}>
               {sponsorOpened
                 ? ({ en: "Sponsor Opened", id: "Sponsor Sudah Dibuka", hi: "प्रायोजक खुल गया", fil: "Nabuksan na ang sponsor", ms: "Penaja Dibuka", th: "เปิดผู้สนับสนุนแล้ว" } as const)[uiLang]
