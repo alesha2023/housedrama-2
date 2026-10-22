@@ -19,6 +19,7 @@ import { reportPlayback } from "@/lib/drama/api";
 import { pickTitle } from "@/lib/drama/display";
 import { usePrefs } from "@/lib/drama/i18n";
 import { previewPathPrefix } from "@/lib/preview-path-prefix";
+import { openMonetagAd } from "@/lib/drama/monetag";
 import { readProgress, readWatchlist, toggleWatchlist, upsertHistory, writeProgress } from "@/lib/drama/storage";
 import type { DramaCard, Episode, ProviderId, StreamCandidate, StreamPayload } from "@/lib/drama/types";
 import { cn } from "@/lib/utils";
@@ -26,16 +27,14 @@ import { cn } from "@/lib/utils";
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
 const SPONSOR_SMARTLINKS = [
-  "https://uplcm.com/4/12095251",
-  "https://uplcm.com/4/12095249",
-  "https://uplcm.com/4/12056282",
-  "https://uplcm.com/4/12095247",
-  "https://uplcm.com/4/1209524",
-  "https://uplcm.com/4/12095259",
-  "https://uplcm.com/4/12095268",
-  "https://uplcm.com/4/12095269",
-  "https://uplcm.com/4/12095271",
-  "https://uplcm.com/4/12095272",
+  "https://auctionr.org/4/e02ff50611e53dfb3b95d9b7fe94759f",
+  "https://asiafilm.org/4/3b9a06b621155c33e54e072a498d0691",
+  "https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2",
+  "https://uplcm.com/4/12057622",
+  "https://uplcm.com/4/12057617",
+  "https://uplcm.com/4/12057615",
+  "https://uplcm.com/4/12017844",
+  "https://auctionr.org/4/97ee6d6eed24baa0974e41f4f1567470",
 ];
 
 function formatPlaybackTime(seconds: number | null | undefined) {
@@ -131,10 +130,13 @@ export function Player({
   const [openSpeed, setOpenSpeed] = useState(false);
   const [openSubs, setOpenSubs] = useState(false);
   const [openList, setOpenList] = useState(false);
+  // Episode 1 gets its own sponsor popup before playback. Keep the initial
+  // state identical on server/client to avoid a hydration mismatch.
   const [pendingAdEpisode, setPendingAdEpisode] = useState<string | null>(null);
+  const [firstEpisodePopupReady, setFirstEpisodePopupReady] = useState(false);
   const [sponsorOpened, setSponsorOpened] = useState(false);
   const [sponsorWait, setSponsorWait] = useState(0);
-  const [sponsorProvider, setSponsorProvider] = useState<"monetag" | null>(null);
+  const [sponsorProvider, setSponsorProvider] = useState<"monetag" | "adsterra" | null>(null);
   const lastSponsorIndex = useRef<number>(-1);
   const [rate, setRate] = useState(1);
   const [subtitleLang, setSubtitleLang] = useState<string | null>(null);
@@ -145,8 +147,23 @@ export function Player({
   const [retrying, setRetrying] = useState(false);
   const candidate = payload.candidates[index] ?? null;
   const currentIndex = episodes.findIndex((item) => item.episodeId === episode.episodeId);
+  const isFirstEpisodeSponsor = pendingAdEpisode !== null && pendingAdEpisode === episodes[0]?.episodeId;
   const previous = currentIndex > 0 ? episodes[currentIndex - 1] : null;
   const next = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
+
+  useEffect(() => {
+    if (episodes[0]?.episodeId !== episode.episodeId) {
+      setFirstEpisodePopupReady(true);
+      return;
+    }
+    const firstSponsorKey = `housedrama-first-sponsor:${drama.provider}:${drama.seriesId}`;
+    try {
+      if (!window.sessionStorage.getItem(firstSponsorKey)) setPendingAdEpisode(episode.episodeId);
+    } catch {
+      setPendingAdEpisode(episode.episodeId);
+    }
+    setFirstEpisodePopupReady(true);
+  }, [drama.provider, drama.seriesId, episode.episodeId, episodes[0]?.episodeId]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -436,9 +453,16 @@ export function Player({
   }, [subtitleLang, candidate]);
 
   useEffect(() => {
-    if (!autoStart) return;
     const video = videoRef.current;
     if (!video) return;
+    // Wait for the first-episode sponsor check, then never autoplay behind its popup.
+    if (!firstEpisodePopupReady) return;
+    if (pendingAdEpisode === episode.episodeId) {
+      video.pause();
+      setPlaying(false);
+      return;
+    }
+    if (!autoStart) return;
     let cancelled = false;
     let started = false;
     const tryPlay = async () => {
@@ -472,7 +496,7 @@ export function Player({
       video.removeEventListener("canplay", tryPlay);
       video.removeEventListener("loadeddata", tryPlay);
     };
-  }, [autoStart, candidate]);
+  }, [autoStart, candidate, episode.episodeId, firstEpisodePopupReady, pendingAdEpisode]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -511,8 +535,11 @@ export function Player({
 
 
   function go(episodeId: string, auto = false) {
-    // Ask for a sponsor on every episode transition, including automatic next-episode navigation.
-    if (currentIndex >= 0) {
+    // Ask for a sponsor after every 2nd episode, including automatic next-episode navigation.
+    const isSecondEpisodeBoundary = currentIndex >= 0 && (currentIndex + 1) % 2 === 0;
+    if (isSecondEpisodeBoundary) {
+      videoRef.current?.pause();
+      setPlaying(false);
       setPendingAdEpisode(episodeId);
       setSponsorOpened(false);
       setSponsorWait(0);
@@ -528,6 +555,13 @@ export function Player({
 
   function continuePendingEpisode() {
     const episodeId = pendingAdEpisode;
+    if (isFirstEpisodeSponsor) {
+      try {
+        window.sessionStorage.setItem(`housedrama-first-sponsor:${drama.provider}:${drama.seriesId}`, "1");
+      } catch {
+        // Storage is optional; the current mounted player can still continue.
+      }
+    }
     setPendingAdEpisode(null);
     setSponsorOpened(false);
     setSponsorWait(0);
@@ -957,8 +991,19 @@ export function Player({
       {pendingAdEpisode ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/65 p-5" role="dialog" aria-modal="true" aria-label="Iklan">
           <div className="sponsor-modal w-full max-w-sm rounded-2xl bg-white p-5 text-center text-[#242424] shadow-2xl dark:bg-[#211d27] dark:text-white">
-            <h2 className="text-lg font-bold text-[#242424] dark:text-white">{({ en: "Watch Sponsor First", id: "Tonton Sponsor Dulu", hi: "पहले प्रायोजक देखें", fil: "Panoorin muna ang sponsor", ms: "Tonton Penaja Dahulu", th: "ดูผู้สนับสนุนก่อน" } as const)[uiLang]}</h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{({
+            <h2 className="text-lg font-bold text-[#242424] dark:text-white">{isFirstEpisodeSponsor
+              ? ({ en: "Support HouseDrama to Start", id: "Dukung HouseDrama untuk Mulai", hi: "शुरू करने के लिए HouseDrama का समर्थन करें", fil: "Suportahan ang HouseDrama para Magsimula", ms: "Sokong HouseDrama untuk Bermula", th: "สนับสนุน HouseDrama เพื่อเริ่มรับชม" } as const)[uiLang]
+              : ({ en: "Watch Sponsor First", id: "Tonton Sponsor Dulu", hi: "पहले प्रायोजक देखें", fil: "Panoorin muna ang sponsor", ms: "Tonton Penaja Dahulu", th: "ดูผู้สนับสนุนก่อน" } as const)[uiLang]}</h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{isFirstEpisodeSponsor
+              ? ({
+                en: "Before Episode 1 starts, open the sponsor in a new tab. Return here and continue watching; the video will not start automatically behind this popup.",
+                id: "Sebelum Episode 1 dimulai, buka sponsor di tab baru. Kembali ke sini untuk mulai menonton. Video tidak akan langsung berjalan di belakang popup ini.",
+                hi: "एपिसोड 1 शुरू करने से पहले प्रायोजक को नए टैब में खोलें। फिर यहाँ लौटकर देखना शुरू करें।",
+                fil: "Bago magsimula ang Episode 1, buksan muna ang sponsor sa bagong tab. Bumalik dito para manood.",
+                ms: "Sebelum Episod 1 bermula, buka penaja dalam tab baharu. Kembali ke sini untuk mula menonton.",
+                th: "ก่อนเริ่มตอนที่ 1 ให้เปิดผู้สนับสนุนในแท็บใหม่ แล้วกลับมาที่นี่เพื่อเริ่มรับชม"
+              } as const)[uiLang]
+              : ({
               en: `To continue to Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, please open the sponsor first. This helps support HouseDrama.`,
               id: `Untuk melanjutkan ke Episode ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, silakan buka sponsor terlebih dahulu. Ini membantu mendukung HouseDrama.`,
               hi: `एपिसोड ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1} पर जाने के लिए पहले प्रायोजक लिंक खोलें। इससे HouseDrama को समर्थन मिलता है।`,
@@ -966,25 +1011,36 @@ export function Player({
               ms: `Untuk meneruskan ke Episod ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1}, buka penaja dahulu. Ini membantu menyokong HouseDrama.`,
               th: `หากต้องการไปยังตอนที่ ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1} โปรดเปิดลิงก์ผู้สนับสนุนก่อน เพื่อช่วยสนับสนุน HouseDrama`,
             } as const)[uiLang]}</p>
-            <button type="button" className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#ff4d8d] to-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => {
+            <button type="button" className={`mt-4 w-full rounded-xl px-4 py-3 font-semibold text-white ${isFirstEpisodeSponsor ? "bg-gradient-to-r from-[#8b5cf6] to-[#ff4d8d]" : "bg-gradient-to-r from-[#ff4d8d] to-[#ff5a36]"}`} onClick={() => {
               // Open a sponsor in a new tab from this explicit user click. The viewer
               // returns to HouseDrama and presses Continue; no ad completion is claimed.
-              // Use only the 10 user-provided Monetag smartlinks; rotate randomly per episode.
-              setSponsorProvider("monetag");
-              const link = SPONSOR_SMARTLINKS[Math.floor(Math.random() * SPONSOR_SMARTLINKS.length)];
-              window.open(link, "_blank", "noopener,noreferrer");
+              const provider = Math.random() < 0.5 ? "monetag" : "adsterra";
+              setSponsorProvider(provider);
+              if (provider === "monetag") {
+                openMonetagAd();
+              } else {
+                // Open only the selected sponsor URL. Do not inject the Adsterra
+                // popunder script here because it can create a sticky clickable overlay
+                // that blocks scrolling on mobile.
+                const link = SPONSOR_SMARTLINKS[Math.floor(Math.random() * SPONSOR_SMARTLINKS.length)];
+                window.open(link, "_blank", "noopener,noreferrer");
+              }
               setSponsorOpened(true);
               setSponsorWait(7);
             }} disabled={sponsorOpened}>
               {sponsorOpened
                 ? ({ en: "Sponsor Opened", id: "Sponsor Sudah Dibuka", hi: "प्रायोजक खुल गया", fil: "Nabuksan na ang sponsor", ms: "Penaja Dibuka", th: "เปิดผู้สนับสนุนแล้ว" } as const)[uiLang]
-                : ({ en: "Open Sponsor in New Tab", id: "Buka Sponsor di Tab Baru", hi: "नए टैब में प्रायोजक खोलें", fil: "Buksan ang sponsor sa bagong tab", ms: "Buka Penaja dalam Tab Baharu", th: "เปิดผู้สนับสนุนในแท็บใหม่" } as const)[uiLang]}
+                : (isFirstEpisodeSponsor
+                  ? ({ en: "Open Sponsor & Start Episode 1", id: "Buka Sponsor & Mulai Episode 1", hi: "प्रायोजक खोलें और एपिसोड 1 शुरू करें", fil: "Buksan ang Sponsor at Simulan ang Episode 1", ms: "Buka Penaja & Mula Episod 1", th: "เปิดผู้สนับสนุนและเริ่มตอนที่ 1" } as const)[uiLang]
+                  : ({ en: "Open Sponsor in New Tab", id: "Buka Sponsor di Tab Baru", hi: "नए टैब में प्रायोजक खोलें", fil: "Buksan ang sponsor sa bagong tab", ms: "Buka Penaja dalam Tab Baharu", th: "เปิดผู้สนับสนุนในแท็บใหม่" } as const)[uiLang])}
             </button>
             {sponsorOpened ? (
               <button type="button" className={`mt-2 w-full rounded-xl border px-4 py-3 font-semibold transition-colors ${sponsorWait > 0 ? "border-gray-300 text-gray-400 dark:border-white/20 dark:text-gray-500" : "border-[#ff4d6d] bg-[#ff4d6d] text-white dark:border-[#ff4d6d] dark:bg-[#ff4d6d] dark:text-white"}`} onClick={continuePendingEpisode} disabled={sponsorWait > 0}>
                 {sponsorWait > 0
                   ? ({ en: `Continue in ${sponsorWait}s`, id: `Lanjutkan dalam ${sponsorWait} dtk`, hi: `${sponsorWait} सेकंड में जारी रखें`, fil: `Magpatuloy sa loob ng ${sponsorWait}s`, ms: `Teruskan dalam ${sponsorWait}s`, th: `ดำเนินการต่อใน ${sponsorWait} วินาที` } as const)[uiLang]
-                  : ({ en: "Return & Continue Episode", id: "Kembali & Lanjutkan Episode", hi: "वापस जाएँ और एपिसोड जारी रखें", fil: "Bumalik at magpatuloy sa episode", ms: "Kembali & Teruskan Episod", th: "กลับไปดูตอนต่อ" } as const)[uiLang]}
+                  : (isFirstEpisodeSponsor
+                    ? ({ en: "Return & Start Episode 1", id: "Kembali & Mulai Episode 1", hi: "वापस जाएँ और एपिसोड 1 शुरू करें", fil: "Bumalik at Simulan ang Episode 1", ms: "Kembali & Mula Episod 1", th: "กลับมาเริ่มตอนที่ 1" } as const)[uiLang]
+                    : ({ en: "Return & Continue Episode", id: "Kembali & Lanjutkan Episode", hi: "वापस जाएँ और एपिसोड जारी रखें", fil: "Bumalik at magpatuloy sa episode", ms: "Kembali & Teruskan Episod", th: "กลับไปดูตอนต่อ" } as const)[uiLang])}
               </button>
             ) : null}
           </div>
