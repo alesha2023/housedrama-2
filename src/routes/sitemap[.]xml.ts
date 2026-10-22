@@ -1,14 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { loadBrowse } from "@/lib/drama/server/catalog";
-import { visibleProviders } from "@/lib/drama/providers";
-import type { DramaCard, ProviderId } from "@/lib/drama/types";
 
 const SITE_ORIGIN = "https://house-drama.xyz";
 const CACHE_MS = 30 * 60 * 1000;
 const MAX_SITEMAP_URLS = 50000;
-// Return a valid sitemap quickly even when provider catalog APIs are slow.
-const CATALOG_BUDGET_MS = 4500;
-
 // Curated drama URLs confirmed by the site owner. Keep these in the sitemap
 // even when a provider's page-1 catalog does not return them.
 const FEATURED_DRAMA_PATHS = [
@@ -86,78 +80,16 @@ function xmlEscape(value: string) {
     .replace(/'/g, "&apos;");
 }
 
-function detailUrl(card: DramaCard) {
-  if (!card.provider || !card.seriesId || !card.title?.trim()) return null;
-  return `${SITE_ORIGIN}/drama/${encodeURIComponent(card.provider)}/${encodeURIComponent(card.seriesId)}`;
-}
-
-async function collectProviderCards(providers: ProviderId[], deadline: number) {
-  const urls = new Set<string>();
-  const withItems = new Set<string>();
-  const requests = providers.flatMap((provider) => {
-    const pages = provider === "anyreel" || provider === "freereels" ? [1, 2, 3] : [1];
-    return pages.map((page) => ({ provider, page }));
-  });
-  const pending = requests.map(async ({ provider, page }) => {
-    try {
-      const result = await loadBrowse({ lang: "en", provider, page });
-      return { provider, items: result.items };
-    } catch {
-      return { provider, items: [] as DramaCard[] };
-    }
-  });
-  const remaining = Math.max(0, deadline - Date.now());
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<null>((resolve) => {
-    timer = setTimeout(() => resolve(null), remaining);
-  });
-  try {
-    const results = await Promise.race([Promise.all(pending), timeout]);
-    if (!results) return { urls, withItems };
-    for (const result of results) {
-      for (const card of result.items) {
-        const url = detailUrl(card);
-        if (url) {
-          urls.add(url);
-          withItems.add(card.provider);
-        }
-      }
-    }
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-  return { urls, withItems };
-}
-
 function renderSitemap(urls: Set<string>) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...urls].slice(0, MAX_SITEMAP_URLS)
     .map((url) => `  <url><loc>${xmlEscape(url)}</loc></url>`)
     .join("\n")}\n</urlset>`;
 }
 
-function coreSitemap() {
-  return renderSitemap(new Set([
-    ...PATHS,
-    ...FEATURED_DRAMA_PATHS,
-  ].map((path) => `${SITE_ORIGIN}${path}`)));
-}
-
-async function buildSitemap() {
+function buildSitemap() {
+  // Keep sitemap retrieval deterministic and independent of upstream provider APIs.
+  // Google must be able to fetch a valid XML response even when provider APIs are slow.
   const urls = new Set([...PATHS, ...FEATURED_DRAMA_PATHS].map((path) => `${SITE_ORIGIN}${path}`));
-  const deadline = Date.now() + CATALOG_BUDGET_MS;
-  try {
-    const providers = visibleProviders();
-    const collected = await collectProviderCards(providers, deadline);
-    for (const url of collected.urls) {
-      if (urls.size >= MAX_SITEMAP_URLS) break;
-      urls.add(url);
-    }
-    for (const id of collected.withItems) {
-      if (providers.includes(id as ProviderId)) urls.add(`${SITE_ORIGIN}/provider/${encodeURIComponent(id)}`);
-    }
-  } catch {
-    // Keep valid core and curated URLs when a provider is unavailable.
-  }
   return renderSitemap(urls);
 }
 
@@ -169,14 +101,16 @@ export const Route = createFileRoute("/sitemap.xml")({
         if (cachedXml && cachedXml.expiresAt > Date.now()) {
           body = cachedXml.body;
         } else {
-          body = await buildSitemap();
+          body = buildSitemap();
           cachedXml = { body, expiresAt: Date.now() + CACHE_MS };
         }
 
         return new Response(body, {
+          status: 200,
           headers: {
             "content-type": "application/xml; charset=utf-8",
             "cache-control": "public, max-age=1800, stale-while-revalidate=86400",
+            "x-content-type-options": "nosniff",
           },
         });
       },
