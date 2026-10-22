@@ -14,9 +14,9 @@ export const Route = createFileRoute("/latest")({
       { name: "robots", content: "index,follow,max-image-preview:large" },
       { property: "og:title", content: "Latest Chinese Short Dramas & New Episodes — HouseDrama" },
       { property: "og:description", content: "Find newly added Chinese and Asian short dramas and the latest available episodes on HouseDrama." },
-      { property: "og:url", content: "https://house-drama.web.id/latest" },
+      { property: "og:url", content: "https://house-drama.xyz/latest" },
     ],
-    links: [{ rel: "canonical", href: "https://house-drama.web.id/latest" }],
+    links: [{ rel: "canonical", href: "https://house-drama.xyz/latest" }],
   }),
   component: LatestPage,
 });

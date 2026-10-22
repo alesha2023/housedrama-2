@@ -46,13 +46,16 @@ function WatchPage() {
   const [detail, setDetail] = useState(initial.detail);
   const [stream, setStream] = useState(initial.stream);
 
-  // Count one play-start per drama per browser session to avoid duplicate counts on refresh.
+  // Count one successful play-start per drama per browser session. Do not mark
+  // the view as recorded before the API succeeds: on a transient DB/network error
+  // that would permanently suppress retries for the rest of the session.
   useEffect(() => {
     if (!detail.drama || !isProviderId(params.provider)) return;
     const key = `housedrama-viewed:${params.provider}:${params.seriesId}`;
+    const pendingKey = `${key}:pending`;
     try {
-      if (window.sessionStorage.getItem(key)) return;
-      window.sessionStorage.setItem(key, "1");
+      if (window.sessionStorage.getItem(key) || window.sessionStorage.getItem(pendingKey)) return;
+      window.sessionStorage.setItem(pendingKey, "1");
     } catch {
       // Private browsing/storage restrictions should never block playback.
     }
@@ -66,7 +69,15 @@ function WatchPage() {
         posterUrl: detail.drama.posterUrl,
       }),
       keepalive: true,
-    }).catch(() => undefined);
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("View count was not saved");
+        try { window.sessionStorage.setItem(key, "1"); } catch { /* storage is optional */ }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        try { window.sessionStorage.removeItem(pendingKey); } catch { /* storage is optional */ }
+      });
   }, [detail.drama, params.provider, params.seriesId]);
 
   useEffect(() => {

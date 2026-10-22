@@ -28,14 +28,14 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       { property: "og:title", content: "HouseDrama — Watch Chinese & Asian Short Dramas Online" },
       { property: "og:description", content: "Discover Chinese and Asian short dramas, trending romance, CEO stories, and new episodes on HouseDrama." },
-      { property: "og:image", content: "https://house-drama.web.id/og-v2.jpg" },
+      { property: "og:image", content: "https://house-drama.xyz/og-v2.jpg" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "1200" },
       { property: "og:image:alt", content: "HouseDrama — Watch Chinese and Asian Short Dramas Online" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "HouseDrama — Chinese & Asian Short Dramas" },
       { name: "twitter:description", content: "Watch Chinese short dramas online and discover romance, revenge, CEO stories, fantasy, and new episodes on HouseDrama." },
-      { name: "twitter:image", content: "https://house-drama.web.id/og-v2.jpg" },
+      { name: "twitter:image", content: "https://house-drama.xyz/og-v2.jpg" },
       { name: "theme-color", content: "#b34bff" },
       { name: "admaven-placement", content: "BpdU4qdU6" },
     ],
@@ -43,10 +43,9 @@ export const Route = createRootRoute({
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "icon", type: "image/png", sizes: "64x64", href: "/favicon.png" },
       { rel: "shortcut icon", href: "/favicon.ico" },
+      { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" },
-      { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
     ],
@@ -66,6 +65,17 @@ function RootLayout() {
   return (
     <html lang={routeLang} suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "try{var t=localStorage.getItem('housedrama_theme');if(!t){t='dark';localStorage.setItem('housedrama_theme','dark');localStorage.setItem('housedrama_dark_default_v1','1')}document.documentElement.dataset.theme=t==='light'?'light':'dark';document.documentElement.style.colorScheme=t==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark'}",
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "(function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap';l.media='print';l.onload=function(){this.media='all'};document.head.appendChild(l)})()",
+          }}
+        />
+        <style dangerouslySetInnerHTML={{ __html: "html{background:#09090d;color-scheme:dark}html[data-theme='light']{background:#fff3f0;color-scheme:light}body{margin:0;min-height:100vh;background:#09090d;color:#f5f5f7}html[data-theme='light'] body{background:#fff3f0;color:#17181d}footer [aria-label='Social']{display:flex;align-items:center;gap:10px;min-height:40px}footer [aria-label='Social'] a{display:grid;width:40px;height:40px;min-width:40px;min-height:40px;place-items:center;flex:0 0 40px;overflow:hidden;border-radius:9999px}footer [aria-label='Social'] svg{display:block!important;width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;max-width:20px!important;max-height:20px!important;flex:none!important} .boot-splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#09090d;color:#fff} .boot-splash__logo{display:block;width:64px;height:auto;max-width:64px;object-fit:contain}" }} />
         <HeadContent />
       </head>
       <body>
@@ -77,7 +87,7 @@ function RootLayout() {
               "@type": "WebSite",
               name: "HouseDrama",
               alternateName: "House Drama",
-              url: "https://house-drama.web.id/",
+              url: "https://house-drama.xyz/",
               inLanguage: "en",
               description: "A catalog of Chinese short dramas from multiple providers on HouseDrama.",
             }),
@@ -90,8 +100,8 @@ function RootLayout() {
               "@context": "https://schema.org",
               "@type": "Organization",
               name: "HouseDrama",
-              url: "https://house-drama.web.id/",
-              logo: "https://house-drama.web.id/logo.png",
+              url: "https://house-drama.xyz/",
+              logo: "https://house-drama.xyz/logo.png",
             }),
           }}
         />

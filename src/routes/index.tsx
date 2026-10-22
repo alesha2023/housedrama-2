@@ -28,22 +28,36 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:title", content: "HouseDrama — Watch Chinese & Asian Short Dramas Online" },
       { property: "og:description", content: "Watch Chinese and Asian short dramas online, including romance, CEO, revenge, and fantasy stories on HouseDrama." },
-      { property: "og:url", content: "https://house-drama.web.id/" },
-      { property: "og:image", content: "https://house-drama.web.id/og-v2.jpg" },
+      { property: "og:url", content: "https://house-drama.xyz/" },
+      { property: "og:image", content: "https://house-drama.xyz/og-v2.jpg" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "1200" },
       { property: "og:image:alt", content: "HouseDrama — Watch Chinese and Asian Short Dramas Online" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
-      { rel: "canonical", href: "https://house-drama.web.id/" },
-      { rel: "alternate", hrefLang: "en", href: "https://house-drama.web.id/en" },
-      { rel: "alternate", hrefLang: "id", href: "https://house-drama.web.id/id" },
-      { rel: "alternate", hrefLang: "x-default", href: "https://house-drama.web.id/" },
+      { rel: "canonical", href: "https://house-drama.xyz/" },
+      { rel: "alternate", hrefLang: "en", href: "https://house-drama.xyz/en" },
+      { rel: "alternate", hrefLang: "id", href: "https://house-drama.xyz/id" },
+      { rel: "alternate", hrefLang: "x-default", href: "https://house-drama.xyz/" },
     ],
   }),
   component: HomePage,
 });
+
+
+function getCatalogTrendingFallback(payload: import("@/lib/drama/types").HomePayload) {
+  const seen = new Set<string>();
+  const items: import("@/lib/drama/types").DramaCard[] = [];
+  for (const item of [...payload.hero, ...payload.sections.flatMap((section) => section.items)]) {
+    const key = `${item.provider}:${item.seriesId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    items.push(item);
+    if (items.length >= 12) break;
+  }
+  return items;
+}
 
 function HomePage() {
   const initial = Route.useLoaderData();
@@ -60,9 +74,11 @@ function HomePage() {
     fetch("/api/drama-trending", { headers: { accept: "application/json" } })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Trending unavailable")))
       .then((payload: { items?: import("@/lib/drama/types").DramaCard[] }) => {
-        if (active && Array.isArray(payload.items)) setHouseTrending(payload.items);
+        if (active && Array.isArray(payload.items)) {
+          setHouseTrending(payload.items.length ? payload.items : getCatalogTrendingFallback(initial));
+        }
       })
-      .catch(() => { if (active) setHouseTrending([]); });
+      .catch(() => { if (active) setHouseTrending(getCatalogTrendingFallback(initial)); });
     return () => { active = false; };
   }, []);
 
@@ -258,7 +274,7 @@ function HomePage() {
         </section>
       ) : null}
 
-      {houseTrending.length ? <Rail title={({ en: "Trending on HouseDrama · Most watched", id: "Trending di HouseDrama · Paling banyak ditonton", hi: "HouseDrama पर ट्रेंडिंग · सबसे ज़्यादा देखे गए", fil: "Trending sa HouseDrama · Pinakamaraming pinanood", ms: "Trending di HouseDrama · Paling banyak ditonton", th: "กำลังมาแรงบน HouseDrama · รับชมมากที่สุด" } as const)[uiLang]} items={houseTrending} more={<Link to="/trending" className="text-sm font-semibold text-primary">{t.viewAll}</Link>} /> : null}
+      {houseTrending.length ? <Rail title={({ en: "Explore popular dramas", id: "Jelajahi drama populer", hi: "लोकप्रिय ड्रामा देखें", fil: "Tuklasin ang mga sikat na drama", ms: "Terokai drama popular", th: "สำรวจซีรีส์ยอดนิยม" } as const)[uiLang]} items={houseTrending} more={<Link to="/trending" className="text-sm font-semibold text-primary">{t.viewAll}</Link>} /> : null}
       {data.sections
         .filter((section) => section.id !== "featured")
         .map((section) => (

@@ -523,18 +523,10 @@ export function PrefsProvider({ initialLang = "id", children }: { initialLang?: 
       void router.invalidate();
     };
 
-    fetch("https://ipapi.co/json/", { headers: { Accept: "application/json" } })
-      .then((response) => {
-        if (!response.ok) throw new Error("IP language lookup failed");
-        return response.json() as Promise<{ country_code?: string }>;
-      })
-      .then((data) => {
-        const country = data.country_code?.toUpperCase();
-        applyAutoLanguage(country === "ID" ? "id" : country === "IN" ? "hi" : country === "PH" ? "fil" : country === "MY" ? "ms" : country === "TH" ? "th" : "en");
-      })
-      .catch(() => {
-        // The server already chose a language from the request IP when it could.
-      });
+    // Avoid a client-side IP geolocation request: it is non-essential, may be
+    // blocked by privacy tools, and creates noisy Googlebot live-test XHR errors.
+    // Use the server-selected language; visitors can still choose language manually.
+    applyAutoLanguage(initialLang);
 
     return () => { cancelled = true; };
   }, [initialLang, router]);

@@ -19,7 +19,6 @@ import { reportPlayback } from "@/lib/drama/api";
 import { pickTitle } from "@/lib/drama/display";
 import { usePrefs } from "@/lib/drama/i18n";
 import { previewPathPrefix } from "@/lib/preview-path-prefix";
-import { openMonetagAd } from "@/lib/drama/monetag";
 import { readProgress, readWatchlist, toggleWatchlist, upsertHistory, writeProgress } from "@/lib/drama/storage";
 import type { DramaCard, Episode, ProviderId, StreamCandidate, StreamPayload } from "@/lib/drama/types";
 import { cn } from "@/lib/utils";
@@ -135,7 +134,7 @@ export function Player({
   const [pendingAdEpisode, setPendingAdEpisode] = useState<string | null>(null);
   const [sponsorOpened, setSponsorOpened] = useState(false);
   const [sponsorWait, setSponsorWait] = useState(0);
-  const [sponsorProvider, setSponsorProvider] = useState<"monetag" | "adsterra" | null>(null);
+  const [sponsorProvider, setSponsorProvider] = useState<"monetag" | null>(null);
   const lastSponsorIndex = useRef<number>(-1);
   const [rate, setRate] = useState(1);
   const [subtitleLang, setSubtitleLang] = useState<string | null>(null);
@@ -512,10 +511,8 @@ export function Player({
 
 
   function go(episodeId: string, auto = false) {
-    // Ask for a Monetag sponsor before every episode change, including automatic next-episode navigation.
-    // The initial episode opens normally; every subsequent episode requires one explicit sponsor click.
-    const isEpisodeChange = currentIndex >= 0;
-    if (isEpisodeChange) {
+    // Ask for a sponsor on every episode transition, including automatic next-episode navigation.
+    if (currentIndex >= 0) {
       setPendingAdEpisode(episodeId);
       setSponsorOpened(false);
       setSponsorWait(0);
@@ -972,7 +969,7 @@ export function Player({
             <button type="button" className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#ff4d8d] to-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => {
               // Open a sponsor in a new tab from this explicit user click. The viewer
               // returns to HouseDrama and presses Continue; no ad completion is claimed.
-              // All episode sponsor prompts use the user's ten Monetag links.
+              // Use only the 10 user-provided Monetag smartlinks; rotate randomly per episode.
               setSponsorProvider("monetag");
               const link = SPONSOR_SMARTLINKS[Math.floor(Math.random() * SPONSOR_SMARTLINKS.length)];
               window.open(link, "_blank", "noopener,noreferrer");

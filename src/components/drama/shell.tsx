@@ -496,7 +496,7 @@ const SOCIALS: { name: string; href: string; icon: () => ReactNode; className: s
 
 function SocialGlyph({ children }: { children: ReactNode }) {
   return (
-    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="20" height="20" style={{ display: "block", width: 20, height: 20, maxWidth: 20, maxHeight: 20, flexShrink: 0 }} className="size-5" aria-hidden="true">
       {children}
     </svg>
   );
