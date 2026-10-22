@@ -17,7 +17,7 @@ export const Route = createFileRoute("/provider/$provider")({
       anyreel: "AnyReel", dramabox: "DramaBox", freereels: "FreeReels", melolo: "Melolo",
     };
     const label = labels[params.provider] || params.provider;
-    const canonical = `https://house-drama.web.id/provider/${encodeURIComponent(params.provider)}`;
+    const canonical = `https://house-drama.xyz/provider/${encodeURIComponent(params.provider)}`;
     return {
       meta: [
         { title: `${label} Short Dramas — HouseDrama` },

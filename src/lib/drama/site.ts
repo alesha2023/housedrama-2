@@ -1,7 +1,7 @@
 /** Production origin. Never derive this from the request Host header. */
 export const SITE_ORIGIN = "https://house-drama.xyz";
 /** Previous production host. Redirect this host with a 301 that keeps path and query. */
-export const LEGACY_ORIGIN = "https://house-drama.web.id";
+export const LEGACY_ORIGIN = "https://house-drama.xyz";
 export const SITE_NAME = "HouseDrama";
 const OG_IMAGE_PATH = "/og.jpg";
 const PRODUCTION_HOST = "house-drama.xyz";
@@ -24,7 +24,7 @@ export function productionHostRedirect(requestUrl: string): string | null {
     return null;
   }
   const host = url.hostname.toLowerCase().replace(/\.$/, "");
-  const movable = host === "www.house-drama.xyz" || host === "house-drama.web.id" || host === "www.house-drama.web.id";
+  const movable = host === "www.house-drama.xyz" || host === "house-drama.xyz" || host === "www.house-drama.xyz";
   if (!movable) return null;
   url.protocol = "https:";
   url.hostname = PRODUCTION_HOST;

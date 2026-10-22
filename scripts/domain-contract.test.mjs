@@ -22,10 +22,10 @@ test("production pages use house-drama.xyz and do not canonicalise the old host"
       assert.match(text, /SITE_ORIGIN = "https:\/\/house-drama\.xyz"/);
       continue;
     }
-    if (text.includes("house-drama.web.id")) offenders.push(path);
+    if (text.includes("house-drama.xyz")) offenders.push(path);
   }
   assert.deepEqual(offenders, []);
   const robots = readFileSync("public/robots.txt", "utf8");
   assert.match(robots, /Sitemap: https:\/\/house-drama\.xyz\/sitemap\.xml/);
-  assert.equal(robots.includes("house-drama.web.id"), false);
+  assert.equal(robots.includes("house-drama.xyz"), false);
 });

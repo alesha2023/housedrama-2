@@ -1,5 +1,5 @@
 /**
- * Deploy this Worker on the OLD zone (house-drama.web.id) only.
+ * Deploy this Worker on the OLD zone (house-drama.xyz) only.
  * It is not part of the house-drama.xyz Worker. Do not attach both domains
  * to this script or the new site will redirect to itself.
  *
@@ -9,7 +9,7 @@
 export function legacyRedirectLocation(requestUrl) {
   const url = new URL(requestUrl);
   const host = url.hostname.toLowerCase().replace(/\.$/, "");
-  if (host !== "house-drama.web.id" && host !== "www.house-drama.web.id") return null;
+  if (host !== "house-drama.xyz" && host !== "www.house-drama.xyz") return null;
   url.protocol = "https:";
   url.hostname = "house-drama.xyz";
   url.port = "";

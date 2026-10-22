@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin
 
-Sitemap: https://house-drama.web.id/sitemap.xml
+Sitemap: https://house-drama.xyz/sitemap.xml

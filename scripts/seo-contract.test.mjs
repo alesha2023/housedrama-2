@@ -13,11 +13,11 @@ const root = readFileSync("src/routes/__root.tsx", "utf8");
 
 test("legacy worker redirects only the old host and keeps path plus query", () => {
   assert.equal(
-    legacyRedirectLocation("https://house-drama.web.id/drama/freereels/LSjOzwuyTG?ref=g"),
+    legacyRedirectLocation("https://house-drama.xyz/drama/freereels/LSjOzwuyTG?ref=g"),
     "https://house-drama.xyz/drama/freereels/LSjOzwuyTG?ref=g",
   );
   assert.equal(
-    legacyRedirectLocation("https://www.house-drama.web.id/sitemap.xml"),
+    legacyRedirectLocation("https://www.house-drama.xyz/sitemap.xml"),
     "https://house-drama.xyz/sitemap.xml",
   );
   assert.equal(legacyRedirectLocation("https://house-drama.xyz/drama/freereels/LSjOzwuyTG"), null);
@@ -26,7 +26,7 @@ test("legacy worker redirects only the old host and keeps path plus query", () =
 
 test("sitemap lists the production origin and omits non-indexable routes", () => {
   assert.match(sitemap, /const SITE_ORIGIN = "https:\/\/house-drama\.xyz"/);
-  assert.equal(sitemap.includes("house-drama.web.id"), false);
+  assert.equal(sitemap.includes("house-drama.xyz"), false);
   assert.equal(sitemap.includes('"/en"'), false);
   assert.equal(sitemap.includes('"/history"'), false);
   assert.equal(sitemap.includes('"/watchlist"'), false);
@@ -45,7 +45,7 @@ test("robots.txt points at the new sitemap and blocks private routes", () => {
   assert.match(robots, /Disallow: \/history/);
   assert.match(robots, /Disallow: \/watchlist/);
   assert.match(robots, /Disallow: \/search/);
-  assert.equal(robots.includes("house-drama.web.id"), false);
+  assert.equal(robots.includes("house-drama.xyz"), false);
 });
 
 test("drama and watch metadata stay on the fixed origin", () => {
@@ -53,7 +53,7 @@ test("drama and watch metadata stay on the fixed origin", () => {
   assert.match(drama, /applyHttpStatus\(503\)/);
   assert.match(drama, /absoluteSiteUrl\(`/);
   assert.equal(drama.includes("aggregateRating"), false);
-  assert.equal(drama.includes("house-drama.web.id"), false);
+  assert.equal(drama.includes("house-drama.xyz"), false);
   assert.match(watch, /noindex,follow/);
   assert.match(watch, /absoluteSiteUrl\(`\/drama\//);
   assert.match(watch, /throw notFound\(\)/);

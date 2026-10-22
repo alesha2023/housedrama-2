@@ -16,9 +16,9 @@ export const Route = createFileRoute("/categories")({
       { name: "robots", content: "index,follow,max-image-preview:large" },
       { property: "og:title", content: "Chinese Short Drama Categories — HouseDrama" },
       { property: "og:description", content: "Find short dramas by genre, including romance, revenge, fantasy, and CEO stories." },
-      { property: "og:url", content: "https://house-drama.web.id/categories" },
+      { property: "og:url", content: "https://house-drama.xyz/categories" },
     ],
-    links: [{ rel: "canonical", href: "https://house-drama.web.id/categories" }],
+    links: [{ rel: "canonical", href: "https://house-drama.xyz/categories" }],
   }),
   component: CategoriesPage,
 });

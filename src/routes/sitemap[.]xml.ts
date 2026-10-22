@@ -3,7 +3,7 @@ import { loadBrowse } from "@/lib/drama/server/catalog";
 import { visibleProviders } from "@/lib/drama/providers";
 import type { DramaCard, ProviderId } from "@/lib/drama/types";
 
-const SITE_ORIGIN = "https://house-drama.web.id";
+const SITE_ORIGIN = "https://house-drama.xyz";
 const CACHE_MS = 30 * 60 * 1000;
 
 // Curated drama URLs confirmed by the site owner. Keep these in the sitemap
