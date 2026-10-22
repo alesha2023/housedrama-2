@@ -582,6 +582,28 @@ export function Player({
 
   function continuePendingEpisode() {
     const episodeId = pendingAdEpisode;
+    if (!episodeId) return;
+
+    // For a different episode, keep the current sponsor gate in place until the
+    // route changes. Clearing pendingAdEpisode first briefly re-attaches the old
+    // episode's stream and can race with navigation on mobile browsers.
+    if (episodeId !== episode.episodeId) {
+      try {
+        window.sessionStorage.setItem(`housedrama-sponsor-bypass:${drama.provider}:${drama.seriesId}:${episodeId}`, "1");
+      } catch {
+        // The route can still transition if sessionStorage is unavailable.
+      }
+      void navigate({
+        to: "/watch/$provider/$seriesId/$episodeId",
+        params: { provider: drama.provider, seriesId: drama.seriesId, episodeId },
+        search: { auto: true, lang: contentLang },
+      });
+      return;
+    }
+
+    // Same-episode continuation: the route will not remount, so release the gate
+    // here and let the playback effect attach the stream. The visible Play control
+    // remains available if the mobile browser blocks delayed autoplay.
     if (isFirstEpisodeSponsor) {
       try {
         window.sessionStorage.setItem(`housedrama-first-sponsor:${drama.provider}:${drama.seriesId}`, "1");
@@ -594,35 +616,7 @@ export function Player({
     setSponsorWait(0);
     setSponsorClosing(false);
     setSponsorProvider(null);
-    if (!episodeId) return;
-    // If moving to a different episode, let that route consume a one-time
-    // bypass so its initial popup does not reopen after this popup completes.
-    if (episodeId !== episode.episodeId) {
-      try {
-        window.sessionStorage.setItem(`housedrama-sponsor-bypass:${drama.provider}:${drama.seriesId}:${episodeId}`, "1");
-      } catch {
-        // The transition still works if sessionStorage is unavailable.
-      }
-    }
-    // If the sponsor popup was shown for the episode already on screen, navigating
-    // to the same URL may not remount the route or update its `auto` search param.
-    // Start playback directly instead. Mobile browsers may block unmuted autoplay,
-    // so playContent() retries muted playback and leaves the Play control available
-    // if the browser/provider still refuses to start.
-    if (episodeId === episode.episodeId) {
-      playAfterSponsor.current = true;
-      // The stream is attached only after the popup closes. The playback effect
-      // waits for canplay/loadeddata and then starts the episode.
-      return;
-    }
-
-    // A different episode needs a route transition; its `auto` flag lets the
-    // player attempt playback after the new stream is ready.
-    void navigate({
-      to: "/watch/$provider/$seriesId/$episodeId",
-      params: { provider: drama.provider, seriesId: drama.seriesId, episodeId },
-      search: { auto: true, lang: contentLang },
-    });
+    playAfterSponsor.current = true;
   }
 
   function saveDrama() {
