@@ -88,6 +88,11 @@ export function browserPosterUrl(value: string | null | undefined): string | nul
   if (!normalized || normalized.startsWith("/")) return normalized;
   try {
     const parsed = new URL(normalized);
+    // Serve MyDramaWave cover images through HouseDrama's same-origin media route.
+    // This avoids Googlebot depending on the provider's cross-origin image response.
+    if (/(^|\.)mydramawave\.com$/i.test(parsed.hostname)) {
+      return `/api/media?u=${encodeURIComponent(normalized)}`;
+    }
     if (/\.hei[cf](?:$|[?#])/i.test(parsed.pathname) && !POSTER_PROXY_HOSTS.has(parsed.hostname)) {
       return `https://wsrv.nl/?url=${encodeURIComponent(normalized)}&output=jpg&q=82&w=720`;
     }
