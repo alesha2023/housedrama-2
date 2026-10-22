@@ -27,14 +27,16 @@ import { cn } from "@/lib/utils";
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
 const SPONSOR_SMARTLINKS = [
-  "https://auctionr.org/4/e02ff50611e53dfb3b95d9b7fe94759f",
-  "https://asiafilm.org/4/3b9a06b621155c33e54e072a498d0691",
-  "https://asiafilm.org/4/4a0d43260f21506b6b29c2febdc90ea2",
-  "https://uplcm.com/4/12057622",
-  "https://uplcm.com/4/12057617",
-  "https://uplcm.com/4/12057615",
-  "https://uplcm.com/4/12017844",
-  "https://auctionr.org/4/97ee6d6eed24baa0974e41f4f1567470",
+  "https://uplcm.com/4/12095251",
+  "https://uplcm.com/4/12095249",
+  "https://uplcm.com/4/12056282",
+  "https://uplcm.com/4/12095247",
+  "https://uplcm.com/4/1209524",
+  "https://uplcm.com/4/12095259",
+  "https://uplcm.com/4/12095268",
+  "https://uplcm.com/4/12095269",
+  "https://uplcm.com/4/12095271",
+  "https://uplcm.com/4/12095272",
 ];
 
 function formatPlaybackTime(seconds: number | null | undefined) {
@@ -510,9 +512,10 @@ export function Player({
 
 
   function go(episodeId: string, auto = false) {
-    // Ask for a sponsor after every 2nd episode, including automatic next-episode navigation.
-    const isSecondEpisodeBoundary = currentIndex >= 0 && (currentIndex + 1) % 2 === 0;
-    if (isSecondEpisodeBoundary) {
+    // Ask for a Monetag sponsor before every episode change, including automatic next-episode navigation.
+    // The initial episode opens normally; every subsequent episode requires one explicit sponsor click.
+    const isEpisodeChange = currentIndex >= 0;
+    if (isEpisodeChange) {
       setPendingAdEpisode(episodeId);
       setSponsorOpened(false);
       setSponsorWait(0);
@@ -969,17 +972,10 @@ export function Player({
             <button type="button" className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#ff4d8d] to-[#ff5a36] px-4 py-3 font-semibold text-white" onClick={() => {
               // Open a sponsor in a new tab from this explicit user click. The viewer
               // returns to HouseDrama and presses Continue; no ad completion is claimed.
-              const provider = Math.random() < 0.5 ? "monetag" : "adsterra";
-              setSponsorProvider(provider);
-              if (provider === "monetag") {
-                openMonetagAd();
-              } else {
-                // Open only the selected sponsor URL. Do not inject the Adsterra
-                // popunder script here because it can create a sticky clickable overlay
-                // that blocks scrolling on mobile.
-                const link = SPONSOR_SMARTLINKS[Math.floor(Math.random() * SPONSOR_SMARTLINKS.length)];
-                window.open(link, "_blank", "noopener,noreferrer");
-              }
+              // All episode sponsor prompts use the user's ten Monetag links.
+              setSponsorProvider("monetag");
+              const link = SPONSOR_SMARTLINKS[Math.floor(Math.random() * SPONSOR_SMARTLINKS.length)];
+              window.open(link, "_blank", "noopener,noreferrer");
               setSponsorOpened(true);
               setSponsorWait(7);
             }} disabled={sponsorOpened}>

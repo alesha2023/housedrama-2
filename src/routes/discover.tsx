@@ -20,9 +20,9 @@ export const Route = createFileRoute("/discover")({
       { name: "robots", content: "index,follow,max-image-preview:large" },
       { property: "og:title", content: "Discover Chinese & Asian Short Dramas — HouseDrama" },
       { property: "og:description", content: "Explore short dramas by genre and discover your next Chinese or Asian drama on HouseDrama." },
-      { property: "og:url", content: "https://house-drama.xyz/discover" },
+      { property: "og:url", content: "https://house-drama.web.id/discover" },
     ],
-    links: [{ rel: "canonical", href: "https://house-drama.xyz/discover" }],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/discover" }],
   }),
   component: DiscoverPage,
 });

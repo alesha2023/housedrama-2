@@ -13,7 +13,7 @@ export function SeoItemList({ items, name }: { items: DramaCard[]; name: string 
     itemListElement: visible.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: `https://house-drama.xyz/drama/${encodeURIComponent(item.provider)}/${encodeURIComponent(item.seriesId)}`,
+      url: `https://house-drama.web.id/drama/${encodeURIComponent(item.provider)}/${encodeURIComponent(item.seriesId)}`,
       name: (item.displayTitle || item.title).slice(0, 180),
     })),
   };

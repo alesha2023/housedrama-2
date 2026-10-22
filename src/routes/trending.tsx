@@ -16,9 +16,9 @@ export const Route = createFileRoute("/trending")({
       { name: "robots", content: "index,follow,max-image-preview:large" },
       { property: "og:title", content: "Trending Chinese Short Dramas to Watch Online — HouseDrama" },
       { property: "og:description", content: "Explore trending Chinese and Asian short dramas, popular stories, and new favorites on HouseDrama." },
-      { property: "og:url", content: "https://house-drama.xyz/trending" },
+      { property: "og:url", content: "https://house-drama.web.id/trending" },
     ],
-    links: [{ rel: "canonical", href: "https://house-drama.xyz/trending" }],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/trending" }],
   }),
   component: TrendingPage,
 });

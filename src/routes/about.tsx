@@ -12,7 +12,7 @@ export const Route = createFileRoute("/about")({
       },
       { name: "robots", content: "index,follow" },
     ],
-    links: [{ rel: "canonical", href: "https://house-drama.xyz/about" }],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/about" }],
   }),
   component: AboutPage,
 });

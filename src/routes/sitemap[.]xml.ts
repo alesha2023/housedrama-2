@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { loadBrowse } from "@/lib/drama/server/catalog";
+import { visibleProviders } from "@/lib/drama/providers";
+import type { DramaCard, ProviderId } from "@/lib/drama/types";
 
-const SITE_ORIGIN = "https://house-drama.xyz";
+const SITE_ORIGIN = "https://house-drama.web.id";
 const CACHE_MS = 30 * 60 * 1000;
-const MAX_SITEMAP_URLS = 50000;
+
 // Curated drama URLs confirmed by the site owner. Keep these in the sitemap
 // even when a provider's page-1 catalog does not return them.
 const FEATURED_DRAMA_PATHS = [
@@ -80,17 +83,55 @@ function xmlEscape(value: string) {
     .replace(/'/g, "&apos;");
 }
 
-function renderSitemap(urls: Set<string>) {
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...urls].slice(0, MAX_SITEMAP_URLS)
-    .map((url) => `  <url><loc>${xmlEscape(url)}</loc></url>`)
-    .join("\n")}\n</urlset>`;
+function detailUrl(card: DramaCard) {
+  if (!card.provider || !card.seriesId || !card.title?.trim()) return null;
+  return `${SITE_ORIGIN}/drama/${encodeURIComponent(card.provider)}/${encodeURIComponent(card.seriesId)}`;
 }
 
-function buildSitemap() {
-  // Keep sitemap retrieval deterministic and independent of upstream provider APIs.
-  // Google must be able to fetch a valid XML response even when provider APIs are slow.
+async function collectProviderCards(providers: ProviderId[]) {
+  const urls = new Set<string>();
+  // Include the first browse catalog for every visible provider. AnyReel and
+  // FreeReels support pagination in loadBrowse(), so crawl additional pages
+  // to discover more real detail URLs. Do not synthesize IDs from trend titles.
+  const requests = providers.flatMap((provider) => {
+    const pages = provider === "anyreel" || provider === "freereels" ? [1, 2, 3, 4, 5] : [1];
+    return pages.map((page) => ({ provider, page }));
+  });
+
+  // Limit concurrency so one sitemap request doesn't overwhelm providers or
+  // exceed the serverless function's execution budget.
+  const batchSize = 6;
+  for (let i = 0; i < requests.length; i += batchSize) {
+    const batch = requests.slice(i, i + batchSize);
+    const results = await Promise.allSettled(
+      batch.map(({ provider, page }) => loadBrowse({ lang: "en", provider, page })),
+    );
+    for (const result of results) {
+      if (result.status !== "fulfilled") continue;
+      for (const card of result.value.items) {
+        const url = detailUrl(card);
+        if (url) urls.add(url);
+      }
+    }
+  }
+  return urls;
+}
+
+async function buildSitemap() {
   const urls = new Set([...PATHS, ...FEATURED_DRAMA_PATHS].map((path) => `${SITE_ORIGIN}${path}`));
-  return renderSitemap(urls);
+  try {
+    // Build detail URLs from each visible provider's own browse catalog instead
+    // of only the homepage rails, which are intentionally limited.
+    const providers = visibleProviders();
+    const dramaUrls = await collectProviderCards(providers);
+    for (const url of dramaUrls) urls.add(url);
+  } catch {
+    // Keep core public URLs available if catalog providers are temporarily down.
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...urls]
+    .map((url) => `  <url><loc>${xmlEscape(url)}</loc></url>`)
+    .join("\n")}\n</urlset>`;
 }
 
 export const Route = createFileRoute("/sitemap.xml")({
@@ -101,16 +142,14 @@ export const Route = createFileRoute("/sitemap.xml")({
         if (cachedXml && cachedXml.expiresAt > Date.now()) {
           body = cachedXml.body;
         } else {
-          body = buildSitemap();
+          body = await buildSitemap();
           cachedXml = { body, expiresAt: Date.now() + CACHE_MS };
         }
 
         return new Response(body, {
-          status: 200,
           headers: {
             "content-type": "application/xml; charset=utf-8",
             "cache-control": "public, max-age=1800, stale-while-revalidate=86400",
-            "x-content-type-options": "nosniff",
           },
         });
       },

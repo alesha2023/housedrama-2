@@ -104,13 +104,13 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
     const description = (drama
       ? `${sourceDescription ? `${sourceDescription} ` : `Watch ${dramaTitle} on HouseDrama. `}Explore the synopsis, series information, and available episodes.`
       : "This drama is temporarily unavailable on HouseDrama.").slice(0, 300);
-    const canonical = `https://house-drama.xyz/drama/${encodeURIComponent(params.provider)}/${encodeURIComponent(params.seriesId)}`;
+    const canonical = `https://house-drama.web.id/drama/${encodeURIComponent(params.provider)}/${encodeURIComponent(params.seriesId)}`;
     // Give crawlers the real, absolute poster URL. Resolve relative URLs against
     // HouseDrama first; unwrap image-proxy URLs so metadata points at the source
     // poster rather than a proxy endpoint that may be blocked for crawlers.
-    let image = drama?.posterUrl || "https://house-drama.xyz/og-v2.jpg";
+    let image = drama?.posterUrl || "https://house-drama.web.id/og-v2.jpg";
     try {
-      let parsedImage = new URL(image, "https://house-drama.xyz");
+      let parsedImage = new URL(image, "https://house-drama.web.id");
       if (parsedImage.hostname === "wsrv.nl" || parsedImage.hostname === "images.weserv.nl") {
         const original = parsedImage.searchParams.get("url");
         if (original && /^https?:\/\//i.test(original)) parsedImage = new URL(original);
@@ -118,10 +118,10 @@ export const Route = createFileRoute("/drama/$provider/$seriesId")({
       if (parsedImage.protocol === "https:" || parsedImage.protocol === "http:") {
         image = parsedImage.href;
       } else {
-        image = "https://house-drama.xyz/og-v2.jpg";
+        image = "https://house-drama.web.id/og-v2.jpg";
       }
     } catch {
-      image = "https://house-drama.xyz/og-v2.jpg";
+      image = "https://house-drama.web.id/og-v2.jpg";
     }
     return {
       meta: [
@@ -206,7 +206,7 @@ function DetailPage() {
   }
 
   const first = data.episodes[0];
-  const canonicalUrl = `https://house-drama.xyz/drama/${encodeURIComponent(drama.provider)}/${encodeURIComponent(drama.seriesId)}`;
+  const canonicalUrl = `https://house-drama.web.id/drama/${encodeURIComponent(drama.provider)}/${encodeURIComponent(drama.seriesId)}`;
   const displayTitle = drama.displayTitle || drama.title;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -221,7 +221,7 @@ function DetailPage() {
     inLanguage: drama.language || undefined,
     genre: drama.tags,
     keywords: [...new Set([...(drama.tags || []), "Chinese short drama", "Asian short drama", "short drama online"])].join(", "),
-    publisher: { "@type": "Organization", name: "HouseDrama", url: "https://house-drama.xyz/" },
+    publisher: { "@type": "Organization", name: "HouseDrama", url: "https://house-drama.web.id/" },
     isAccessibleForFree: data.episodes.some((episode) => episode.access === "open") ? true : undefined,
   };
 
@@ -235,8 +235,8 @@ function DetailPage() {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: uiLang === "id" ? "Beranda" : "Home", item: "https://house-drama.xyz/" },
-              { "@type": "ListItem", position: 2, name: uiLang === "id" ? "Drama" : "Discover Dramas", item: "https://house-drama.xyz/discover" },
+              { "@type": "ListItem", position: 1, name: uiLang === "id" ? "Beranda" : "Home", item: "https://house-drama.web.id/" },
+              { "@type": "ListItem", position: 2, name: uiLang === "id" ? "Drama" : "Discover Dramas", item: "https://house-drama.web.id/discover" },
               { "@type": "ListItem", position: 3, name: displayTitle, item: canonicalUrl },
             ],
           }),
