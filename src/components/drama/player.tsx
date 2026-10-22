@@ -211,14 +211,6 @@ export function Player({
   }, [sponsorOpened, sponsorWait]);
 
   useEffect(() => {
-    if (!sponsorOpened || sponsorWait !== 0 || sponsorClosing || !pendingAdEpisode) return;
-    // Let the modal animate out, then continue automatically to the selected episode.
-    setSponsorClosing(true);
-    const timer = window.setTimeout(() => continuePendingEpisode(), 350);
-    return () => window.clearTimeout(timer);
-  }, [sponsorOpened, sponsorWait, sponsorClosing, pendingAdEpisode]);
-
-  useEffect(() => {
     setAutoplay(localStorage.getItem("dramaluma.autoplay") !== "0");
     const storedVolume = Number(localStorage.getItem("dramaluma.volume") ?? "1");
     if (Number.isFinite(storedVolume)) setVolume(storedVolume);
@@ -1081,13 +1073,17 @@ export function Player({
                   : ({ en: "Open Sponsor in New Tab", id: "Buka Sponsor di Tab Baru", hi: "नए टैब में प्रायोजक खोलें", fil: "Buksan ang sponsor sa bagong tab", ms: "Buka Penaja dalam Tab Baharu", th: "เปิดผู้สนับสนุนในแท็บใหม่" } as const)[uiLang])}
             </button>
             {sponsorOpened ? (
-              <button type="button" className={`mt-2 w-full rounded-xl border px-4 py-3 font-semibold transition-colors ${sponsorWait > 0 ? "border-gray-300 text-gray-400 dark:border-white/20 dark:text-gray-500" : "border-[#ff4d6d] bg-[#ff4d6d] text-white dark:border-[#ff4d6d] dark:bg-[#ff4d6d] dark:text-white"}`} onClick={continuePendingEpisode} disabled={sponsorWait > 0}>
-                {sponsorWait > 0
-                  ? ({ en: `Continue in ${sponsorWait}s`, id: `Lanjutkan dalam ${sponsorWait} dtk`, hi: `${sponsorWait} सेकंड में जारी रखें`, fil: `Magpatuloy sa loob ng ${sponsorWait}s`, ms: `Teruskan dalam ${sponsorWait}s`, th: `ดำเนินการต่อใน ${sponsorWait} วินาที` } as const)[uiLang]
-                  : (isFirstEpisodeSponsor
+              sponsorWait > 0 ? (
+                <div className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-center font-semibold text-gray-500 dark:border-white/20 dark:text-gray-400" role="status" aria-live="polite">
+                  {({ en: `Continue button available in ${sponsorWait}s`, id: `Tombol lanjut muncul dalam ${sponsorWait} detik`, hi: `${sponsorWait} सेकंड में जारी रखने का बटन आएगा`, fil: `Lalabas ang continue button sa loob ng ${sponsorWait}s`, ms: `Butang teruskan muncul dalam ${sponsorWait}s`, th: `ปุ่มดำเนินการต่อจะแสดงใน ${sponsorWait} วินาที` } as const)[uiLang]}
+                </div>
+              ) : (
+                <button type="button" className="mt-2 w-full rounded-xl border border-[#ff4d6d] bg-[#ff4d6d] px-4 py-3 font-semibold text-white transition-all duration-200 hover:brightness-110" onClick={continuePendingEpisode}>
+                  {isFirstEpisodeSponsor
                     ? ({ en: "Return & Start Episode 1", id: "Kembali & Mulai Episode 1", hi: "वापस जाएँ और एपिसोड 1 शुरू करें", fil: "Bumalik at Simulan ang Episode 1", ms: "Kembali & Mula Episod 1", th: "กลับมาเริ่มตอนที่ 1" } as const)[uiLang]
-                    : ({ en: "Return & Continue Episode", id: "Kembali & Lanjutkan Episode", hi: "वापस जाएँ और एपिसोड जारी रखें", fil: "Bumalik at magpatuloy sa episode", ms: "Kembali & Teruskan Episod", th: "กลับไปดูตอนต่อ" } as const)[uiLang])}
-              </button>
+                    : ({ en: "Return & Continue Episode", id: "Kembali & Lanjutkan Episode", hi: "वापस जाएँ और एपिसोड जारी रखें", fil: "Bumalik at magpatuloy sa episode", ms: "Kembali & Teruskan Episod", th: "กลับไปดูตอนต่อ" } as const)[uiLang]}
+                </button>
+              )
             ) : null}
           </div>
         </div>
