@@ -67,7 +67,7 @@ function HomePage() {
   const [data, setData] = useState<HomePayload>(initial);
   const [history, setHistory] = useState<ReturnType<typeof readHistory>>([]);
   const [slide, setSlide] = useState(0);
-  const [houseTrending, setHouseTrending] = useState<import("@/lib/drama/types").DramaCard[]>([]);
+  const [houseTrending, setHouseTrending] = useState<import("@/lib/drama/types").DramaCard[]>(() => getCatalogTrendingFallback(initial));
 
   useEffect(() => {
     let active = true;
@@ -274,7 +274,7 @@ function HomePage() {
         </section>
       ) : null}
 
-      {houseTrending.length ? <Rail title={({ en: "Explore popular dramas", id: "Jelajahi drama populer", hi: "लोकप्रिय ड्रामा देखें", fil: "Tuklasin ang mga sikat na drama", ms: "Terokai drama popular", th: "สำรวจซีรีส์ยอดนิยม" } as const)[uiLang]} items={houseTrending} more={<Link to="/trending" className="text-sm font-semibold text-primary">{t.viewAll}</Link>} /> : null}
+      {houseTrending.length ? <Rail title={({ en: "Trending on HouseDrama", id: "Trending di HouseDrama", hi: "HouseDrama पर ट्रेंडिंग", fil: "Trending sa HouseDrama", ms: "Trending di HouseDrama", th: "กำลังมาแรงบน HouseDrama" } as const)[uiLang]} items={houseTrending} more={<Link to="/trending" className="text-sm font-semibold text-primary">{t.viewAll}</Link>} /> : null}
       {data.sections
         .filter((section) => section.id !== "featured")
         .map((section) => (

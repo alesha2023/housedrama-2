@@ -113,6 +113,7 @@ export function Player({
   const videoRef = useRef<HTMLVideoElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const reported = useRef(false);
+  const playAfterSponsor = useRef(false);
   const ignoreClick = useRef(false);
   const seekingRef = useRef(false);
   const [payload, setPayload] = useState(initial);
@@ -239,13 +240,26 @@ export function Player({
     setPayload(initial);
     setIndex(0);
     setError(initial.ok ? null : initial.message);
-    setLoading(initial.ok);
+    // Do not start stream loading underneath the sponsor popup.
+    setLoading(false);
     reported.current = false;
   }, [initial]);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !candidate) return;
+    if (!video) return;
+    // Sponsor-first: keep the media element idle until the visitor completes
+    // the popup flow. This avoids loading/spinning before the first click.
+    if (!firstEpisodePopupReady || pendingAdEpisode) {
+      video.pause();
+      video.removeAttribute("src");
+      video.querySelectorAll("track").forEach((track) => track.remove());
+      video.load();
+      setLoading(false);
+      setPlaying(false);
+      return;
+    }
+    if (!candidate) return;
     let destroyed = false;
     let hls: { destroy: () => void } | null = null;
     // Try the direct stream first. Proxying every HLS error can add another
@@ -424,7 +438,7 @@ export function Player({
       video.querySelectorAll("track").forEach((track) => track.remove());
       video.load();
     };
-  }, [candidate, drama.provider, drama.seriesId, episode.episodeId, index, payload.candidates.length]);
+  }, [candidate, drama.provider, drama.seriesId, episode.episodeId, firstEpisodePopupReady, pendingAdEpisode, index, payload.candidates.length]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -479,7 +493,7 @@ export function Player({
       setPlaying(false);
       return;
     }
-    if (!autoStart) return;
+    if (!autoStart && !playAfterSponsor.current) return;
     let cancelled = false;
     let started = false;
     const tryPlay = async () => {
@@ -489,6 +503,7 @@ export function Player({
       // episode, or start at zero when this episode has no saved progress.
       try {
         await video.play();
+        playAfterSponsor.current = false;
       } catch {
         if (cancelled) return;
         // Mobile browsers often block unmuted autoplay. Retry muted once.
@@ -497,6 +512,7 @@ export function Player({
           setMuted(true);
           localStorage.setItem("dramaluma.muted", "1");
           await video.play();
+          playAfterSponsor.current = false;
         } catch {
           started = false;
           setPlaying(false);
@@ -592,7 +608,9 @@ export function Player({
     // so playContent() retries muted playback and leaves the Play control available
     // if the browser/provider still refuses to start.
     if (episodeId === episode.episodeId) {
-      window.setTimeout(() => { void playContent(); }, 0);
+      playAfterSponsor.current = true;
+      // The stream is attached only after the popup closes. The playback effect
+      // waits for canplay/loadeddata and then starts the episode.
       return;
     }
 
