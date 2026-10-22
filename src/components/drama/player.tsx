@@ -139,6 +139,8 @@ export function Player({
   const [sponsorWait, setSponsorWait] = useState(0);
   const [sponsorClosing, setSponsorClosing] = useState(false);
   const [sponsorProvider, setSponsorProvider] = useState<"monetag" | "adsterra" | null>(null);
+  // Synchronous guard prevents rapid/double clicks from opening multiple sponsor tabs.
+  const sponsorClickLock = useRef(false);
   const lastSponsorIndex = useRef<number>(-1);
   const [rate, setRate] = useState(1);
   const [subtitleLang, setSubtitleLang] = useState<string | null>(null);
@@ -174,6 +176,7 @@ export function Player({
     setSponsorWait(0);
     setSponsorClosing(false);
     setSponsorProvider(null);
+    sponsorClickLock.current = false;
     setFirstEpisodePopupReady(true);
   }, [drama.provider, drama.seriesId, episode.episodeId, episodes]);
 
@@ -1049,8 +1052,10 @@ export function Player({
               th: `หากต้องการไปยังตอนที่ ${episodes.findIndex((item) => item.episodeId === pendingAdEpisode) + 1} โปรดเปิดลิงก์ผู้สนับสนุนก่อน เพื่อช่วยสนับสนุน HouseDrama`,
             } as const)[uiLang]}</p>
             <button type="button" className={`mt-4 w-full rounded-xl px-4 py-3 font-semibold text-white ${isFirstEpisodeSponsor ? "bg-gradient-to-r from-[#8b5cf6] to-[#ff4d8d]" : "bg-gradient-to-r from-[#ff4d8d] to-[#ff5a36]"}`} onClick={() => {
-              // Open a sponsor in a new tab from this explicit user click. The viewer
-              // returns to HouseDrama and presses Continue; no ad completion is claimed.
+              // Lock synchronously: React's disabled state alone may not stop two rapid taps.
+              if (sponsorClickLock.current || sponsorOpened) return;
+              sponsorClickLock.current = true;
+              // Open exactly one selected sponsor link for this episode gate.
               const provider = Math.random() < 0.5 ? "monetag" : "adsterra";
               setSponsorProvider(provider);
               if (provider === "monetag") {
