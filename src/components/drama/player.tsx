@@ -151,20 +151,19 @@ export function Player({
   const [retrying, setRetrying] = useState(false);
   const candidate = payload.candidates[index] ?? null;
   const currentIndex = episodes.findIndex((item) => item.episodeId === episode.episodeId);
-  const isFirstEpisodeSponsor = pendingAdEpisode !== null && pendingAdEpisode === episodes[0]?.episodeId;
+  const firstEpisodeId = episodes[0]?.episodeId;
+  const isFirstEpisodeSponsor = pendingAdEpisode !== null && pendingAdEpisode === firstEpisodeId;
   const previous = currentIndex > 0 ? episodes[currentIndex - 1] : null;
   const next = currentIndex >= 0 && currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
 
   useEffect(() => {
-    // Episode 1 is always ad-free. Sponsor popup starts from Episode 2,
-    // including direct links and automatic/manual episode transitions.
-    // A one-time sessionStorage bypass is consumed when returning from a
-    // popup that was already completed for the selected episode.
-    const isEpisodeOne = episode.episodeId === episodes[0]?.episodeId;
-    const bypassKey = `housedrama-sponsor-bypass:${drama.provider}:${drama.seriesId}:${episode.episodeId}`;
+    // Episode 1 is ad-free. From Episode 2 onward, show at most one sponsor
+    // gate per episode per tab session. Keep the completed marker instead of
+    // consuming a one-time bypass, so rerenders cannot reopen the same popup.
+    const isEpisodeOne = episode.episodeId === firstEpisodeId;
+    const completedKey = `housedrama-sponsor-completed:${drama.provider}:${drama.seriesId}:${episode.episodeId}`;
     try {
-      if (isEpisodeOne || window.sessionStorage.getItem(bypassKey) === "1") {
-        if (!isEpisodeOne) window.sessionStorage.removeItem(bypassKey);
+      if (isEpisodeOne || window.sessionStorage.getItem(completedKey) === "1") {
         setPendingAdEpisode(null);
       } else {
         setPendingAdEpisode(episode.episodeId);
@@ -178,7 +177,7 @@ export function Player({
     setSponsorProvider(null);
     sponsorClickLock.current = false;
     setFirstEpisodePopupReady(true);
-  }, [drama.provider, drama.seriesId, episode.episodeId, episodes]);
+  }, [drama.provider, drama.seriesId, episode.episodeId, firstEpisodeId]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -579,15 +578,18 @@ export function Player({
     const episodeId = pendingAdEpisode;
     if (!episodeId) return;
 
+    // Mark the gated episode complete before either releasing playback or
+    // routing. This prevents the same episode from reopening its sponsor gate.
+    try {
+      window.sessionStorage.setItem(`housedrama-sponsor-completed:${drama.provider}:${drama.seriesId}:${episodeId}`, "1");
+    } catch {
+      // Playback/navigation can still continue if sessionStorage is unavailable.
+    }
+
     // For a different episode, keep the current sponsor gate in place until the
     // route changes. Clearing pendingAdEpisode first briefly re-attaches the old
     // episode's stream and can race with navigation on mobile browsers.
     if (episodeId !== episode.episodeId) {
-      try {
-        window.sessionStorage.setItem(`housedrama-sponsor-bypass:${drama.provider}:${drama.seriesId}:${episodeId}`, "1");
-      } catch {
-        // The route can still transition if sessionStorage is unavailable.
-      }
       void navigate({
         to: "/watch/$provider/$seriesId/$episodeId",
         params: { provider: drama.provider, seriesId: drama.seriesId, episodeId },
