@@ -132,8 +132,27 @@ export function isProviderHidden(id: ProviderId) {
   return HIDDEN_PROVIDERS.has(id);
 }
 
+const POPULAR_FIRST: ProviderId[] = [
+  "anyreel",
+  "freereels",
+  "dramabox",
+  "melolo",
+  "netshort",
+  "reelshort",
+  "shortmax",
+  "goodshort",
+  "flextv",
+  "dramawave",
+  "joyreels",
+  "flickreels",
+  "vigloo",
+];
+
 export function visibleProviders() {
-  return PROVIDERS.filter((id) => !HIDDEN_PROVIDERS.has(id));
+  const popular = POPULAR_FIRST.filter((id) => PROVIDERS.includes(id));
+  const regular = PROVIDERS.filter((id) => !HIDDEN_PROVIDERS.has(id) && !popular.includes(id));
+  const unavailable = PROVIDERS.filter((id) => HIDDEN_PROVIDERS.has(id));
+  return [...popular, ...regular, ...unavailable];
 }
 
 export function isCoreProvider(id: ProviderId) {

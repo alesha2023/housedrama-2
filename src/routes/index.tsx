@@ -107,11 +107,9 @@ function HomePage() {
     history.map((item) => item.originalTitle || item.title),
     contentLang,
   );
-  const down = data.providers.filter((item) => !item.ok);
 
   return (
     <div>
-      {down.length ? <ErrorNote message={`${t.providersDown} (${down.map((item) => item.id).join(", ")})`} /> : null}
       <div className="mb-4">
         <p className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
           <span className="h-4 w-1 rounded-full bg-coral" aria-hidden="true" />
