@@ -3,19 +3,60 @@ import { loadBrowse } from "@/lib/drama/server/catalog";
 import { visibleProviders } from "@/lib/drama/providers";
 import type { DramaCard, ProviderId } from "@/lib/drama/types";
 
-const SITE_ORIGIN = "https://house-drama.xyz";
+const SITE_ORIGIN = "https://house-drama.web.id";
 const CACHE_MS = 30 * 60 * 1000;
-const MAX_SITEMAP_URLS = 50000;
 
 // Curated drama URLs confirmed by the site owner. Keep these in the sitemap
 // even when a provider's page-1 catalog does not return them.
-// Only include drama URLs returned by current provider catalogs; never guess IDs.
-const FEATURED_DRAMA_PATHS: string[] = [];
+const FEATURED_DRAMA_PATHS = [
+  "/drama/freereels/LSjOzwuyTG",
+  "/drama/freereels/CtuX3LVyry",
+  "/drama/freereels/E8PxLvaL3J",
+  "/drama/freereels/ZLM2f8JJEQ",
+  "/drama/dramabox/42000026343",
+  "/drama/dramabox/42000029045",
+  // Additional trending dramas confirmed by the site owner.
+  "/drama/freereels/JJYPIFhFmD",
+  "/drama/freereels/vyCsDHzEN9",
+  "/drama/freereels/hMVo9oiMlB",
+  "/drama/freereels/aAHtGDqOPG",
+  "/drama/freereels/dqoMUlYLBQ",
+  "/drama/dramabox/42000028298",
+  "/drama/dramabox/42000028283",
+  "/drama/dramabox/42000021480",
+  "/drama/dramabox/42000023896",
+  // Current trending titles verified against HouseDrama's live catalog (Oct 2026).
+  // Only real provider IDs copied from live catalog links; no IDs are inferred from titles.
+  "/drama/freereels/5na1FgP377", // The Goddess Returned: Rise of the White Queen
+  "/drama/melolo/7646772069891312693", // My Trial Marriage
+  "/drama/freereels/2gCQBFCwPd", // No Forgiveness, Only Revenge
+  "/drama/melolo/7635476299183574021", // Her Cure Was Love
+  "/drama/freereels/77hAc6kCOE", // Marry the Hidden Pirate King
+  "/drama/melolo/7636698880377097269", // Capital Wedding Frenzy
+  "/drama/freereels/but18YxLsA", // That Beggar Girl Reigns
+  "/drama/melolo/7512710469950376976", // Sworn Enemies in Love
+  "/drama/freereels/oylHxZfNuZ", // The Goddess Awakens: My Daughter's Revenge
+  "/drama/melolo/7535278226612947984", // Mute Husband, My Love Amplifier
+  "/drama/melolo/7622861073141468213", // Married to the CEO Overnight
+  // Priority drama URLs observed in Google Search Console.
+  "/drama/dramabox/420000030309",
+  "/drama/dramabox/42000030762",
+  "/drama/anyreel/678a7bcc8f3d553db1998228",
+  "/drama/dramabox/420000030502",
+  "/drama/dramabox/420000029973",
+  "/drama/dramabox/420000027254",
+  "/drama/dramabox/420000030511",
+  "/drama/dramabox/420000028173",
+  "/drama/dramabox/420000029949",
+  "/drama/dramabox/420000025978",
+  "/drama/dramabox/420000030437",
+];
 
 // Only include public, indexable pages. User-specific history/watchlist pages
 // are intentionally omitted from the sitemap.
 const PATHS = [
   "/",
+  "/en",
   "/id",
   "/discover",
   "/trending",
@@ -49,13 +90,11 @@ function detailUrl(card: DramaCard) {
 
 async function collectProviderCards(providers: ProviderId[]) {
   const urls = new Set<string>();
-  const withItems = new Set<string>();
   // Include the first browse catalog for every visible provider. AnyReel and
   // FreeReels support pagination in loadBrowse(), so crawl additional pages
   // to discover more real detail URLs. Do not synthesize IDs from trend titles.
   const requests = providers.flatMap((provider) => {
-    // Only paginate providers whose adapters expose pages; generic providers expose one catalog response.
-    const pages = provider === "anyreel" || provider === "freereels" ? Array.from({ length: 8 }, (_, index) => index + 1) : [1];
+    const pages = provider === "anyreel" || provider === "freereels" ? [1, 2, 3, 4, 5] : [1];
     return pages.map((page) => ({ provider, page }));
   });
 
@@ -71,14 +110,11 @@ async function collectProviderCards(providers: ProviderId[]) {
       if (result.status !== "fulfilled") continue;
       for (const card of result.value.items) {
         const url = detailUrl(card);
-        if (url) {
-          urls.add(url);
-          withItems.add(card.provider);
-        }
+        if (url) urls.add(url);
       }
     }
   }
-  return { urls, withItems };
+  return urls;
 }
 
 async function buildSitemap() {
@@ -87,22 +123,13 @@ async function buildSitemap() {
     // Build detail URLs from each visible provider's own browse catalog instead
     // of only the homepage rails, which are intentionally limited.
     const providers = visibleProviders();
-    const collected = await collectProviderCards(providers);
-    // Include only real IDs returned by the current provider catalogs, up to the
-    // 50,000-URL per-file sitemap limit supported by Google. Static pages and curated known URLs stay first.
-    for (const url of collected.urls) {
-      if (urls.size >= MAX_SITEMAP_URLS) break;
-      urls.add(url);
-    }
-    for (const id of collected.withItems) {
-      if (!providers.includes(id as ProviderId)) continue;
-      urls.add(`${SITE_ORIGIN}/provider/${encodeURIComponent(id)}`);
-    }
+    const dramaUrls = await collectProviderCards(providers);
+    for (const url of dramaUrls) urls.add(url);
   } catch {
     // Keep core public URLs available if catalog providers are temporarily down.
   }
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...urls].slice(0, MAX_SITEMAP_URLS)
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...urls]
     .map((url) => `  <url><loc>${xmlEscape(url)}</loc></url>`)
     .join("\n")}\n</urlset>`;
 }

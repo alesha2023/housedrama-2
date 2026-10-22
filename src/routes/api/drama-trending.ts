@@ -54,7 +54,7 @@ async function handleGet() {
     return Response.json({ items }, { headers: { "cache-control": "no-store" } });
   } catch (error) {
     console.error("[drama-trending] read failed:", error);
-    return Response.json({ error: "Trending data unavailable" }, { status: 503, headers: { "cache-control": "no-store" } });
+    return Response.json({ items: [] }, { headers: { "cache-control": "no-store" } });
   }
 }
 

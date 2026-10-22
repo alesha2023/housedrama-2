@@ -1,14 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageIntro } from "@/components/drama/cards";
-import { pageSeo } from "@/lib/drama/site";
 import { usePrefs } from "@/lib/drama/i18n";
 
 export const Route = createFileRoute("/about")({
-  head: () => pageSeo({
-    title: "About HouseDrama",
-    description: "HouseDrama lists Chinese and Asian short dramas from public provider catalogs. It does not own or re-upload the shows.",
-    path: "/about",
-    robots: "index,follow",
+  head: () => ({
+    meta: [
+      { title: "About HouseDrama" },
+      {
+        name: "description",
+        content: "HouseDrama aggregates publicly available Chinese short-drama catalogs. It does not own the shows.",
+      },
+      { name: "robots", content: "index,follow" },
+    ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/about" }],
   }),
   component: AboutPage,
 });

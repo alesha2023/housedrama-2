@@ -146,20 +146,6 @@ const COPY_BASE = {
     next: "Next episode",
     prev: "Previous episode",
     autoplay: "Autoplay next",
-    autoplayOn: "Autoplay the next episode",
-    autoplayOff: "Autoplay the next episode is off",
-    theme: "Theme",
-    light: "Light",
-    dark: "Dark",
-    themeToLight: "Switch to light theme",
-    themeToDark: "Switch to dark theme",
-    searchProviders: "Search provider name",
-    noProviderMatch: "No matching provider.",
-    statsLoading: "Loading visitor statistics…",
-    statsUnavailable: "Visitor stats temporarily unavailable",
-    statsOnline: "online",
-    statsToday: "today",
-    statsTotal: "total visitors",
     unavailable: "This episode does not have a free playable stream from this provider.",
     loading: "Loading",
     searching: "Searching…",
@@ -269,20 +255,6 @@ const COPY_BASE = {
     next: "Episode berikut",
     prev: "Episode sebelum",
     autoplay: "Putar otomatis",
-    autoplayOn: "Putar episode berikutnya otomatis",
-    autoplayOff: "Autoplay episode berikutnya mati",
-    theme: "Tema",
-    light: "Terang",
-    dark: "Gelap",
-    themeToLight: "Ganti ke tema terang",
-    themeToDark: "Ganti ke tema gelap",
-    searchProviders: "Cari nama penyedia",
-    noProviderMatch: "Tidak ada penyedia yang cocok.",
-    statsLoading: "Memuat statistik pengunjung…",
-    statsUnavailable: "Statistik pengunjung sementara tidak tersedia",
-    statsOnline: "online",
-    statsToday: "hari ini",
-    statsTotal: "total pengunjung",
     unavailable: "Episode ini belum punya stream gratis yang bisa diputar dari penyedia ini.",
     loading: "Memuat",
     searching: "Mencari…",
@@ -521,24 +493,51 @@ function writeLangCookie(lang: UiLang, manual: boolean) {
     : "hd_manual=; path=/; max-age=0; samesite=lax";
 }
 
-export function PrefsProvider({ initialLang = "en", children }: { initialLang?: UiLang; children: ReactNode }) {
+export function PrefsProvider({ initialLang = "id", children }: { initialLang?: UiLang; children: ReactNode }) {
   const router = useRouter();
   const [uiLang, setUiLangState] = useState<UiLang>(initialLang);
-  const [contentLang, setContentLangState] = useState(initialLang === "id" ? "id" : "en");
+  const [contentLang, setContentLangState] = useState(initialLang);
 
   useEffect(() => {
+    let cancelled = false;
     const manualChoice = localStorage.getItem("dramaluma.ui.manual") === "1";
-    if (!manualChoice) {
-      writeLangCookie(initialLang, false);
-      return;
+    if (manualChoice) {
+      const ui = localStorage.getItem("dramaluma.ui");
+      const content = localStorage.getItem("dramaluma.content");
+      const lang: UiLang = isUiLang(ui) ? ui : content === "en" ? "en" : "id";
+      setUiLangState(lang);
+      setContentLangState(content === "en" || content === "id" ? content : (lang === "id" ? "id" : "en"));
+      writeLangCookie(lang, true);
+      return () => { cancelled = true; };
     }
-    const ui = localStorage.getItem("dramaluma.ui");
-    const content = localStorage.getItem("dramaluma.content");
-    const lang: UiLang = isUiLang(ui) ? ui : content === "en" ? "en" : "id";
-    setUiLangState(lang);
-    setContentLangState(content === "en" || content === "id" ? content : (lang === "id" ? "id" : "en"));
-    writeLangCookie(lang, true);
-  }, [initialLang]);
+
+    writeLangCookie(initialLang, false);
+    const applyAutoLanguage = (lang: UiLang) => {
+      if (cancelled || localStorage.getItem("dramaluma.ui.manual") === "1" || lang === initialLang) return;
+      setUiLangState(lang);
+      const catalogLang = lang === "id" ? "id" : "en";
+      setContentLangState(catalogLang);
+      localStorage.setItem("dramaluma.ui", lang);
+      localStorage.setItem("dramaluma.content", catalogLang);
+      writeLangCookie(lang, false);
+      void router.invalidate();
+    };
+
+    fetch("https://ipapi.co/json/", { headers: { Accept: "application/json" } })
+      .then((response) => {
+        if (!response.ok) throw new Error("IP language lookup failed");
+        return response.json() as Promise<{ country_code?: string }>;
+      })
+      .then((data) => {
+        const country = data.country_code?.toUpperCase();
+        applyAutoLanguage(country === "ID" ? "id" : country === "IN" ? "hi" : country === "PH" ? "fil" : country === "MY" ? "ms" : country === "TH" ? "th" : "en");
+      })
+      .catch(() => {
+        // The server already chose a language from the request IP when it could.
+      });
+
+    return () => { cancelled = true; };
+  }, [initialLang, router]);
 
   useEffect(() => {
     document.documentElement.lang = uiLang;

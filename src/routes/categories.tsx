@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { DramaGrid, PageIntro, PageSkeleton } from "@/components/drama/cards";
 import { SeoItemList } from "@/components/drama/seo-item-list";
 import { getBrowseData } from "@/lib/drama/api";
-import { pageSeo } from "@/lib/drama/site";
 import { railTitle, usePrefs } from "@/lib/drama/i18n";
 
 const GENRES = ["romance", "revenge", "billionaire", "ceo", "historical", "fantasy", "family", "comedy", "completed"];
@@ -10,10 +9,16 @@ const GENRES = ["romance", "revenge", "billionaire", "ceo", "historical", "fanta
 export const Route = createFileRoute("/categories")({
   loader: () => getBrowseData({ data: { lang: "en", provider: "all", page: 1, rail: null } }),
   pendingComponent: PageSkeleton,
-  head: () => pageSeo({
-    title: "Chinese Short Drama Genres: Romance, CEO & Revenge — HouseDrama",
-    description: "Browse Chinese and Asian short dramas by genre: romance, CEO, revenge, fantasy, family, comedy, and completed series on HouseDrama.",
-    path: "/categories",
+  head: () => ({
+    meta: [
+      { title: "Chinese Short Drama Genres: Romance, CEO & Revenge — HouseDrama" },
+      { name: "description", content: "Browse Chinese and Asian short dramas by genre: romance, CEO, revenge, fantasy, family, comedy, and completed series on HouseDrama." },
+      { name: "robots", content: "index,follow,max-image-preview:large" },
+      { property: "og:title", content: "Chinese Short Drama Categories — HouseDrama" },
+      { property: "og:description", content: "Find short dramas by genre, including romance, revenge, fantasy, and CEO stories." },
+      { property: "og:url", content: "https://house-drama.web.id/categories" },
+    ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/categories" }],
   }),
   component: CategoriesPage,
 });

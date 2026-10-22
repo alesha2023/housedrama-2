@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { DramaGrid, EmptyState, ErrorNote, PageIntro, PageSkeleton } from "@/components/drama/cards";
 import { SeoItemList } from "@/components/drama/seo-item-list";
 import { getBrowseData } from "@/lib/drama/api";
-import { pageSeo } from "@/lib/drama/site";
 import { railTitle, usePrefs } from "@/lib/drama/i18n";
 import type { BrowsePayload } from "@/lib/drama/types";
 
@@ -14,11 +13,16 @@ export const Route = createFileRoute("/discover")({
   loaderDeps: ({ search }) => ({ rail: search.rail ?? null }),
   loader: ({ deps }) => getBrowseData({ data: { lang: "en", provider: "all", page: 1, rail: deps.rail } }),
   pendingComponent: PageSkeleton,
-  head: ({ match }) => pageSeo({
-    title: "Discover Chinese & Asian Short Dramas — HouseDrama",
-    description: "Discover Chinese and Asian short dramas from multiple providers. Browse romance, CEO, revenge, fantasy, family, and more on HouseDrama.",
-    path: "/discover",
-    robots: match.search.rail ? "noindex,follow" : "index,follow,max-image-preview:large",
+  head: () => ({
+    meta: [
+      { title: "Discover Chinese & Asian Short Dramas — HouseDrama" },
+      { name: "description", content: "Discover Chinese and Asian short dramas from multiple providers. Browse romance, CEO, revenge, fantasy, family, and more on HouseDrama." },
+      { name: "robots", content: "index,follow,max-image-preview:large" },
+      { property: "og:title", content: "Discover Chinese & Asian Short Dramas — HouseDrama" },
+      { property: "og:description", content: "Explore short dramas by genre and discover your next Chinese or Asian drama on HouseDrama." },
+      { property: "og:url", content: "https://house-drama.web.id/discover" },
+    ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/discover" }],
   }),
   component: DiscoverPage,
 });

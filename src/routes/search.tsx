@@ -7,7 +7,6 @@ import { getSearchData } from "@/lib/drama/api";
 import { usePrefs } from "@/lib/drama/i18n";
 import type { ProviderId, SearchPayload } from "@/lib/drama/types";
 import { PROVIDERS } from "@/lib/drama/types";
-import { absoluteSiteUrl } from "@/lib/drama/site";
 
 export const Route = createFileRoute("/search")({
   validateSearch: (search: Record<string, unknown>): { q?: string; provider?: string } => ({
@@ -32,7 +31,6 @@ export const Route = createFileRoute("/search")({
       { name: "description", content: "Search the HouseDrama catalog for Chinese short-drama titles." },
       { name: "robots", content: "noindex,follow" },
     ],
-    links: [{ rel: "canonical", href: absoluteSiteUrl("/search") }],
   }),
   component: SearchPage,
 });
@@ -113,7 +111,7 @@ function SearchPage() {
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder={t.searchPlaceholder}
-            className="hd-search h-12 min-w-0 flex-1 rounded-full border border-line bg-surface px-5 text-ink"
+            className="h-12 min-w-0 flex-1 rounded-full border border-line bg-white px-5"
             aria-label={t.search}
           />
           <button type="submit" disabled={loading} className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 font-semibold text-primary-ink disabled:opacity-60" aria-busy={loading}>

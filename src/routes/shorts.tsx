@@ -5,8 +5,6 @@ import { getDetailData, getShortsData, getStreamData } from "@/lib/drama/api";
 import { pickTitle } from "@/lib/drama/display";
 import { usePrefs } from "@/lib/drama/i18n";
 import { providerLabel } from "@/lib/drama/providers";
-import { browserPosterUrl } from "@/lib/drama/images";
-import { pageSeo } from "@/lib/drama/site";
 import { previewPathPrefix } from "@/lib/preview-path-prefix";
 import { readWatchlist, toggleWatchlist } from "@/lib/drama/storage";
 import type { DramaCard, StreamCandidate } from "@/lib/drama/types";
@@ -14,11 +12,13 @@ import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
 
 export const Route = createFileRoute("/shorts")({
   loader: () => getShortsData({ data: { lang: "en", page: 1 } }),
-  head: ({ loaderData }) => pageSeo({
-    title: "Short Drama Shorts — HouseDrama",
-    description: "Watch a vertical feed of Chinese and Asian short dramas from the providers available on HouseDrama.",
-    path: "/shorts",
-    robots: loaderData?.items?.length ? "index,follow,max-image-preview:large" : "noindex,follow",
+  head: () => ({
+    meta: [
+      { title: "Shorts — HouseDrama" },
+      { name: "description", content: "A vertical autoplay feed of short dramas from every available provider." },
+      { name: "robots", content: "index,follow,max-image-preview:large" },
+    ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/shorts" }],
   }),
   component: ShortsPage,
 });
@@ -68,7 +68,6 @@ function ShortsPage() {
   if (!items.length) {
     return (
       <div className="grid h-full place-items-center px-6 text-center text-white">
-        <h1 className="sr-only">Short Drama Shorts</h1>
         <p>{t.shortsEmpty}</p>
       </div>
     );
@@ -76,7 +75,6 @@ function ShortsPage() {
 
   return (
     <div ref={scroller} onScroll={onScroll} className="h-full min-h-0 snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <h1 className="sr-only">Short Drama Shorts</h1>
       {items.map((item, index) => (
         <ShortClip
           key={`${item.provider}-${item.seriesId}`}
@@ -234,7 +232,7 @@ function ShortClip({
         }}
       />
       {(!active || !candidate) && item.posterUrl ? (
-        <img src={browserPosterUrl(item.posterUrl) || item.posterUrl} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+        <img src={item.posterUrl} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
       ) : null}
       {paused && active ? (
         <span className="pointer-events-none absolute inset-0 grid place-items-center">
@@ -247,7 +245,7 @@ function ShortClip({
         <p className="text-xs font-semibold sm:text-sm">@{providerLabel(item.provider)}</p>
         <h2 className="mt-1 line-clamp-2 text-sm font-semibold leading-snug sm:text-base">{title}</h2>
         {item.description ? <p className="mt-1 line-clamp-2 text-xs text-white/85 sm:text-sm">{item.description}</p> : null}
-        {failed ? <p className="mt-2 text-sm text-white/80">This provider did not return a preview. Open the full episode, or swipe up for the next video.</p> : null}
+        {failed ? <p className="mt-2 text-sm text-white/80">Video pratinjau tidak tersedia dari provider ini. Buka episode lengkap untuk mencoba pemutar utama, atau geser ke atas untuk video berikutnya.</p> : null}
       </div>
       <div className="absolute right-2 bottom-[5.7rem] z-10 flex flex-col items-center gap-3 text-white sm:right-3 sm:gap-4 lg:bottom-8">
         {item.posterUrl ? (
@@ -256,7 +254,7 @@ function ShortClip({
             params={{ provider: item.provider, seriesId: item.seriesId }}
             className="size-9 overflow-hidden rounded-full border-2 border-white sm:size-12"
           >
-            <img src={browserPosterUrl(item.posterUrl) || item.posterUrl} alt="" className="h-full w-full object-cover" />
+            <img src={item.posterUrl} alt="" className="h-full w-full object-cover" />
           </Link>
         ) : null}
         <button
@@ -275,8 +273,8 @@ function ShortClip({
             setSaved(next.some((entry) => entry.provider === item.provider && entry.seriesId === item.seriesId));
           }}
         >
-          <Heart className={saved ? "size-6 fill-current text-[#ff2d8d] sm:size-8" : "size-6 sm:size-8"} />
-          <span>{saved ? "Saved" : "Save"}</span>
+          <Heart className={saved ? "size-6 fill-current text-[#ff2d55] sm:size-8" : "size-6 sm:size-8"} />
+          <span>{saved ? "Disimpan" : "Suka"}</span>
         </button>
         {episodeId ? (
           <Link
@@ -287,7 +285,7 @@ function ShortClip({
             className="grid place-items-center gap-0.5 text-[10px] font-semibold sm:gap-1 sm:text-xs"
           >
             <Play className="size-6 sm:size-8" />
-            <span>Full episode</span>
+            <span>Episode Lengkap</span>
           </Link>
         ) : null}
         <button
@@ -301,7 +299,7 @@ function ShortClip({
           }}
         >
           <Share2 className="size-6 sm:size-7" />
-          <span>Share</span>
+          <span>Bagikan</span>
         </button>
       </div>
       <div className="absolute inset-x-0 bottom-[4.5rem] z-10 h-0.5 bg-white/25 lg:bottom-0">

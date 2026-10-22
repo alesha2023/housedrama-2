@@ -14,7 +14,7 @@ const LINKS = [
 ] as const;
 
 function VisitorCounter() {
-  const { t } = usePrefs();
+  const { uiLang } = usePrefs();
   const [counts, setCounts] = useState<{ online: number; today: number; total: number } | null>(null);
   const [attempted, setAttempted] = useState(false);
 
@@ -70,6 +70,17 @@ function VisitorCounter() {
 
       // Read first in the background so the saved counter can render quickly.
       // Record the visit in parallel; the API uses an upsert keyed by visitorId.
+      const getCounts = async () => {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 3500);
+        try {
+          const response = await fetch("/api/visitor-count", {
+            method: "GET", cache: "no-store", headers: { accept: "application/json" }, signal: controller.signal,
+          });
+          if (response.ok) applyCounts(await response.json());
+        } catch { /* Keep cached/previous counts when the API is slow. */ }
+        finally { window.clearTimeout(timeout); }
+      };
       const recordVisit = async () => {
         const controller = new AbortController();
         const timeout = window.setTimeout(() => controller.abort(), 5000);
@@ -77,13 +88,13 @@ function VisitorCounter() {
           const response = await fetch("/api/visitor-count", {
             method: "POST",
             headers: { "content-type": "application/json", accept: "application/json" },
-            body: JSON.stringify({ visitorId }), cache: "no-store", keepalive: true, signal: controller.signal,
+            body: JSON.stringify({ visitorId }), cache: "no-store", signal: controller.signal,
           });
           if (response.ok) applyCounts(await response.json());
-        } catch { /* A failed stat write must not block the page. */ }
+        } catch { /* Reading stats must not depend on recording succeeding. */ }
         finally { window.clearTimeout(timeout); }
       };
-      await recordVisit();
+      await Promise.all([getCounts(), recordVisit()]);
       if (!cancelled) setAttempted(true);
       updating = false;
     };
@@ -95,11 +106,12 @@ function VisitorCounter() {
     return () => { cancelled = true; window.clearInterval(timer); document.removeEventListener("visibilitychange", refreshOnVisible); };
   }, []);
 
-  const labels = { online: t.statsOnline, today: t.statsToday, total: t.statsTotal };
+  const en = uiLang === "en";
+  const labels = en ? { online: "online", today: "today", total: "total visitors" } : { online: "online", today: "hari ini", total: "total pengunjung" };
   if (counts === null) {
     return (
       <div className="mt-5 flex w-full flex-wrap items-center justify-end gap-x-4 gap-y-2 border-t border-current/10 pt-3 text-xs text-muted" role="status" aria-live="polite">
-        <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-emerald-400" aria-hidden="true" />{!attempted ? t.statsLoading : t.statsUnavailable}</span>
+        <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-emerald-400" aria-hidden="true" />{!attempted ? (en ? "Loading visitor statistics…" : "Memuat statistik pengunjung…") : (en ? "Visitor stats temporarily unavailable" : "Statistik pengunjung sementara tidak tersedia")}</span>
       </div>
     );
   }
@@ -231,8 +243,8 @@ export function Shell({ children }: { children: ReactNode }) {
       <BootSplash />
       <PwaInstallPrompt />
       {watching || shorts ? null : (
-      <header className="hd-header sticky top-0 z-40 border-b border-line/80 bg-bg/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-1 px-3 sm:gap-2 sm:px-4">
+      <header className="sticky top-0 z-40 border-b border-line/70 bg-white/75 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-1 px-2 sm:gap-2 sm:px-4">
           <Link to="/" className="flex shrink-0 items-center" onClick={() => setOpen(false)}>
             <Logo className="h-8 w-auto max-w-none shrink-0 sm:h-10" />
           </Link>
@@ -241,7 +253,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <Link
                 key={link.to}
                 to={link.to}
-                className="hd-navlink rounded-full px-3 py-2 text-sm font-medium text-muted hover:bg-surface hover:text-ink data-[status=active]:text-ink"
+                className="rounded-full px-3 py-2 text-sm font-medium text-muted hover:bg-surface hover:text-ink data-[status=active]:bg-surface data-[status=active]:text-ink"
                 activeOptions={{ exact: link.to === "/" }}
               >
                 {labels[link.key]}
@@ -255,7 +267,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 id="header-language-select"
                 aria-label="Choose language"
                 value={uiLang}
-                className="h-9 w-[6.4rem] appearance-none rounded-full border border-line bg-surface/90 pr-6 pl-2 text-[11px] font-bold text-ink shadow-sm hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary sm:h-10 sm:w-[8.6rem] sm:pr-7 sm:pl-3 sm:text-xs"
+                className="h-9 w-[7.6rem] appearance-none rounded-full border border-line bg-white/80 pr-6 pl-2.5 text-[11px] font-bold text-ink shadow-sm hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary sm:h-10 sm:w-[8.6rem] sm:pr-7 sm:pl-3 sm:text-xs"
                 onChange={(event) => setUiLang(event.target.value as typeof uiLang)}
               >
                 {UI_LANGS.map((lang) => (
@@ -264,18 +276,14 @@ export function Shell({ children }: { children: ReactNode }) {
               </select>
               <ChevronDown className="pointer-events-none absolute top-1/2 right-2 size-3.5 -translate-y-1/2 text-muted" />
             </div>
-            <Link to="/search" className="hd-searchlink ml-3 hidden h-10 min-w-0 items-center gap-2 rounded-full border border-line bg-surface/70 px-3 text-sm text-muted lg:inline-flex">
-              <Search className="size-4 shrink-0" />
-              <span className="truncate">{t.search}</span>
-            </Link>
-            <Link to="/search" aria-label={t.search} className="hd-iconbtn grid size-11 shrink-0 place-items-center rounded-full hover:bg-surface lg:hidden">
+            <Link to="/search" aria-label={t.search} className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-surface sm:size-11">
               <Search className="size-5" />
             </Link>
             <button
               type="button"
-              aria-label={theme === "dark" ? t.themeToLight : t.themeToDark}
-              title={theme === "dark" ? t.themeToLight : t.themeToDark}
-              className="hd-iconbtn hidden size-11 shrink-0 place-items-center rounded-full hover:bg-surface min-[400px]:grid"
+              aria-label={theme === "dark" ? "Ganti ke tema terang" : "Ganti ke tema gelap"}
+              title={theme === "dark" ? "Tema terang" : "Tema gelap"}
+              className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-surface sm:size-11"
               onClick={() => changeTheme(theme === "dark" ? "light" : "dark")}
             >
               {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
@@ -285,7 +293,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
             <button
               type="button"
-              className="hd-iconbtn grid size-11 shrink-0 place-items-center rounded-full hover:bg-surface lg:hidden"
+              className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-surface sm:size-11 lg:hidden"
               aria-label="Menu"
               onClick={() => setOpen((value) => !value)}
             >
@@ -301,53 +309,47 @@ export function Shell({ children }: { children: ReactNode }) {
                   key={link.to}
                   to={link.to}
                   onClick={() => setOpen(false)}
-                  className="flex min-h-12 items-center rounded-xl px-3 text-base font-medium hover:bg-surface"
+                  className="rounded-xl px-3 py-3 text-base font-medium hover:bg-surface"
                 >
                   {labels[link.key]}
                 </Link>
               ))}
-              <Link to="/shorts" onClick={() => setOpen(false)} className="flex min-h-12 items-center rounded-xl px-3 hover:bg-surface">
+              <Link to="/shorts" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 hover:bg-surface">
                 {t.shorts}
               </Link>
-              <Link to="/history" onClick={() => setOpen(false)} className="flex min-h-12 items-center rounded-xl px-3 hover:bg-surface">
+              <Link to="/history" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 hover:bg-surface">
                 {t.history}
               </Link>
               <div className="mt-2 rounded-2xl border border-line bg-surface/70 p-3">
                 <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
                   {theme === "dark" ? <Moon className="size-4" /> : <Sun className="size-4" />}
-                  {t.theme}
+                  Ganti tema
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <button type="button" onClick={() => changeTheme("light")} className={cn("flex h-10 items-center justify-center gap-2 rounded-xl border text-sm", theme === "light" ? "border-primary bg-primary/10 text-primary" : "border-line bg-bg text-muted")}>
-                    <Sun className="size-4" /> {t.light}
+                    <Sun className="size-4" /> Terang
                   </button>
                   <button type="button" onClick={() => changeTheme("dark")} className={cn("flex h-10 items-center justify-center gap-2 rounded-xl border text-sm", theme === "dark" ? "border-primary bg-primary/10 text-primary" : "border-line bg-bg text-muted")}>
-                    <Moon className="size-4" /> {t.dark}
+                    <Moon className="size-4" /> Gelap
                   </button>
                 </div>
               </div>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <label className="block text-xs font-medium text-muted">
-                {t.uiLang}
-                <select className="mt-1 h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink" value={uiLang} aria-label={t.uiLang} onChange={(event) => setUiLang(event.target.value as typeof uiLang)}>
-                  {UI_LANGS.map((lang) => (
-                    <option key={lang.id} value={lang.id}>
-                      {lang.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block text-xs font-medium text-muted">
-                {t.contentLang}
-                <select className="mt-1 h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink" value={contentLang} aria-label={t.contentLang} onChange={(event) => setContentLang(event.target.value)}>
-                  {CONTENT_LANGS.map((lang) => (
-                    <option key={lang.id} value={lang.id}>
-                      {lang.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <select className="h-11 rounded-xl border border-line bg-surface px-3" value={uiLang} onChange={(event) => setUiLang(event.target.value as typeof uiLang)}>
+                {UI_LANGS.map((lang) => (
+                  <option key={lang.id} value={lang.id}>
+                    {lang.label}
+                  </option>
+                ))}
+              </select>
+              <select className="h-11 rounded-xl border border-line bg-surface px-3" value={contentLang} onChange={(event) => setContentLang(event.target.value)}>
+                {CONTENT_LANGS.map((lang) => (
+                  <option key={lang.id} value={lang.id}>
+                    {lang.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         ) : null}
@@ -401,7 +403,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   key={topic.label}
                   to={topic.rail === "latest" ? "/latest" : "/discover"}
                   search={topic.rail === "latest" ? undefined : { rail: topic.rail }}
-                  className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/80 px-3 py-1.5 text-xs text-muted shadow-sm transition-colors hover:border-primary hover:text-primary"
+                  className="inline-flex items-center gap-2 rounded-full border border-line bg-white/80 px-3 py-1.5 text-xs text-muted shadow-sm transition-colors hover:border-primary hover:text-primary"
                 >
                   <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
                     <Hash className="size-3.5" />
@@ -422,7 +424,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <nav
         className={cn(
           "fixed inset-x-0 bottom-0 z-40 lg:hidden",
-          shorts ? "bg-black/55 text-white backdrop-blur-md [&_a]:text-white/75 [&_a[data-status=active]]:text-white" : "border-t border-line/80 bg-bg/92 backdrop-blur-xl",
+          shorts ? "bg-black/55 text-white backdrop-blur-md [&_a]:text-white/75 [&_a[data-status=active]]:text-white" : "border-t border-line/80 bg-white/90 backdrop-blur-xl",
         )}
         aria-label="Mobile"
       >
@@ -444,7 +446,7 @@ function BootSplash() {
 
   useEffect(() => {
     const started = (window as Window & { __boot?: number }).__boot ?? Date.now();
-    const left = Math.max(0, 1300 - (Date.now() - started));
+    const left = Math.max(0, 1000 - (Date.now() - started));
     const remove = window.setTimeout(() => setGone(true), left);
     return () => window.clearTimeout(remove);
   }, []);
@@ -454,11 +456,9 @@ function BootSplash() {
   return (
     <div className="boot-splash" role="status" aria-label="Loading HouseDrama">
       <div className="boot-splash__glow" />
-      <div className="boot-splash__stage">
-        <Logo className="boot-splash__logo" />
-        <div className="boot-splash__track" aria-hidden="true">
-          <span />
-        </div>
+      <Logo className="boot-splash__logo h-16 w-auto" />
+      <div className="boot-splash__track" aria-hidden="true">
+        <span />
       </div>
     </div>
   );
@@ -495,17 +495,8 @@ const SOCIALS: { name: string; href: string; icon: () => ReactNode; className: s
 ];
 
 function SocialGlyph({ children }: { children: ReactNode }) {
-  // Explicit dimensions prevent the SVG's 300x150 browser default from flashing
-  // at full size before the app stylesheet finishes loading on a hard refresh.
   return (
-    <svg
-      viewBox="0 0 24 24"
-      width={20}
-      height={20}
-      className="size-5 shrink-0"
-      style={{ display: "block", width: 20, height: 20, flexShrink: 0 }}
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
       {children}
     </svg>
   );

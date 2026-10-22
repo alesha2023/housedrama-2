@@ -1,11 +1,5 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /api/
-Disallow: /history
-Disallow: /watchlist
-Disallow: /search
-Disallow: /*?provider=
-Disallow: /*?rail=
 
-Sitemap: https://house-drama.xyz/sitemap.xml
+Sitemap: https://house-drama.web.id/sitemap.xml

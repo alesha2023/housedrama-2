@@ -15,7 +15,7 @@ export const getLocalizedHomeData = createServerFn({ method: "GET" })
 export const getHomeData = createServerFn({ method: "GET" })
   .validator(
     z.object({
-      lang: z.string().min(2).max(12).default("en"),
+      lang: z.string().min(2).max(12).default("id"),
       provider: z.enum(["all", ...PROVIDERS]).default("all"),
     }),
   )
@@ -28,7 +28,7 @@ export const getHomeData = createServerFn({ method: "GET" })
 export const getBrowseData = createServerFn({ method: "GET" })
   .validator(
     z.object({
-      lang: z.string().min(2).max(12).default("en"),
+      lang: z.string().min(2).max(12).default("id"),
       provider: providerSchema.default("all"),
       page: z.number().int().min(1).max(20).default(1),
       rail: z.string().max(40).nullable().optional(),
@@ -49,7 +49,7 @@ export const getSearchData = createServerFn({ method: "GET" })
   .validator(
     z.object({
       q: z.string().max(80).default(""),
-      lang: z.string().min(2).max(12).default("en"),
+      lang: z.string().min(2).max(12).default("id"),
       provider: providerSchema.default("all"),
       page: z.number().int().min(1).max(20).default(1),
     }),
@@ -63,7 +63,7 @@ export const getSearchData = createServerFn({ method: "GET" })
 export const getShortsData = createServerFn({ method: "GET" })
   .validator(
     z.object({
-      lang: z.string().min(2).max(12).default("en"),
+      lang: z.string().min(2).max(12).default("id"),
       page: z.number().int().min(1).max(20).default(1),
     }),
   )
@@ -78,7 +78,7 @@ export const getDetailData = createServerFn({ method: "GET" })
     z.object({
       provider: z.enum(PROVIDERS),
       seriesId: z.string().min(1).max(80),
-      lang: z.string().min(2).max(12).default("en"),
+      lang: z.string().min(2).max(12).default("id"),
     }),
   )
   .handler(async ({ data }) => {
@@ -93,7 +93,7 @@ export const getWatchData = createServerFn({ method: "GET" })
       provider: z.enum(PROVIDERS),
       seriesId: z.string().min(1).max(80),
       episodeId: z.string().min(1).max(80),
-      lang: z.string().min(2).max(12).default("en"),
+      lang: z.string().min(2).max(12).default("id"),
     }),
   )
   .handler(async ({ data }) => {
@@ -108,7 +108,7 @@ export const getStreamData = createServerFn({ method: "GET" })
       provider: z.enum(PROVIDERS),
       seriesId: z.string().min(1).max(80),
       episodeId: z.string().min(1).max(80),
-      lang: z.string().min(2).max(12).default("en"),
+      lang: z.string().min(2).max(12).default("id"),
     }),
   )
   .handler(async ({ data }) => {

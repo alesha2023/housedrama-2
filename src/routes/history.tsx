@@ -5,16 +5,13 @@ import { usePrefs } from "@/lib/drama/i18n";
 import { useDisplayTitles } from "@/lib/drama/display";
 import { readHistory, type HistoryEntry } from "@/lib/drama/storage";
 import { maybeOpenMonetagAd } from "@/lib/drama/monetag";
-import { absoluteSiteUrl } from "@/lib/drama/site";
 
 export const Route = createFileRoute("/history")({
   head: () => ({
     meta: [
-      { title: "Watch History — HouseDrama" },
-      { name: "description", content: "Your HouseDrama watch history is stored in this browser and is not a public catalog page." },
+      { title: "Riwayat Tontonan — HouseDrama" },
       { name: "robots", content: "noindex,follow" },
     ],
-    links: [{ rel: "canonical", href: absoluteSiteUrl("/history") }],
   }),
   component: HistoryPage,
 });

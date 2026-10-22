@@ -51,42 +51,29 @@ const ID_KEYS = [
 ];
 
 const IMAGE_KEYS = [
-  "highImage",
-  "coverWap",
   "book_pic",
   "shortPlayCover",
   "cover_url",
+  "cover",
   "cover_image",
   "cover_image_url",
   "series_cover",
   "series_cover_url",
-  "coverUrl",
-  "coverImageUrl",
-  "poster_url",
-  "posterUrl",
-  "verticalCover",
-  "vertical_cover",
-  "image_url",
-  "imageUrl",
-  "bookCover",
-  "book_cover",
-  "alioss_cover",
-  "cover",
-  "cover_path",
   "cover_uri",
-  "bannerImage",
-  "bannerUrl",
-  "img_url",
-  "imgUrl",
-  "image",
-  "pic",
-  "poster",
-  "banner",
   "compress_cover_url",
-  "thumbUrl",
-  "thumb_url",
+  "coverImageUrl",
+  "coverUrl",
+  "posterUrl",
+  "poster",
+  "cover",
   "thumbnailExpanded",
   "thumbnail",
+  "bannerImage",
+  "bannerUrl",
+  "banner",
+  "highImage",
+  "image",
+  "pic",
 ];
 
 const URL_KEYS = ["video_url", "videoUrl", "playUrl", "play_url", "m3u8_url", "m3u8", "streamUrl", "stream_url", "proxy_url", "proxyUrl", "play_url_proxy", "url"];
@@ -287,12 +274,10 @@ function channelIds(root: unknown) {
 }
 
 async function read(provider: ProviderId, path: string, lang: string) {
-  // Stardust's hot list is empty when a lang query is attached. Other routes still accept lang.
-  const requestPath = provider === "stardusttv" && path.startsWith("/get-hot") ? path : withLang(path, lang);
-  const data = await providerFetch<unknown>(provider, requestPath, {
+  const data = await providerFetch<unknown>(provider, withLang(path, lang), {
     cacheTtl: 180_000,
     timeout: 5000,
-    cacheKey: `${provider}:${lang}:${requestPath}`,
+    cacheKey: `${provider}:${lang}:${path}`,
   });
   return data;
 }
@@ -601,21 +586,16 @@ export async function genericDetail(provider: ProviderId, seriesId: string, lang
     if (!card && detailError && !episodes.length) throw detailError;
     return { card, episodes };
   }
-  const detail = await read(provider, `/get-detail/${enc(seriesId)}`, lang).catch(() => null);
-  let episodes = detail ? extractEpisodes(detail) : [];
-  let episodeRoot: unknown = null;
+  const detail = await read(provider, `/get-detail/${enc(seriesId)}`, lang);
+  let episodes = extractEpisodes(detail);
   if (!episodes.length) {
     try {
-      episodeRoot = await read(provider, `/get-episodes/${enc(seriesId)}`, lang);
-      episodes = extractEpisodes(episodeRoot);
+      episodes = extractEpisodes(await read(provider, `/get-episodes/${enc(seriesId)}`, lang));
     } catch {
       episodes = [];
     }
   }
-  const cards = [
-    ...(detail ? extractCards(detail, provider) : []),
-    ...(episodeRoot ? extractCards(episodeRoot, provider) : []),
-  ];
+  const cards = extractCards(detail, provider);
   const card = cards.find((item) => item.seriesId === seriesId) ?? cards[0] ?? null;
   if (card && !card.firstEpisodeId && episodes[0]) card.firstEpisodeId = episodes[0].episodeId;
   if (card && episodes.length && !card.episodeCount) card.episodeCount = episodes.length;

@@ -1,14 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageIntro } from "@/components/drama/cards";
-import { pageSeo } from "@/lib/drama/site";
 import { usePrefs } from "@/lib/drama/i18n";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => pageSeo({
-    title: "Privacy — HouseDrama",
-    description: "HouseDrama stores watch history in your browser. It does not require an account to browse the catalog.",
-    path: "/privacy",
-    robots: "index,follow",
+  head: () => ({
+    meta: [
+      { title: "Privacy — HouseDrama" },
+      { name: "description", content: "HouseDrama stores watch history locally in your browser and does not require an account." },
+      { name: "robots", content: "index,follow" },
+    ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/privacy" }],
   }),
   component: PrivacyPage,
 });

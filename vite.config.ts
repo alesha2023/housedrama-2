@@ -145,13 +145,7 @@ function authPopupPlugin(): Plugin {
 // `0.0.0.0:8080` is the live-preview contract — don't change host/port.
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
-// DEPLOY_TARGET=cloudflare swaps Nitro/Vercel for the official Cloudflare Vite plugin.
-export default defineConfig(async ({ command, isPreview }) => {
-  const useCloudflare = process.env.DEPLOY_TARGET === "cloudflare";
-  const cloudflarePlugin = useCloudflare
-    ? [(await import("@cloudflare/vite-plugin")).cloudflare({ viteEnvironment: { name: "ssr" } })]
-    : [];
-  return {
+export default defineConfig(({ command, isPreview }) => ({
   server: {
     host: "0.0.0.0",
     port: 8080,
@@ -162,14 +156,8 @@ export default defineConfig(async ({ command, isPreview }) => {
     port: 8081,
     strictPort: true,
   },
-  resolve: {
-    tsconfigPaths: true,
-    alias: useCloudflare
-      ? { "@electric-sql/pglite": join(process.cwd(), "src/lib/pglite-workers-stub.ts") }
-      : {},
-  },
+  resolve: { tsconfigPaths: true },
   plugins: [
-    ...cloudflarePlugin,
     pgliteBootstrapPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.
     authPopupPlugin(),
@@ -179,10 +167,13 @@ export default defineConfig(async ({ command, isPreview }) => {
     grokPwaPlugin(),
     tailwindcss(),
     tanstackStart(),
-    ...(!useCloudflare && (command === "build" || isPreview)
+    ...(command === "build" || isPreview
       ? [
           nitro({
-            preset: "vercel",
+            // This project is deployed to Cloudflare Workers. Using the Vercel
+            // preset emits a different server/static-asset layout and can leave
+            // built CSS assets unavailable to crawlers after deployment.
+            preset: process.env.NITRO_PRESET ?? "cloudflare_module",
             // Auto-registers server/middleware/* (the PWA install page +
             // manifest + head-tag middleware). Nitro v3 defaults serverDir to
             // false, so removing this silently unwires /?install=1 on deploys.
@@ -192,4 +183,4 @@ export default defineConfig(async ({ command, isPreview }) => {
       : []),
     viteReact(),
   ],
-};});
+}));

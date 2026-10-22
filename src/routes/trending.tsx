@@ -3,17 +3,22 @@ import { useEffect, useState } from "react";
 import { DramaGrid, EmptyState, PageIntro, PageSkeleton } from "@/components/drama/cards";
 import { SeoItemList } from "@/components/drama/seo-item-list";
 import { getHomeData } from "@/lib/drama/api";
-import { pageSeo } from "@/lib/drama/site";
 import { usePrefs } from "@/lib/drama/i18n";
 import type { DramaCard } from "@/lib/drama/types";
 
 export const Route = createFileRoute("/trending")({
   loader: () => getHomeData({ data: { lang: "en" } }),
   pendingComponent: PageSkeleton,
-  head: () => pageSeo({
-    title: "Trending Chinese Short Dramas to Watch Online — HouseDrama",
-    description: "Watch popular Chinese short dramas online. Explore trending romance, CEO, revenge, and fantasy stories on HouseDrama.",
-    path: "/trending",
+  head: () => ({
+    meta: [
+      { title: "Trending Chinese Short Dramas to Watch Online — HouseDrama" },
+      { name: "description", content: "Watch popular Chinese short dramas online. Explore trending romance, CEO, revenge, and fantasy stories on HouseDrama." },
+      { name: "robots", content: "index,follow,max-image-preview:large" },
+      { property: "og:title", content: "Trending Chinese Short Dramas to Watch Online — HouseDrama" },
+      { property: "og:description", content: "Explore trending Chinese and Asian short dramas, popular stories, and new favorites on HouseDrama." },
+      { property: "og:url", content: "https://house-drama.web.id/trending" },
+    ],
+    links: [{ rel: "canonical", href: "https://house-drama.web.id/trending" }],
   }),
   component: TrendingPage,
 });
@@ -22,7 +27,6 @@ function TrendingPage() {
   const { uiLang } = usePrefs();
   const [watchedItems, setWatchedItems] = useState<DramaCard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unavailable, setUnavailable] = useState(false);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
@@ -38,12 +42,9 @@ function TrendingPage() {
         return response.json();
       })
       .then((payload: { items?: DramaCard[] }) => {
-        if (active) {
-          setWatchedItems(Array.isArray(payload.items) ? payload.items : []);
-          setUnavailable(false);
-        }
+        if (active) setWatchedItems(Array.isArray(payload.items) ? payload.items : []);
       })
-      .catch(() => { if (active) { setWatchedItems([]); setUnavailable(true); } })
+      .catch(() => { if (active) setWatchedItems([]); })
       .finally(() => {
         clearTimeout(timeoutId);
         if (active) setLoading(false);
@@ -69,8 +70,8 @@ function TrendingPage() {
         <PageSkeleton />
       ) : (
         <EmptyState
-          title={unavailable ? (uiLang === "id" ? "Data Trending tidak tersedia" : "Trending data unavailable") : (uiLang === "id" ? "Belum ada data tontonan" : "No HouseDrama view data yet")}
-          body={unavailable ? (uiLang === "id" ? "API atau database tidak merespons. Coba lagi nanti; periksa log Cloudflare untuk detailnya." : "The API or database did not respond. Try again later and check Cloudflare logs for details.") : (uiLang === "id" ? "Drama akan muncul di sini setelah pengunjung mulai menontonnya." : "Dramas will appear here after visitors start watching them.") }
+          title={uiLang === "id" ? "Belum ada data tontonan" : "No HouseDrama view data yet"}
+          body={uiLang === "id" ? "Drama akan muncul di sini setelah pengunjung mulai menontonnya." : "Dramas will appear here after visitors start watching them."}
         />
       )}
     </div>
